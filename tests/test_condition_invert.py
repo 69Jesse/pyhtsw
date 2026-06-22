@@ -1,10 +1,3 @@
-"""`~condition` must return an inverted clone, never mutate the original.
-
-`PlayerSneaking` (and the other named conditions) are module-level singletons,
-so an in-place `__invert__` would corrupt the shared object for every later
-use — `print(PlayerSneaking, ~PlayerSneaking)` showed both as inverted.
-"""
-
 from pyhtsl import (
     Container,
     IfAll,

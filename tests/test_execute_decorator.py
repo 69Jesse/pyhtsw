@@ -1,12 +1,3 @@
-"""The `execute` decorator defers its callback until after finalization.
-
-A function block looks empty while the container it lives in is still being
-built -- its callback has not run yet. Inside a plain `with ExecutionContext`
-that is exactly what you see. The `execute` decorator runs its callback later
-(in the atexit hook, after everything has finalized), so by then the block is
-populated.
-"""
-
 from pyhtsl import ExecutionContext, chat, create_function, execute
 
 with ExecutionContext():

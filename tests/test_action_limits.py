@@ -1,11 +1,3 @@
-"""Action limits count rendered HTSL actions, not expression objects.
-
-A single `BinaryExpression` can flatten into several `var` lines (temps, etc.),
-so a block with 25 objects can still emit 26 "change variable" actions. The
-limit fixer must count what is rendered and split the overflow (HTSL caps each
-function at 25 stat changes), not trust the object count.
-"""
-
 from pyhtsl import (
     Container,
     PlayerStat,
@@ -14,7 +6,6 @@ from pyhtsl import (
 
 
 def _top_level_and_total_var_lines(block_htsl: str) -> tuple[int, int]:
-    """(var lines at brace-depth 0, total var lines) for one block's HTSL."""
     depth = 0
     top_level = 0
     total = 0

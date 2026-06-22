@@ -1,5 +1,3 @@
-"""round_double from pyhtsl.ext: round a double stat to N decimal places."""
-
 from pyhtsl import Container, ExecutionContext, PlayerStat
 from pyhtsl.ext import round_double
 

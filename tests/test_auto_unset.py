@@ -1,5 +1,3 @@
-"""auto_unset controls the trailing `true`/`false` flag on stat assignments."""
-
 from pyhtsl import Container, PlayerStat
 
 with Container() as container:

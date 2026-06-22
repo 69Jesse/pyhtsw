@@ -1,13 +1,5 @@
-"""Nested if/else/random blocks aren't valid HTSL — entering one should raise SyntaxError.
-
-ExecutionContext exposes ``allow_nested_expressions`` to bypass this check during simulation.
-Entering a Random/If/Else inside a function block (a Block scope, not an expression scope)
-must still be allowed: only nested *expression* blocks are rejected.
-"""
-
-from helpers import expect_exception
-
 import pyhtsl.container
+from helpers import expect_exception
 from pyhtsl import (
     Container,
     Else,

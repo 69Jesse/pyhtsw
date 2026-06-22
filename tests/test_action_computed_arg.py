@@ -1,11 +1,3 @@
-"""Computed expressions passed directly as an action argument materialize.
-
-A `BinaryExpression` / `CompoundExpression` handed straight to an action (not
-via an f-string) used to leak its deferred sentinel into the rendered HTSL,
-because the deferred resolver only scanned string fields. It now materializes
-those fields into temp stats, the same way f-string interpolation does.
-"""
-
 from pyhtsl import (
     Container,
     IfAll,

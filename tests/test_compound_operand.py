@@ -1,5 +1,3 @@
-"""A CompoundExpression used as an operand flattens into the surrounding computation."""
-
 import math
 
 from pyhtsl import (

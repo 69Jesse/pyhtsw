@@ -1,19 +1,6 @@
-"""cheap_read / cheap_write across widths and lengths.
-
-Verifies the correct slot is read from / written to for several (width, length)
-pairs that exercise both special-case branches (len <= 4) and the recursive
-chunked branch (len > 4 for reads, len > 25 for writes).
-
-The slow-path tests use letter names (`a, b, ..., z, aa, ab, ...`) so the
-substitution-based shortcut in cheap_read does NOT kick in — those names don't
-form an arithmetic-sequence pattern. The fast-path / shortcut is exercised
-separately in the second half of the file.
-"""
-
 import random
 
 from helpers import expect_exception
-
 from pyhtsl import Container, ExecutionContext, GlobalStat, PlayerStat
 from pyhtsl.expression.binary_expression import BinaryExpression
 from pyhtsl.expression.condition.conditional_expression import ConditionalExpression
@@ -43,8 +30,6 @@ def sample_targets(length: int) -> list[int]:
 def value_at(i: int, k: int) -> int:
     return i * 1000 + k + 1  # nonzero so a read into a default-0 stat is detectable
 
-
-# --- cheap_read slow-path: reads return the targeted item ---
 
 for length in (1, 10, 100):
     for width in (1, 3):
@@ -86,8 +71,6 @@ for length in (1, 10, 100):
 
                 ctx.assert_all(check_read)
 
-
-# --- cheap_write: only the targeted slot changes; others keep their prior value ---
 
 NEW_OFFSET = 1_000_000  # added to value_at to make the post-write value distinct
 
@@ -140,18 +123,6 @@ for length in (1, 10, 100):
 
                 ctx.assert_all(check_write)
 
-
-# --- cheap_read fast-path: shortcut via placeholder substitution ---
-#
-# When item names form `prefix + format(start + i, ',') + suffix`, cheap_read
-# emits a constant-size sequence of BinaryExpressions instead of a chunked
-# IfAll/Else cascade. Each fast-path read emits per column:
-#   - n_k.value = index [+ offset]                   (1 BE)
-#   - p_k.value = '%var.<scope>/<prefix>'            (1 BE, only if prefix non-empty)
-#   - tmp_str_k.value = template                     (1 BE)
-#   - tmp_str_k.set(tmp_str_k, intentional)          (1 BE: chain resolver)
-#   - output[k].value = tmp_str_k                    (1 BE)
-# So 5 BEs per column with non-empty prefix, 4 BEs per column with empty prefix.
 
 # Width=1, non-empty prefix, simple indexing → 5 BinaryExpressions, no conditionals.
 with Container() as container:
@@ -311,16 +282,6 @@ assert len(counts) == 2, counts
 assert ConditionalExpression in counts, counts
 
 
-# --- Fast-path correctness via ExecutionContext (n < 1000) ---
-#
-# Each test uses a single cheap_read per ExecutionContext. The fast path's
-# writes are unconditional, so stacking multiple cheap_read calls in a loop
-# would let the dead-store eliminator merge them — that's the optimizer
-# working correctly under the test's opaque-callback pattern (the slow path
-# survives the same pattern only because its writes are inside IfAll). For a
-# faithful single-read test, isolate each call in its own context.
-
-
 # Width=1, PlayerStat, prefix='src', start=0
 for _target in (0, 3, 7, 9):
     with ExecutionContext(ignore_action_limits=True) as ctx:
@@ -460,8 +421,6 @@ for _target in (0, 3, 9):
 
         ctx.assert_all(check_offset)
 
-
-# --- failure cases for cheap_read ---
 
 # Empty items list
 with expect_exception(ValueError):

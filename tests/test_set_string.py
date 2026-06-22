@@ -1,26 +1,10 @@
-"""set_string: chunked string assignment under HTSL's 32-char source limit.
-
-Covers:
-- Short values: single direct set.
-- Long values that are reducible via placeholders: chained self-concat,
-  with each emitted line <= 32 chars source.
-- Provably-impossible inputs raise (no placeholders, atom too big to fit).
-- ExecutionContext correctness for short values, and the runtime rule
-  (when substitution would exceed 32 chars, the literal source with
-  placeholders is stored instead).
-- Compile-time: emitting a string set with > 32 chars source raises.
-"""
-
 from helpers import expect_exception
-
 from pyhtsl import Container, ExecutionContext, PlayerStat
 from pyhtsl.expression.binary_expression import (
     SET_STRING_MAX_LENGTH,
     BinaryExpression,
 )
 from pyhtsl.ext.set_string import set_string
-
-# --- short values: single direct set ---
 
 with Container() as container:
     s = PlayerStat('s').as_string()
@@ -37,8 +21,6 @@ with Container() as container:
 
 assert container.into_htsl() == f'var "s" = "{value}" true', container.into_htsl()
 
-
-# --- long value reduced by placeholders: chained self-concat ---
 
 with Container() as container:
     s = PlayerStat('s').as_string()
@@ -57,20 +39,11 @@ for line in lines:
     assert len(src) <= SET_STRING_MAX_LENGTH, (len(src), src, line)
 
 
-# --- impossible: no placeholders, length > 32 ---
-
 with expect_exception(ValueError):
     with Container() as container:
         s = PlayerStat('s').as_string()
         set_string(s, 'A' * 50)
 
-
-# --- impossible: a single placeholder atom too long for any non-first chunk ---
-#
-# Self-ref of "%var.player/destination%" is 24 chars, leaving budget 8 for
-# continuation chunks. After the first chunk fills with 32 literal chars, the
-# placeholder atom (14 chars) lands in a continuation chunk where 14 > 8 —
-# set_string must reject this.
 
 with expect_exception(ValueError):
     with Container() as container:
@@ -78,12 +51,6 @@ with expect_exception(ValueError):
         value = 'a' * 32 + '%var.player/y%'
         set_string(s, value)
 
-
-# --- HTSL compile-time check: a direct set > 32 chars rejects at finalize ---
-#
-# The 32-char source check fires inside Container.__exit__ when each
-# expression's into_htsl() runs during finalize. Use a small try/except so
-# we can clean up the CONTAINERS stack if finalize raises mid-exit.
 
 import pyhtsl.container as _container_mod  # noqa: E402
 
@@ -102,8 +69,6 @@ finally:
 assert caught, 'expected ValueError for >32-char direct set'
 
 
-# --- ExecutionContext: short value round-trip ---
-
 with ExecutionContext() as ctx:
     s = PlayerStat('s').as_string()
     set_string(s, 'hello')
@@ -113,8 +78,6 @@ with ExecutionContext() as ctx:
 
     ctx.assert_all(check_short)
 
-
-# --- ExecutionContext: chained self-concat builds expanded value <= 32 ---
 
 with ExecutionContext() as ctx:
     s = PlayerStat('s').as_string()
@@ -135,11 +98,6 @@ with ExecutionContext() as ctx:
     ctx.assert_all(check_chained)
 
 
-# --- ExecutionContext: runtime rule fires when substitution would exceed 32 ---
-#
-# Set a stat to a literal whose substituted result would be > 32 chars.
-# Per HTSL's runtime rule, the literal source (placeholders intact) is stored.
-
 with ExecutionContext() as ctx:
     a = PlayerStat('a').as_string()
     b = PlayerStat('b').as_string()
@@ -157,8 +115,6 @@ with ExecutionContext() as ctx:
     ctx.assert_all(check_rule_fires)
 
 
-# --- ExecutionContext: runtime rule does NOT fire when result fits ---
-
 with ExecutionContext() as ctx:
     a = PlayerStat('a').as_string()
     b = PlayerStat('b').as_string()
@@ -174,11 +130,6 @@ with ExecutionContext() as ctx:
 
     ctx.assert_all(check_substituted)
 
-
-# --- The chunked emission for a long template results in <= 32 chars per line ---
-#
-# Use a template that requires >1 chunk. Verify HTSL output, then verify the
-# simulator reaches the same final value as a direct (short) set would.
 
 with Container() as container:
     s = PlayerStat('s').as_string()

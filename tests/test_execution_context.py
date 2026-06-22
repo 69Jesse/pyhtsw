@@ -1,7 +1,4 @@
-"""ExecutionContext basics: put/get round-trips, default values, conditional assertions."""
-
 from helpers import expect_exception
-
 from pyhtsl import (
     Container,
     ExecutionContext,

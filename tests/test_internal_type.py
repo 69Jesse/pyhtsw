@@ -1,7 +1,4 @@
-"""InternalType: type_compatible_housing_type, default_housing_type, from_value."""
-
 from helpers import expect_exception
-
 from pyhtsl.internal_type import InternalType
 
 # Coercion to LONG

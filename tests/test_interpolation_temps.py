@@ -1,5 +1,3 @@
-"""Interpolating computed expressions into statement strings."""
-
 import io
 from contextlib import redirect_stdout
 

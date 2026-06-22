@@ -1,5 +1,3 @@
-"""Shared helpers for the test suite."""
-
 from collections.abc import Iterator
 from contextlib import contextmanager
 

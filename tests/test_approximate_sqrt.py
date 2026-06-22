@@ -1,10 +1,7 @@
-"""approximate_sqrt from pyhtsl.ext: result close to math.sqrt for several inputs."""
-
 import math
 import random
 
 from helpers import expect_exception
-
 from pyhtsl import ExecutionContext, PlayerStat
 from pyhtsl.ext import approximate_sqrt
 

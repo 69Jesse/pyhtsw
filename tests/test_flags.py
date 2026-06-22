@@ -1,12 +1,3 @@
-"""Scope flags that change rendering / execution semantics:
-
-- `NoTypeCasting`: renders rhs bare (no quotes, no L/D suffix), and the
-  simulator skips the string-mode cast pipeline so reads keep the source type.
-- `NoFallbackValues`: drops the fallback portion (` 0`, ` 0.0`) inside
-  placeholders.
-- `NoOptimization`: skips the peephole optimizer so source order is preserved.
-"""
-
 from pyhtsl import (
     Container,
     ExecutionContext,

@@ -1,5 +1,3 @@
-"""`lhs = identity; lhs OP rhs` -> `lhs = rhs` for each operator's identity."""
-
 from pyhtsl import Container, PlayerStat
 
 # Increment identity is 0

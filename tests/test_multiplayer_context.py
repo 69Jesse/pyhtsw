@@ -1,6 +1,3 @@
-"""Multi-player ExecutionContext: per-player vs global scope, and the
-for-all-players function trigger (with caster self-exclusion via cooldown)."""
-
 from pyhtsl import (
     ExecutionContext,
     ExecutionPlayer,

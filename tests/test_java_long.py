@@ -1,11 +1,3 @@
-"""Java `long` semantics: the `pyhtsl.execute.java_long` primitives plus the
-executor and constant folder built on them.
-
-A Hypixel housing long is a JVM `long` — a 64-bit two's-complement integer — so
-arithmetic wraps on overflow, division truncates toward zero, modulo takes the
-sign of the dividend, and shift counts are masked to their low 6 bits.
-"""
-
 from pyhtsl import Container, ExecutionContext, PlayerStat
 from pyhtsl.execute import java_long
 from pyhtsl.execute.java_long import INT64_MAX, INT64_MIN, JavaLong

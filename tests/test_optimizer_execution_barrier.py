@@ -1,15 +1,3 @@
-"""Optimizations must not move stat reads/writes across an execution barrier.
-
-A `pause` yields back to the housing tick loop and a triggered `function` runs
-other code; across either, another script can observe — or change — a stat. So
-a write that is "overwritten anyway" later is *not* dead if a barrier sits
-between the two writes, and two writes around a barrier may not be merged: in
-the meantime the value could have been read or changed.
-
-A barrier nested inside a `random` or `if` block still counts — it is
-reachable, so the conservative choice keeps the earlier write.
-"""
-
 from pyhtsl import (
     Container,
     IfAll,
@@ -22,8 +10,6 @@ from pyhtsl.actions.pause_execution import PauseExecutionExpression
 from pyhtsl.expression.binary_expression import BinaryExpression, BinaryOperator
 from pyhtsl.internal_type import InternalType
 from pyhtsl.stats.temporary_stat import TemporaryStat
-
-# --- Dead-store elimination ------------------------------------------------
 
 # The motivating case: a pause *and* a triggered function between the two
 # writes. `x = 1` must survive — both barriers can observe it.
@@ -125,8 +111,6 @@ expected = 'var "x" = 1 true\npause 1\nvar "x" = 2 true'
 assert container.into_htsl() == expected, container.into_htsl()
 
 
-# --- Identity-set merge ----------------------------------------------------
-
 # `x = 0; x += y` would normally collapse to `x = y`. A pause in between
 # blocks it — `x` is observable as `0` at the pause.
 with Container() as container:
@@ -153,8 +137,6 @@ expected = (
 )
 assert container.into_htsl() == expected, container.into_htsl()
 
-
-# --- Temp-stat merge -------------------------------------------------------
 
 # `tmp = a; tmp += b; x = tmp` normally merges into `x = a; x += b`, folding
 # the temp away. A barrier between the temp's computation and the read into

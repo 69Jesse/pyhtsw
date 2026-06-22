@@ -1,5 +1,3 @@
-"""approximate_sin_cos from pyhtsl.ext: results close to math.sin/cos for several inputs."""
-
 import math
 import random
 from typing import Literal

@@ -1,5 +1,3 @@
-"""Operations that are no-ops (e.g. += 0, *= 1) get removed entirely."""
-
 from pyhtsl import Container, PlayerStat
 
 # `+= 0` and `-= 0` are no-ops; only the surviving op remains

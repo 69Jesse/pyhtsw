@@ -1,19 +1,7 @@
-"""Tests for the stack/queue implementations in `pyhtsl.ext.stack_queue`.
-
-Covers `IntStack`, `IntQueue`, `Stack` and `Queue`; future stack/queue types in
-the same module should add their cases here rather than spawning a parallel
-file.
-
-Capacity arithmetic used throughout:
-    most=255  -> bit_length=8  -> per_holder_capacity = 64 // 8 = 8
-    most=1023 -> bit_length=10 -> per_holder_capacity = 64 // 10 = 6
-"""
-
 import io
 from contextlib import redirect_stdout
 
 from helpers import expect_exception
-
 from pyhtsl import Container, ExecutionContext, PlayerStat
 from pyhtsl.ext.stack_queue import IntQueue, IntStack, Queue, Stack
 
@@ -1523,26 +1511,10 @@ with expect_exception(ValueError):
     q.remove(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
 
 
-# ===========================================================================
-# Large containers
-# ===========================================================================
-#
-# A bulk shift/cascade over a container with many holders emits far more stat
-# changes than HTSL allows inside one if-statement. `add` / `remove` split
-# those across several sequential `IfAll` blocks (see
-# `pyhtsl.helpers.chunked_if`). These cases pin two things:
-#   1. execution stays correct once the body is spread over many blocks, and
-#   2. finalization through a real `Container` no longer raises the
-#      action-limit error an un-chunked body used to trigger.
-#
-# Sizes are kept to the smallest that still overflow the ~25-action cap: a
-# 28-slot shift and a 13-holder cascade each land two chunks deep.
-
 _BIG = 28  # slot holders: a 27-deep shift clears the per-if action cap
 _INT_CAP = 104  # IntStack/IntQueue capacity -> 13 holders, tile-even for 8-bit
 
 
-# --- Slot Queue: many holders, plain FIFO ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'bigq{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
@@ -1561,7 +1533,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_queue)
 
 
-# --- Slot Queue: many holders, override_oldest drops the front when full ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'bigqo{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
@@ -1581,7 +1552,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_queue_oldest)
 
 
-# --- Slot Queue: many holders, override_newest replaces the back when full ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'bigqn{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
@@ -1602,7 +1572,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_queue_newest)
 
 
-# --- Slot Stack: many holders, plain LIFO ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'bigs{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
@@ -1622,7 +1591,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_stack)
 
 
-# --- Slot Stack: many holders, override_oldest drops the bottom when full ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'bigso{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
@@ -1642,7 +1610,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_stack_oldest)
 
 
-# --- Slot Stack: many holders, override_newest replaces the top when full ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'bigsn{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
@@ -1663,9 +1630,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_stack_newest)
 
 
-# --- IntQueue: large capacity (13 holders), plain FIFO ---
-# most=255 -> per_holder_capacity=8; capacity=104 -> 13 holders, so the
-# pop-side cascade runs past the per-if action cap.
 with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigiq{i}').as_long() for i in range(16)]
@@ -1688,7 +1652,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_intqueue)
 
 
-# --- IntStack: large capacity (13 holders), plain LIFO ---
 with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigis{i}').as_long() for i in range(16)]
@@ -1712,10 +1675,6 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ctx.assert_all(check_big_intstack)
 
 
-# --- Finalization through a real Container must not raise the action-limit
-#     error. ExecutionContext above ignores those limits; here they bite, so
-#     this is the case that actually exercises the chunked-block split across
-#     every overflow mode of every container type. ---
 with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
     for _ov in ('ignore', 'override_oldest', 'override_newest'):
         with Container() as _container:

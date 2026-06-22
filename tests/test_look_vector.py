@@ -1,8 +1,3 @@
-"""approximate_look_vector from pyhtsl.ext: the computed unit vector matches
-Minecraft's look formula (x = -sin(yaw)cos(pitch), y = -sin(pitch),
-z = cos(yaw)cos(pitch)) within the approximate-trig tolerance, for several
-yaw/pitch pairs."""
-
 import math
 
 from pyhtsl import ExecutionContext, PlayerStat, disable_global_export

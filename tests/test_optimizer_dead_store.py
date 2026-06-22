@@ -1,5 +1,3 @@
-"""A write to lhs is dead if the next expression that touches lhs fully overwrites it."""
-
 from pyhtsl import Container, PlayerStat
 
 # Set followed by Set: first is dead

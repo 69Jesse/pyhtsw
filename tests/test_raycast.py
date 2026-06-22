@@ -1,16 +1,3 @@
-"""create_raycast from pyhtsl.ext: hits, misses, headshots, piercing,
-caps, conditions and the sender callback, driven through a multi-player
-ExecutionContext with real geometry.
-
-Geometry note: the caster's eyes sit `eye_height` (1.62) above their feet and a
-target's torso is `torso_offset` (0.9) above theirs. A horizontal ray therefore
-passes through a target whose feet are at the caster's-feet + 0.72, i.e. whose
-torso is at eye level. The hitbox radius defaults to 1.0 block, so a target a
-few blocks dead ahead is unambiguously hit while one several blocks to the side
-is unambiguously missed — comfortably clear of the simulator's 3-decimal
-rounding.
-"""
-
 from pyhtsl import (
     ExecutionContext,
     ExecutionPlayer,

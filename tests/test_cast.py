@@ -1,7 +1,3 @@
-"""cast_to_long / cast_to_double / cast_to_string emit intentional self-assignments
-with the destination type's suffix on the rhs (so HTSL parses through the type
-on the way in)."""
-
 from pyhtsl import Container, PlayerStat
 
 # Casting a double-typed stat to long: read x with the long suffix, write back.

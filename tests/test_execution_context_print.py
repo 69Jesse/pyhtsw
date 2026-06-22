@@ -1,5 +1,3 @@
-"""ctx.print captures output via redirect_stdout (everything happens at __exit__)."""
-
 import io
 from contextlib import redirect_stdout
 

@@ -1,20 +1,7 @@
-"""Tests for the chunking helpers in `pyhtsl.helpers`.
-
-`chunked(IfAll(...))` spreads a body that overflows HTSL's per-block action
-cap across several sequential `if` blocks; `chunked(Else)` then packs a large
-`else` body into those blocks' empty `else` slots, appending extra empty-`if`
-blocks only once the slots run out.
-
-A flat write of distinct stats survives the optimizer untouched, so a body of
-N such writes is exactly `ceil(N / 25)` chunks (25 = the per-block stat-change
-cap).
-"""
-
 import io
 from contextlib import redirect_stdout
 
 from helpers import expect_exception
-
 from pyhtsl import (
     Container,
     Else,

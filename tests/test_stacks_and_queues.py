@@ -2,8 +2,9 @@ import io
 from contextlib import redirect_stdout
 
 from helpers import expect_exception
-from pyhtsl import Container, ExecutionContext, PlayerStat
-from pyhtsl.ext.stack_queue import IntQueue, IntStack, Queue, Stack
+
+from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw.ext.stack_queue import IntQueue, IntStack, Queue, Stack
 
 # === Single holder, width 1 ===
 

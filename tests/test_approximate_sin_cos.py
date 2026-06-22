@@ -2,8 +2,8 @@ import math
 import random
 from typing import Literal
 
-from pyhtsl import ExecutionContext, PlayerStat
-from pyhtsl.ext import approximate_sin_cos
+from pyhtsw import ExecutionContext, PlayerStat
+from pyhtsw.ext import approximate_sin_cos
 
 
 def assert_sin_cos_close(

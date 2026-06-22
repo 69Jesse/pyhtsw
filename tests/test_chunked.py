@@ -2,7 +2,8 @@ import io
 from contextlib import redirect_stdout
 
 from helpers import expect_exception
-from pyhtsl import (
+
+from pyhtsw import (
     Container,
     Else,
     ExecutionContext,

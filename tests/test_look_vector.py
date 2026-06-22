@@ -1,9 +1,10 @@
 import math
 
-from pyhtsl import ExecutionContext, PlayerStat, disable_global_export
-from pyhtsl.actions.player_position_pitch import PlayerPositionPitch
-from pyhtsl.actions.player_position_yaw import PlayerPositionYaw
-from pyhtsl.ext import approximate_look_vector
+from pyhtsw.actions.player_position_pitch import PlayerPositionPitch
+from pyhtsw.actions.player_position_yaw import PlayerPositionYaw
+
+from pyhtsw import ExecutionContext, PlayerStat, disable_global_export
+from pyhtsw.ext import approximate_look_vector
 
 disable_global_export()
 

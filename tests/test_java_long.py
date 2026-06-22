@@ -1,6 +1,6 @@
-from pyhtsl import Container, ExecutionContext, PlayerStat
-from pyhtsl.execute import java_long
-from pyhtsl.execute.java_long import INT64_MAX, INT64_MIN, JavaLong
+from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw.execute import java_long
+from pyhtsw.execute.java_long import INT64_MAX, INT64_MIN, JavaLong
 
 # === JavaLong construction wraps into the signed 64-bit range ===
 assert int(JavaLong(INT64_MAX)) == INT64_MAX
@@ -8,7 +8,7 @@ assert int(JavaLong(INT64_MAX + 1)) == INT64_MIN
 assert int(JavaLong(INT64_MIN - 1)) == INT64_MAX
 assert int(JavaLong(2**64)) == 0
 assert int(JavaLong(-(2**63))) == INT64_MIN
-assert isinstance(JavaLong(5), int)  # stays int-compatible for the rest of pyhtsl
+assert isinstance(JavaLong(5), int)  # stays int-compatible for the rest of pyhtsw
 
 
 # === Addition / subtraction / multiplication wrap on overflow ===
@@ -117,7 +117,7 @@ with ExecutionContext() as ctx:
 assert int(ctx.get_raw(out)) == -1, ctx.get_raw(out)
 
 
-# PyHTSL's `%` operator stays Python-flavoured on purpose — it adjusts the
+# PyHTSW's `%` operator stays Python-flavoured on purpose — it adjusts the
 # truncated remainder so the result instead takes the sign of the divisor.
 with ExecutionContext() as ctx:
     x = PlayerStat('x').as_long()

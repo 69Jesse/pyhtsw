@@ -1,4 +1,6 @@
-from pyhtsl import (
+from pyhtsw.actions.pause_execution import PauseExecutionExpression
+
+from pyhtsw import (
     Container,
     IfAll,
     PlayerStat,
@@ -6,10 +8,9 @@ from pyhtsl import (
     pause_execution,
     trigger_function,
 )
-from pyhtsl.actions.pause_execution import PauseExecutionExpression
-from pyhtsl.expression.binary_expression import BinaryExpression, BinaryOperator
-from pyhtsl.internal_type import InternalType
-from pyhtsl.stats.temporary_stat import TemporaryStat
+from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
+from pyhtsw.internal_type import InternalType
+from pyhtsw.stats.temporary_stat import TemporaryStat
 
 # The motivating case: a pause *and* a triggered function between the two
 # writes. `x = 1` must survive — both barriers can observe it.

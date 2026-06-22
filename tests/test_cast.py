@@ -1,4 +1,4 @@
-from pyhtsl import Container, PlayerStat
+from pyhtsw import Container, PlayerStat
 
 # Casting a double-typed stat to long: read x with the long suffix, write back.
 with Container() as container:

@@ -1,4 +1,4 @@
-from pyhtsl.expression.housing_type import housing_type_as_rhs, housing_type_from_string
+from pyhtsw.expression.housing_type import housing_type_as_rhs, housing_type_from_string
 
 # Integers render bare
 assert housing_type_as_rhs(5) == '5'

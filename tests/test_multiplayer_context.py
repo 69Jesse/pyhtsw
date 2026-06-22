@@ -1,4 +1,6 @@
-from pyhtsl import (
+from pyhtsw.actions.player_name import PlayerName
+
+from pyhtsw import (
     ExecutionContext,
     ExecutionPlayer,
     GlobalStat,
@@ -9,7 +11,6 @@ from pyhtsl import (
     exit_function,
     trigger_function,
 )
-from pyhtsl.actions.player_name import PlayerName
 
 disable_global_export()
 

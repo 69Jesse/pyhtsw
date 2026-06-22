@@ -1,4 +1,4 @@
-from pyhtsl import Container, PlayerStat
+from pyhtsw import Container, PlayerStat
 
 # `+= 0` and `-= 0` are no-ops; only the surviving op remains
 with Container() as container:

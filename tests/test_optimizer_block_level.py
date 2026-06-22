@@ -1,4 +1,4 @@
-from pyhtsl import Container, PlayerStat
+from pyhtsw import Container, PlayerStat
 
 # Adjacent inc/dec across statements collapse
 with Container() as container:

@@ -1,4 +1,4 @@
-from pyhtsl import Container, PlayerStat
+from pyhtsw import Container, PlayerStat
 
 # Set followed by Set: first is dead
 with Container() as container:
@@ -54,7 +54,7 @@ assert container.into_htsl() == 'var "x" = 5 true', container.into_htsl()
 # recurses into `ConditionalExpression.if_expressions` / `else_expressions`.
 # Without this, `x = 5` would be wrongly eliminated even though the conditional
 # reads (and writes) x.
-from pyhtsl import IfAll  # noqa: E402
+from pyhtsw import IfAll  # noqa: E402
 
 with Container() as container:
     x = PlayerStat('x').as_long()
@@ -79,7 +79,7 @@ assert container.into_htsl() == expected, container.into_htsl()
 # expression's `line` attribute; without scanning string fields,
 # `is_using_stat` would miss it and the dead-store optimizer would wrongly
 # eliminate the prior `x = 5`.
-from pyhtsl import chat  # noqa: E402
+from pyhtsw import chat  # noqa: E402
 
 with Container() as container:
     x = PlayerStat('x').as_long()

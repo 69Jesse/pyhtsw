@@ -1,5 +1,5 @@
-from pyhtsl import Container, ExecutionContext, PlayerStat
-from pyhtsl.ext import round_double
+from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw.ext import round_double
 
 # 1.234567 rounded to 2 decimals -> 1.24
 with ExecutionContext() as ctx:

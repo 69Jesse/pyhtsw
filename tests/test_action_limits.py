@@ -1,4 +1,4 @@
-from pyhtsl import (
+from pyhtsw import (
     Container,
     PlayerStat,
     create_function,

@@ -40,9 +40,24 @@ __all__ = (
 SET_STRING_MAX_LENGTH = 32
 
 
-# Below this block size the quadratic peephole scans are cheaper than building
-# the per-pass index; above it the index wins by orders of magnitude.
+# Below this many BinaryExpression candidates the quadratic peephole scans are
+# cheaper than building the per-pass index; above it the index wins by orders of
+# magnitude. The gate counts BinaryExpressions, not total expressions, so a block
+# that is mostly conditionals (few assignments) keeps the cheap scan.
 _OPT_INDEX_THRESHOLD = 128
+
+
+def _should_use_index(expressions: list['Expression']) -> bool:
+    if len(expressions) <= _OPT_INDEX_THRESHOLD:
+        return False
+    candidates = 0
+    for expr in expressions:
+        if type(expr) is BinaryExpression:
+            candidates += 1
+            if candidates > _OPT_INDEX_THRESHOLD:
+                return True
+    return False
+
 
 _BARRIER_TYPES: tuple[type, ...] | None = None
 
@@ -285,6 +300,11 @@ class BinaryExpression[
     @staticmethod
     def take_out_useless_expressions(expressions: list[Expression]) -> bool:
         """Run the peephole passes to a fixed point, returning whether anything changed."""
+        # The merge/fold/dead-store passes need at least two expressions; for the
+        # many empty/one-line conditional bodies finalize produces, only the
+        # single-expression no-op removal can apply, so run just that.
+        if len(expressions) < 2:
+            return BinaryExpression._remove_no_op_expressions(expressions)
         changed_any = False
         has_changed = True
         while has_changed:
@@ -443,7 +463,7 @@ class BinaryExpression[
     @staticmethod
     def _merge_identity_set_with_op(expressions: list[Expression]) -> bool:
         has_changed = False
-        use_index = len(expressions) > _OPT_INDEX_THRESHOLD
+        use_index = _should_use_index(expressions)
         next_use: list[int | None] = []
         next_barrier: list[int | None] = []
         if use_index:
@@ -708,7 +728,7 @@ class BinaryExpression[
 
     @staticmethod
     def _eliminate_dead_stores(expressions: list[Expression]) -> bool:
-        if len(expressions) <= _OPT_INDEX_THRESHOLD:
+        if not _should_use_index(expressions):
             return BinaryExpression._eliminate_dead_stores_scan(expressions)
 
         next_use, next_barrier = BinaryExpression._compute_pass_index(expressions)
@@ -786,6 +806,13 @@ class BinaryExpression[
 
     @staticmethod
     def optimize_binary_expressions(expressions: list[Expression]) -> None:
+        # The temp-stat merge needs at least two expressions; for the very many
+        # empty/one-line conditional bodies finalize produces, only the no-op
+        # removal can apply.
+        if len(expressions) < 2:
+            BinaryExpression.take_out_useless_expressions(expressions)
+            return
+
         has_changed = True
         while has_changed:
             has_changed = False

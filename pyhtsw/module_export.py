@@ -29,7 +29,10 @@ class _Node:
 def _module_key_to_node(module: str | None, prefix: tuple[str, ...]) -> str:
     if not module or module == '__main__':
         return ''
-    return '.'.join(module.split('.')[len(prefix) :])
+    parts = module.split('.')
+    if tuple(parts[: len(prefix)]) == prefix:
+        return '.'.join(parts[len(prefix) :])
+    return module
 
 
 def _common_prefix(importables: list['Importable']) -> tuple[str, ...]:
@@ -49,9 +52,11 @@ def _common_prefix(importables: list['Importable']) -> tuple[str, ...]:
     return tuple(prefix)
 
 
-def _build_tree(importables: list['Importable']) -> dict[str, _Node]:
+def _build_tree(
+    importables: list['Importable'],
+    prefix: tuple[str, ...],
+) -> dict[str, _Node]:
     nodes: dict[str, _Node] = {'': _Node('')}
-    prefix = _common_prefix(importables)
 
     def get_node(dotted: str) -> _Node:
         existing = nodes.get(dotted)
@@ -111,8 +116,8 @@ def _node_targets(
 def _resolve_includes(
     nodes: dict[str, _Node],
     importables: list['Importable'],
+    prefix: tuple[str, ...],
 ) -> dict[str, list[str]]:
-    prefix = _common_prefix(importables)
     key_to_module: dict[tuple[str, str], str | None] = {
         (importable.kind, importable.identifier()): _module_key_to_node(
             importable.module,
@@ -159,13 +164,16 @@ def _resolve_includes(
     return cross
 
 
-def export_project(project: Project, importables: list['Importable']) -> None:
-    nodes = _build_tree(importables)
-    cross = _resolve_includes(nodes, importables)
+def export_project(
+    project: Project,
+    importables: list['Importable'],
+    prefix: tuple[str, ...] | None = None,
+) -> None:
+    if prefix is None:
+        prefix = _common_prefix(importables)
+    nodes = _build_tree(importables, prefix)
+    cross = _resolve_includes(nodes, importables, prefix)
 
-    # Items are placed in their owning module's folder; apply the same shared
-    # prefix stripping the tree used so cross-node .snbt paths line up.
-    prefix = _common_prefix(importables)
     project.module_folder = lambda module: module_to_folder(
         _module_key_to_node(module, prefix),
     )

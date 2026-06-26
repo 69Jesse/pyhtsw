@@ -343,6 +343,7 @@ class Item:
             cls(),
             left_fn,
             right_fn,
+            module=cls.__module__,
         )
 
     def __eq__(self, other: object) -> bool:
@@ -611,6 +612,7 @@ def _register_item_instance_importable(
     item: 'Item',
     left_fn: 'ItemHandler | None',
     right_fn: 'ItemHandler | None',
+    module: str | None = None,
 ) -> 'ItemImportable':
     from ..block import NamedBlock
     from ..container import get_current_container
@@ -637,6 +639,7 @@ def _register_item_instance_importable(
         left=left_block,
         right=right_block,
     )
+    importable.module = module
     container.register_importable(importable)
     return importable
 

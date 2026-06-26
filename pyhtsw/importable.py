@@ -1,5 +1,4 @@
 import hashlib
-import json
 import posixpath
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
@@ -677,8 +676,3 @@ def build_import_json(
         if entries[kind]:
             data[kind] = entries[kind]
     return data
-
-
-def export_import_json(project: Project, importables: list[Importable]) -> None:
-    data = build_import_json(project, importables)
-    project.write('import.json', json.dumps(data, indent=2) + '\n')

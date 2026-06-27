@@ -9,14 +9,35 @@ from .utils.kebab import into_kebab
 from .utils.log import log
 
 
+def _reserved_folder_names() -> frozenset[str]:
+    names: set[str] = set()
+    stack = list(Importable.__subclasses__())
+    while stack:
+        cls = stack.pop()
+        kind = getattr(cls, 'kind', None)
+        if kind:
+            names.add(kind)
+        stack.extend(cls.__subclasses__())
+    return frozenset(names)
+
+
 def module_to_folder(dotted: str | None) -> str:
     """Root-relative folder for a Python module in the multi-folder export. The
     entry script (`None`/`__main__`) is the project root (''); every other
-    module nests one `modules/<kebab>` segment per dotted component, e.g.
-    `features.general.combat` -> `modules/features/modules/general/modules/combat`."""
+    module contributes one `<kebab>` segment per dotted component, e.g.
+    `features.general.combat` -> `features/general/combat`. A segment that would
+    collide with one of a node's own importable folders (`items`, `functions`,
+    ...) gets a `-module` suffix, e.g. `items.abilities` -> `items-module/abilities`."""
     if not dotted or dotted == '__main__':
         return ''
-    return '/'.join(f'modules/{into_kebab(part)}' for part in dotted.split('.'))
+    reserved = _reserved_folder_names()
+    parts: list[str] = []
+    for part in dotted.split('.'):
+        folder = into_kebab(part)
+        if folder in reserved:
+            folder = f'{folder}-module'
+        parts.append(folder)
+    return '/'.join(parts)
 
 
 if TYPE_CHECKING:

@@ -69,44 +69,46 @@ def includes(relpath: str) -> set[str]:
 
 
 # Root mirrors the top-level packages/modules (kebab-case), not the functions.
+# No `modules/` wrapper; a module named `items` is suffixed to dodge the
+# collision with a node's own `items/` folder.
 assert 'functions' not in load('import.json')
 assert includes('import.json') == {
-    'modules/features/import.json',
-    'modules/items/import.json',
-    'modules/modx/import.json',
-    'modules/mody/import.json',
+    'features/import.json',
+    'items-module/import.json',
+    'modx/import.json',
+    'mody/import.json',
 }
 
 # Packages include their children; the leaf holds the actual function.
-assert includes('modules/features/import.json') == {
-    'modules/cookie/import.json',
-    'modules/general/import.json',
+assert includes('features/import.json') == {
+    'cookie/import.json',
+    'general/import.json',
 }
-assert includes('modules/features/modules/general/import.json') == {
-    'modules/combat/import.json',
+assert includes('features/general/import.json') == {
+    'combat/import.json',
 }
-combat_node = load('modules/features/modules/general/modules/combat/import.json')
+combat_node = load('features/general/combat/import.json')
 assert {fn['name'] for fn in combat_node['functions']} == {'Combat'}
 
 # Cross-module reference -> include edge into the other subtree, with a relative
 # path that resolves to the abilities import.json.
-cookie_dir = root / 'modules/features/modules/cookie'
-cookie_includes = includes('modules/features/modules/cookie/import.json')
+cookie_dir = root / 'features/cookie'
+cookie_includes = includes('features/cookie/import.json')
 assert len(cookie_includes) == 1
 (edge,) = cookie_includes
 assert (cookie_dir / edge).resolve() == (
-    root / 'modules/items/modules/abilities/import.json'
+    root / 'items-module/abilities/import.json'
 ).resolve()
 
 # The cycle is broken: exactly one of the two directions survives.
-modx_to_mody = 'mody' in str(includes('modules/modx/import.json'))
-mody_to_modx = 'modx' in str(includes('modules/mody/import.json'))
+modx_to_mody = 'mody' in str(includes('modx/import.json'))
+mody_to_modx = 'modx' in str(includes('mody/import.json'))
 assert modx_to_mody != mody_to_modx, (modx_to_mody, mody_to_modx)
 
 # The anonymous potion .snbt lands under its owning module (items.abilities),
 # and the give-item action in features.cookie references it by a path that
 # resolves to that file.
-snbts = list((root / 'modules/items/modules/abilities/items').glob('*.snbt'))
+snbts = list((root / 'items-module/abilities/items').glob('*.snbt'))
 assert snbts, 'potion .snbt was not placed under the owning module'
 give = (cookie_dir / 'functions/cookie.htsl').read_text(encoding='utf-8')
 ref = next(line.split('"')[1] for line in give.splitlines() if '.snbt' in line)
@@ -138,9 +140,9 @@ mod_data = json.loads((mod_root / 'import.json').read_text(encoding='utf-8'))
 # the exported module's own function is at the root...
 assert {fn['name'] for fn in mod_data['functions']} == {'Leaf'}
 # ...and its out-of-package dependency nests under its real path.
-assert 'modules/other/import.json' in mod_data.get('include', [])
+assert 'other/import.json' in mod_data.get('include', [])
 dep_data = json.loads(
-    (mod_root / 'modules/other/modules/dep/import.json').read_text(encoding='utf-8'),
+    (mod_root / 'other/dep/import.json').read_text(encoding='utf-8'),
 )
 assert {fn['name'] for fn in dep_data['functions']} == {'Dep'}
 

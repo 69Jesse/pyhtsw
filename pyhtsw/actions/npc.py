@@ -27,6 +27,7 @@ class NPC:
 
     def __init_subclass__(
         cls,
+        name: str,
         pos: Coord,
         on_left_click: Handler | None = None,
         on_right_click: Handler | None = None,
@@ -36,7 +37,7 @@ class NPC:
         equipment: NpcEquipment | None = None,
     ) -> None:
         super().__init_subclass__()
-        cls.__htsw_name__ = cls.__name__
+        cls.__htsw_name__ = name
 
         left_fn = on_left_click
         right_fn = on_right_click
@@ -52,20 +53,20 @@ class NPC:
         if left_fn is not None:
             handler = left_fn
             left_block = NamedBlock(
-                f'{cls.__name__} left',
+                f'{name} left',
                 callback=lambda: call_with_args(handler, None),
             )
             container.add_block(left_block)
         if right_fn is not None:
             handler = right_fn
             right_block = NamedBlock(
-                f'{cls.__name__} right',
+                f'{name} right',
                 callback=lambda: call_with_args(handler, None),
             )
             container.add_block(right_block)
 
         importable = NpcImportable(
-            name=cls.__name__,
+            name=name,
             pos=pos,
             left=left_block,
             right=right_block,

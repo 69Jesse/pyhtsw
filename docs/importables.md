@@ -41,7 +41,11 @@ The event name is typed to the 18 htsw events (`Player Join`, `Player Quit`,
 
 These are declared as **subclasses** via `__init_subclass__`: the underlying
 constructor arguments are passed as class keyword arguments. Defining the class
-registers the importable; the class name is its htsw name.
+registers the importable. `Item` and `Region` use the class name as their htsw
+name; `NPC` and `Menu` take a **required `name=`** keyword argument instead, so
+the displayed name can differ from the Python class name. An `NPC` name may use
+formatting codes; a `Menu` title may **not** — codes there render literally
+(e.g. `&aShop` shows as the text `&aShop`).
 
 ### Click / enter / exit handlers
 
@@ -111,6 +115,7 @@ class Helmet(Item, key='diamond_helmet'):
 
 class Guide(
     NPC,
+    name='&bVillage Guide',
     pos=(10, 65, 10),
     skin='Steve',
     look_at_players=True,
@@ -122,6 +127,7 @@ class Guide(
         chat('Welcome, traveler.')
 ```
 
+- `name` is **required** — the NPC's displayed name (formatting codes allowed).
 - `pos` is `(x, y, z)`.
 - `skin` is one of `'Steve'`, `'Alex'`, `'Players Skin'`.
 - `NPC.Equipment(helmet=, chestplate=, leggings=, boots=, hand=)` — each is an
@@ -141,7 +147,7 @@ class Confirm(Item, key='lime_dye', name='&aConfirm'):
     pass
 
 
-class Shop(Menu, size=6):
+class Shop(Menu, name='Magic Shop', size=6):
     @Menu.element(item=Filler, xy_check=lambda x, y: (x + y) % 2 == 0)
     def checkerboard(self) -> None:
         pass  # decoration only, no actions
@@ -151,6 +157,8 @@ class Shop(Menu, size=6):
         close_menu()
 ```
 
+- `name` is **required** — the menu's displayed title. Formatting codes are
+  **not** supported here; they render literally.
 - `size` is **required** and typed `Literal[1, 2, 3, 4, 5, 6]` (rows). Menus are
   9 columns wide.
 - `@Menu.element(item=, x=, y=, xy_check=)`:

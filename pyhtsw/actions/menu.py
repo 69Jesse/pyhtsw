@@ -55,15 +55,15 @@ class Menu:
 
     __htsw_importable__: ClassVar['MenuImportable']
 
-    def __init_subclass__(cls, size: MenuSize) -> None:
+    def __init_subclass__(cls, name: str, size: MenuSize) -> None:
         super().__init_subclass__()
         if not 1 <= size <= 6:
-            raise ValueError(f'Menu "{cls.__name__}" size must be between 1 and 6.')
-        cls.__htsw_name__ = cls.__name__
+            raise ValueError(f'Menu "{name}" size must be between 1 and 6.')
+        cls.__htsw_name__ = name
         cls.__htsw_size__ = size
 
         importable = MenuImportable(
-            name=cls.__name__,
+            name=name,
             size=size,
             slots=[],
             menu_cls=cls,
@@ -87,7 +87,7 @@ class Menu:
         xy_check: XYCheck | None,
         func: Callable[..., Any],
     ) -> None:
-        block = NamedBlock(f'{cls.__name__} slot', callback=func)
+        block = NamedBlock(f'{cls.__htsw_name__} slot', callback=func)
         get_current_container().add_block(block)
         cls.__htsw_importable__.slots.append(
             MenuSlot(item=item, x=x, y=y, xy_check=xy_check, block=block),

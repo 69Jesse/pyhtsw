@@ -21,7 +21,7 @@ class Border(Item, key='black_stained_glass_pane', name=' '):
     pass
 
 
-class Shop(Menu, size=6):
+class Shop(Menu, name='Magic Shop', size=6):
     # whole outer-ish decoration: fill the top row, then a checkerboard
     @Menu.element(item=Border, x=0)
     def _top() -> None:
@@ -45,6 +45,7 @@ class Spawn(Region, bounds=((0, 100, 0), (16, 120, 16))):
 
 class Shopkeeper(
     NPC,
+    name='&aShopkeeper',
     pos=(8.5, 100, 8.5),
     skin='Alex',
     look_at_players=True,

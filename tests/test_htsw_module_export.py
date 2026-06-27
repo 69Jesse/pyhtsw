@@ -33,7 +33,7 @@ with Container():
     class Border(Item, key='black_stained_glass_pane', name=' '):
         pass
 
-    class Shop(Menu, size=6):
+    class Shop(Menu, name='Shop', size=6):
         @Menu.element(item=Border, x=0)
         def _border() -> None:
             pass
@@ -47,7 +47,13 @@ with Container():
         def enter() -> None:
             chat('entered')
 
-    class Merchant(NPC, pos=(1.5, 64, 2.5), skin='Steve', look_at_players=True):
+    class Merchant(
+        NPC,
+        name='Merchant',
+        pos=(1.5, 64, 2.5),
+        skin='Steve',
+        look_at_players=True,
+    ):
         @NPC.right_click
         def right() -> None:
             chat('hello')

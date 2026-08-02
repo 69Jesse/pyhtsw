@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Self, final
 from .actions.function import Function
 from .base_object import BaseObject
 from .container import ContainerContextManager, ExpressionContext
-from .limits import fix_action_limits
+from .limits import ImportableKind, fix_action_limits
 from .utils.log import log
 
 if TYPE_CHECKING:
@@ -19,6 +19,9 @@ class Block(BaseObject):
     expressions: list['Expression']
     callback: Callable[[], None] | None
     callback_ran: bool
+    # Which htsw action container this block becomes; a few limits depend on it
+    # (a conditional in an event gets 40 instead of 25).
+    importable_kind: ImportableKind = 'functions'
     _overflow_root_ref: 'Block | None'
     _overflow_counter: int
     _reserved_temp_numbers: set[int]
@@ -116,6 +119,7 @@ class Block(BaseObject):
             nesting_possible=True,
             function_if_exceeds=function,
             always_in_conditional=False,
+            importable=self.importable_kind,
         )
         self.expressions = fixed
         if not rest:
@@ -236,15 +240,17 @@ class NamedBlock(Block):
         *,
         expressions: list['Expression'] | None = None,
         callback: Callable[[], None] | None = None,
+        importable_kind: ImportableKind = 'functions',
     ) -> None:
         super().__init__(expressions=expressions, callback=callback)
         self._name = name
+        self.importable_kind = importable_kind
 
     def equals_raw(self, other: object) -> bool:
         return isinstance(other, NamedBlock) and other._name == self._name
 
     def cloned_raw(self) -> Self:
-        return self.__class__(self._name)
+        return self.__class__(self._name, importable_kind=self.importable_kind)
 
     def get_name(self) -> str:
         return self._name

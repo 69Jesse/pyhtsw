@@ -1,0 +1,180 @@
+import json
+from pathlib import Path
+
+from pyhtsw.importable import (
+    EVENTS,
+    CommandImportable,
+    EventImportable,
+    FunctionImportable,
+    GroupImportable,
+    ItemImportable,
+    MenuImportable,
+    NpcImportable,
+    RegionImportable,
+    TeamImportable,
+)
+from pyhtsw.limits import (
+    EVENT_CONDITIONAL_LIMIT,
+    RANDOM_FLOOR,
+    get_limit,
+    get_limits,
+)
+from pyhtsw.types import (
+    ALL_CHAT_SPEEDS,
+    ALL_COMMAND_MODES,
+    ALL_DEFAULT_GAMEMODES,
+    ALL_HOUSING_COLORS,
+    ALL_PERMISSIONS,
+)
+
+CONTRACT = json.loads(
+    (Path(__file__).parent / 'htsw_contract.json').read_text(encoding='utf-8'),
+)
+
+
+def literal_values(alias: object) -> tuple[str, ...]:
+    return alias.__args__  # type: ignore[attr-defined]
+
+
+enums = CONTRACT['enums']
+assert list(EVENTS) == enums['events'], EVENTS
+assert list(literal_values(ALL_HOUSING_COLORS)) == enums['colors']
+assert list(literal_values(ALL_CHAT_SPEEDS)) == enums['chatSpeeds']
+assert list(literal_values(ALL_DEFAULT_GAMEMODES)) == enums['defaultGameModes']
+assert list(literal_values(ALL_COMMAND_MODES)) == enums['commandModes']
+assert list(literal_values(ALL_PERMISSIONS)) == enums['permissions']
+
+# EventName mirrors EVENTS; keep the two in step.
+from pyhtsw.importable import EventName, NpcSkin  # noqa: E402
+
+assert list(literal_values(EventName)) == enums['events']
+assert list(literal_values(NpcSkin)) == enums['npcSkins']
+
+
+IMPORTABLES = (
+    FunctionImportable,
+    EventImportable,
+    RegionImportable,
+    ItemImportable,
+    MenuImportable,
+    TeamImportable,
+    GroupImportable,
+    CommandImportable,
+    NpcImportable,
+)
+assert {cls.kind for cls in IMPORTABLES} == set(CONTRACT['importables']), (
+    'pyhtsw does not cover every htsw importable: '
+    f'{set(CONTRACT["importables"]) - {cls.kind for cls in IMPORTABLES}}'
+)
+
+
+# pyhtsw keys limits by expression class; map back to htsw's type names.
+HTSW_NAMES = {
+    'ConditionalExpression': 'CONDITIONAL',
+    'ChangePlayerGroupExpression': 'SET_GROUP',
+    'KillPlayerExpression': 'KILL',
+    'FullHealExpression': 'HEAL',
+    'DisplayTitleExpression': 'TITLE',
+    'DisplayActionBarExpression': 'ACTION_BAR',
+    'ResetInventoryExpression': 'RESET_INVENTORY',
+    'ParkourCheckpointExpression': 'PARKOUR_CHECKPOINT',
+    'GiveItemExpression': 'GIVE_ITEM',
+    'RemoveItemExpression': 'REMOVE_ITEM',
+    'ChatExpression': 'MESSAGE',
+    'ApplyPotionEffectExpression': 'APPLY_POTION_EFFECT',
+    'ClearPotionEffectsExpression': 'CLEAR_POTION_EFFECTS',
+    'GiveExperienceLevelsExpression': 'GIVE_EXPERIENCE_LEVELS',
+    'BinaryExpression': 'CHANGE_VAR',
+    'TeleportPlayerExpression': 'TELEPORT',
+    'FailParkourExpression': 'FAIL_PARKOUR',
+    'PlaySoundExpression': 'PLAY_SOUND',
+    'SetCompassTargetExpression': 'SET_COMPASS_TARGET',
+    'SetGamemodeExpression': 'SET_GAMEMODE',
+    'RandomExpression': 'RANDOM',
+    'TriggerFunctionExpression': 'FUNCTION',
+    'ApplyInventoryLayoutExpression': 'APPLY_INVENTORY_LAYOUT',
+    'EnchantHeldItemExpression': 'ENCHANT_HELD_ITEM',
+    'PauseExecutionExpression': 'PAUSE',
+    'SetPlayerTeamExpression': 'SET_TEAM',
+    'DisplayMenuExpression': 'SET_MENU',
+    'DropItemExpression': 'DROP_ITEM',
+    'ChangeVelocityExpression': 'SET_VELOCITY',
+    'LaunchToTargetExpression': 'LAUNCH',
+    'SetPlayerWeatherExpression': 'SET_PLAYER_WEATHER',
+    'SetPlayerTimeExpression': 'SET_PLAYER_TIME',
+    'ToggleNametagDisplayExpression': 'TOGGLE_NAMETAG_DISPLAY',
+    'ExitFunctionExpression': 'EXIT',
+    'CancelEventExpression': 'CANCEL_EVENT',
+    'CloseMenuExpression': 'CLOSE_MENU',
+    'ConsumeItemExpression': 'USE_HELD_ITEM',
+    'SendToLobbyExpression': 'SEND_TO_LOBBY',
+    'PlayerMaxHealthPlaceholder': 'CHANGE_MAX_HEALTH',
+    'PlayerHealthPlaceholder': 'CHANGE_HEALTH',
+    'PlayerHungerPlaceholder': 'CHANGE_HUNGER',
+}
+
+ours = {HTSW_NAMES[cls.__name__]: limit for cls, limit in get_limits().items()}
+theirs = CONTRACT['actionLimits']
+
+missing = set(theirs) - set(ours)
+assert not missing, f'htsw limits pyhtsw does not model: {sorted(missing)}'
+extra = set(ours) - set(theirs)
+assert not extra, f'pyhtsw limits htsw does not have: {sorted(extra)}'
+for name in sorted(theirs):
+    assert ours[name] == theirs[name], (
+        f'{name}: pyhtsw has {ours[name]}, htsw has {theirs[name]}'
+    )
+
+
+from pyhtsw.actions.full_heal import FullHealExpression  # noqa: E402
+
+from pyhtsw.expression.condition.conditional_expression import (  # noqa: E402
+    ConditionalExpression,
+)
+
+context = CONTRACT['contextLimits']
+assert (
+    get_limit(ConditionalExpression, importable='events')
+    == context['CONDITIONAL@events']
+    == EVENT_CONDITIONAL_LIMIT
+)
+assert (
+    get_limit(ConditionalExpression, importable='functions')
+    == context['CONDITIONAL@functions']
+)
+assert (
+    get_limit(ConditionalExpression, importable='events', nested='random')
+    == context['CONDITIONAL@events/random']
+)
+assert (
+    get_limit(FullHealExpression, importable='functions', nested='random')
+    == context['HEAL@functions/random']
+    == RANDOM_FLOOR
+)
+
+
+from pyhtsw.actions.has_potion_effect import HasPotionEffect  # noqa: E402
+from pyhtsw.actions.is_doing_parkour import IsDoingParkourCondition  # noqa: E402
+from pyhtsw.limits import (  # noqa: E402
+    COMPARISON_LIMIT,
+    get_condition_limit,
+    get_condition_limits,
+)
+
+condition_limits = CONTRACT['conditionLimits']
+assert (
+    get_condition_limit(IsDoingParkourCondition) == condition_limits['IS_DOING_PARKOUR']
+)
+assert get_condition_limit(HasPotionEffect) == condition_limits['REQUIRE_POTION_EFFECT']
+assert COMPARISON_LIMIT == condition_limits['COMPARE_VAR']
+
+# Every non-comparison htsw condition type should be modelled; the COMPARE_*
+# family is bucketed by lhs instead of by class.
+COMPARISON_TYPES = {
+    'COMPARE_VAR',
+    'COMPARE_HEALTH',
+    'COMPARE_MAX_HEALTH',
+    'COMPARE_HUNGER',
+    'COMPARE_PLACEHOLDER',
+}
+assert len(get_condition_limits()) >= len(set(condition_limits) - COMPARISON_TYPES)

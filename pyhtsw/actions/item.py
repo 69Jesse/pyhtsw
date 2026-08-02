@@ -631,12 +631,14 @@ def _register_item_instance_importable(
         left_block = NamedBlock(
             f'{name} left',
             callback=lambda fn=left_fn: call_with_args(fn, item),
+            importable_kind='items',
         )
         container.add_block(left_block)
     if right_fn is not None:
         right_block = NamedBlock(
             f'{name} right',
             callback=lambda fn=right_fn: call_with_args(fn, item),
+            importable_kind='items',
         )
         container.add_block(right_block)
 

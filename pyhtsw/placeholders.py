@@ -44,6 +44,9 @@ class PlaceholderCheckable(Checkable, ABC):
     def into_string_lhs(self) -> str:
         return f'placeholder {self.inline_quoted(self.as_string)}'
 
+    def condition_takes_fallback(self) -> bool:
+        return False
+
     def into_string_rhs(self, *, include_internal_type: bool = True) -> str:
         return self.format_with_internal_type(
             self.as_string,
@@ -62,6 +65,7 @@ class PlaceholderCheckable(Checkable, ABC):
 
 class PlaceholderEditable(PlaceholderCheckable, Editable, ABC):
     assignment_lhs: str
+    condition_lhs: str
 
     def __init__(
         self,
@@ -69,12 +73,17 @@ class PlaceholderEditable(PlaceholderCheckable, Editable, ABC):
         assignment_lhs: str,
         as_string: str,
         constant_internal_type: InternalType,
+        condition_lhs: str | None = None,
     ) -> None:
         super().__init__(
             as_string=as_string,
             constant_internal_type=constant_internal_type,
         )
         self.assignment_lhs = assignment_lhs
+        self.condition_lhs = condition_lhs or assignment_lhs
 
     def into_string_lhs(self) -> str:
         return self.assignment_lhs
+
+    def into_condition_lhs(self) -> str:
+        return self.condition_lhs

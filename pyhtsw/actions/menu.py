@@ -87,7 +87,11 @@ class Menu:
         xy_check: XYCheck | None,
         func: Callable[..., Any],
     ) -> None:
-        block = NamedBlock(f'{cls.__htsw_name__} slot', callback=func)
+        block = NamedBlock(
+            f'{cls.__htsw_name__} slot',
+            callback=func,
+            importable_kind='menus',
+        )
         get_current_container().add_block(block)
         cls.__htsw_importable__.slots.append(
             MenuSlot(item=item, x=x, y=y, xy_check=xy_check, block=block),

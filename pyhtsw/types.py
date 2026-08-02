@@ -475,3 +475,104 @@ ITEM_CHECK_WHERE = Literal[
 ]
 
 ITEM_REQUIRED_AMOUNT = Literal['any_amount', 'equal_or_greater_amount']
+
+
+ALL_HOUSING_COLORS = Literal[
+    'Dark Blue',
+    'Dark Green',
+    'Dark Aqua',
+    'Dark Red',
+    'Dark Purple',
+    'Gold',
+    'Gray',
+    'Dark Gray',
+    'Blue',
+    'Green',
+    'Aqua',
+    'Red',
+    'Light Purple',
+    'Yellow',
+]
+
+ALL_CHAT_SPEEDS = Literal[
+    'Off',
+    'On',
+    'Slow 1s',
+    'Slow 2s',
+    'Slow 3s',
+    'Slow 5s',
+    'Slow 10s',
+    'Slow 15s',
+    'Slow 30s',
+    'Slow 45s',
+    'Slow 60s',
+]
+
+ALL_DEFAULT_GAMEMODES = Literal[
+    'ADVENTURE',
+    'SURVIVAL',
+    'CREATIVE',
+]
+
+ALL_COMMAND_MODES = Literal[
+    'Self',
+    'Targeted',
+]
+
+ALL_PERMISSIONS = Literal[
+    'Fly',
+    'Wood Door',
+    'Iron Door',
+    'Wood Trap Door',
+    'Iron Trap Door',
+    'Fence Gate',
+    'Button',
+    'Lever',
+    'Use Launch Pads',
+    '/tp',
+    '/tp Other Players',
+    'Jukebox',
+    'Kick',
+    'Ban',
+    'Mute',
+    'Pet Spawning',
+    'Build',
+    'Offline Build',
+    'Fluid',
+    'Pro Tools',
+    'Use Chests',
+    'Use Ender Chests',
+    'Item Editor',
+    'Switch Game Mode',
+    'Edit Variables',
+    'Change Player Group',
+    'Change Gamerules',
+    'Housing Menu',
+    'Team Chat Spy',
+    'Edit Actions',
+    'Edit Regions',
+    'Edit Scoreboard',
+    'Edit Event Actions',
+    'Edit Commands',
+    'Edit Functions',
+    'Edit Inventory Layouts',
+    'Edit Teams',
+    'Edit Custom Menus',
+    'View Analytics',
+    'View Logger',
+    'Item: Mailbox',
+    'Item: Egg Hunt',
+    'Item: Teleport Pad',
+    'Item: Launch Pad',
+    'Item: Action Pad',
+    'Item: Hologram',
+    'Item: NPCs',
+    'Item: Action Button',
+    'Item: Leaderboard',
+    'Item: Trash Can',
+    'Item: Biome Stick',
+]
+
+PLAYER_WEATHERS = Literal['None', 'Sunny', 'Raining']
+
+PORTAL_TYPES = Literal['Nether Portal', 'End Portal']

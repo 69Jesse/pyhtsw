@@ -22,6 +22,7 @@ class PlayerHealthPlaceholder(
     def __init__(self) -> None:
         super().__init__(
             assignment_lhs='changeHealth',
+            condition_lhs='health',
             as_string='%player.health%',
             constant_internal_type=InternalType.DOUBLE,
         )

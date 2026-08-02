@@ -1,8 +1,17 @@
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..importable import GroupImportable
+
+
 __all__ = ('Group',)
 
 
 class Group:
     name: str
+    # Set by create_group; None for a plain reference to a group declared
+    # elsewhere (or in-game).
+    __htsw_importable__: 'GroupImportable | None' = None
 
     def __init__(self, name: str) -> None:
         self.name = name

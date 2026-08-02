@@ -51,6 +51,7 @@ class Region:
             enter_block = NamedBlock(
                 f'{cls.__name__} enter',
                 callback=lambda: call_with_args(handler, None),
+                importable_kind='regions',
             )
             container.add_block(enter_block)
         if exit_fn is not None:
@@ -58,6 +59,7 @@ class Region:
             exit_block = NamedBlock(
                 f'{cls.__name__} exit',
                 callback=lambda: call_with_args(handler, None),
+                importable_kind='regions',
             )
             container.add_block(exit_block)
 

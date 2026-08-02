@@ -12,7 +12,11 @@ def create_event(
     event: EventName,
 ) -> Callable[[Callable[[], None]], Callable[[], None]]:
     def decorator(callback: Callable[[], None]) -> Callable[[], None]:
-        block = NamedBlock(f'event {event}', callback=callback)
+        block = NamedBlock(
+            f'event {event}',
+            callback=callback,
+            importable_kind='events',
+        )
         container = get_current_container()
         container.add_block(block)
         importable = EventImportable(block, event=event)

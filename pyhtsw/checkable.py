@@ -116,6 +116,24 @@ class Checkable(BaseObject):
         """
         raise NotImplementedError
 
+    def into_condition_lhs(self) -> str:
+        """
+        ~if (
+        var foo > 5
+        ^^^^^^^
+        ~) {}
+
+        Usually the same keyword as the assignment lhs, but a few of Housing's
+        placeholders use different ones for the action and the condition
+        (`changeHealth` vs `health`).
+        """
+        return self.into_string_lhs()
+
+    def condition_takes_fallback(self) -> bool:
+        """Whether the condition form accepts a trailing fallback value. Only
+        var/globalvar/teamvar comparisons do."""
+        return True
+
     def into_string_rhs(self, *, include_internal_type: bool = True) -> str:
         """
         var foo = %var.player/bar%

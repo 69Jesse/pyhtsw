@@ -168,6 +168,7 @@ def export_project(
     project: Project,
     importables: list['Importable'],
     prefix: tuple[str, ...] | None = None,
+    house_uuid: str | None = None,
 ) -> None:
     if prefix is None:
         prefix = _common_prefix(importables)
@@ -193,6 +194,9 @@ def export_project(
         data = build_import_json(project, node.importables)
         if includes:
             data = {'include': includes, **data}
+        # Only the entry import.json's binding is used by htsw.
+        if house_uuid is not None and not node.folder:
+            data = {'houseUuid': house_uuid, **data}
         project.write(node.import_json_relpath, json.dumps(data, indent=2) + '\n')
 
     project.node_folder = ''

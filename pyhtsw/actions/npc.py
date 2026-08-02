@@ -31,6 +31,7 @@ class NPC:
         pos: Coord,
         on_left_click: Handler | None = None,
         on_right_click: Handler | None = None,
+        left_click_redirect: bool | None = None,
         look_at_players: bool | None = None,
         hide_name_tag: bool | None = None,
         skin: NpcSkin | None = None,
@@ -55,6 +56,7 @@ class NPC:
             left_block = NamedBlock(
                 f'{name} left',
                 callback=lambda: call_with_args(handler, None),
+                importable_kind='npcs',
             )
             container.add_block(left_block)
         if right_fn is not None:
@@ -62,6 +64,7 @@ class NPC:
             right_block = NamedBlock(
                 f'{name} right',
                 callback=lambda: call_with_args(handler, None),
+                importable_kind='npcs',
             )
             container.add_block(right_block)
 
@@ -70,6 +73,7 @@ class NPC:
             pos=pos,
             left=left_block,
             right=right_block,
+            left_click_redirect=left_click_redirect,
             look_at_players=look_at_players,
             hide_name_tag=hide_name_tag,
             skin=skin,

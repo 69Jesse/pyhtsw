@@ -49,6 +49,7 @@ from .actions.close_menu import (
 from .actions.close_menu import (
     close_menu as close_menu,
 )
+from .actions.command import Command as Command
 from .actions.conditional.statements import Else as Else
 from .actions.conditional.statements import IfAll as IfAll
 from .actions.conditional.statements import IfAny as IfAny
@@ -58,8 +59,13 @@ from .actions.consume_item import (
 from .actions.consume_item import (
     consume_item as consume_item,
 )
+from .actions.create_command import create_command as create_command
 from .actions.create_event import create_event as create_event
 from .actions.create_function import create_function as create_function
+from .actions.create_group import create_group as create_group
+from .actions.create_team import create_team as create_team
+from .actions.damage_amount import DamageAmount as DamageAmount
+from .actions.damage_amount import DamageAmountCondition as DamageAmountCondition
 from .actions.damage_cause import DamageCause as DamageCause
 from .actions.date_unix import DateUnix as DateUnix
 from .actions.date_unix import DateUnixMS as DateUnixMS
@@ -146,6 +152,7 @@ from .actions.group_priority import GroupPriorityPlaceholder as GroupPriorityPla
 from .actions.group_tag import GroupTag as GroupTag
 from .actions.group_tag import GroupTagPlaceholder as GroupTagPlaceholder
 from .actions.has_item import HasItem as HasItem
+from .actions.has_permission import HasPermission as HasPermission
 from .actions.has_potion_effect import HasPotionEffect as HasPotionEffect
 from .actions.house_cookies import HouseCookies as HouseCookies
 from .actions.house_cookies import HouseCookiesPlaceholder as HouseCookiesPlaceholder
@@ -269,6 +276,7 @@ from .actions.player_version import PlayerVersion as PlayerVersion
 from .actions.player_version import (
     PlayerVersionPlaceholder as PlayerVersionPlaceholder,
 )
+from .actions.portal_type import PortalType as PortalType
 from .actions.random import Random as Random
 from .actions.random import RandomContextManager as RandomContextManager
 from .actions.random import RandomExpression as RandomExpression
@@ -324,6 +332,15 @@ from .actions.set_player_team import (
 from .actions.set_player_team import (
     set_player_team as set_player_team,
 )
+from .actions.set_player_time import PlayerTime as PlayerTime
+from .actions.set_player_time import (
+    SetPlayerTimeExpression as SetPlayerTimeExpression,
+)
+from .actions.set_player_time import set_player_time as set_player_time
+from .actions.set_player_weather import (
+    SetPlayerWeatherExpression as SetPlayerWeatherExpression,
+)
+from .actions.set_player_weather import set_player_weather as set_player_weather
 from .actions.team import Team as Team
 from .actions.team_color import TeamColor as TeamColor
 from .actions.team_color import TeamColorPlaceholder as TeamColorPlaceholder
@@ -339,6 +356,12 @@ from .actions.teleport_player import (
 from .actions.teleport_player import (
     teleport_player as teleport_player,
 )
+from .actions.toggle_nametag_display import (
+    ToggleNametagDisplayExpression as ToggleNametagDisplayExpression,
+)
+from .actions.toggle_nametag_display import (
+    toggle_nametag_display as toggle_nametag_display,
+)
 from .actions.trigger_function import (
     TriggerFunctionExpression as TriggerFunctionExpression,
 )
@@ -350,8 +373,10 @@ from .checkable import Checkable as Checkable
 from .config import cleanup_stale_files as cleanup_stale_files
 from .config import disable_global_export as disable_global_export
 from .config import display_output as display_output
+from .config import get_house_uuid as get_house_uuid
 from .config import get_project_name as get_project_name
 from .config import get_projects_folder as get_projects_folder
+from .config import set_house_uuid as set_house_uuid
 from .config import set_project_name as set_project_name
 from .config import set_projects_folder as set_projects_folder
 from .container import CONTAINERS as CONTAINERS

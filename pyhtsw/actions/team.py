@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from ..placeholders import PlaceholderCheckable
 
 if TYPE_CHECKING:
+    from ..importable import TeamImportable
     from ..stats.team_stat import TeamStat
 
 
@@ -11,6 +12,9 @@ __all__ = ('Team',)
 
 class Team:
     name: str
+    # Set by create_team; None for a plain reference to a team declared
+    # elsewhere (or in-game).
+    __htsw_importable__: 'TeamImportable | None' = None
 
     def __init__(self, name: str) -> None:
         self.name = name

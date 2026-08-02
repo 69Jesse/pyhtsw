@@ -494,7 +494,9 @@ class Container:
         name: str,
         *,
         module_prefix: tuple[str, ...] | None = None,
+        house_uuid: str | None = None,
     ) -> None:
+        from .config import get_house_uuid
         from .importable import Project
         from .module_export import export_project
 
@@ -525,7 +527,12 @@ class Container:
         self.project = project
         CONTAINERS.append(self)
         try:
-            export_project(project, importables, module_prefix)
+            export_project(
+                project,
+                importables,
+                module_prefix,
+                house_uuid if house_uuid is not None else get_house_uuid(),
+            )
         finally:
             CONTAINERS.pop()
             self.project = None

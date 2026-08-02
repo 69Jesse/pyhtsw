@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from .utils.log import log
@@ -14,6 +15,8 @@ __all__ = (
     'should_cleanup_stale_files',
     'set_project_name',
     'get_project_name',
+    'set_house_uuid',
+    'get_house_uuid',
 )
 
 
@@ -150,3 +153,23 @@ def set_project_name(name: str) -> None:
 
 def get_project_name() -> str | None:
     return PROJECT_NAME
+
+
+HOUSE_UUID: str | None = None
+
+UUID_PATTERN = re.compile(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+)
+
+
+def set_house_uuid(uuid: str) -> None:
+    """Bind exported projects to one specific house. Written as `houseUuid` in
+    the entry import.json only; htsw ignores the field in included files."""
+    global HOUSE_UUID
+    if UUID_PATTERN.match(uuid) is None:
+        raise ValueError(f'Not a valid house UUID: {uuid!r}')
+    HOUSE_UUID = uuid
+
+
+def get_house_uuid() -> str | None:
+    return HOUSE_UUID

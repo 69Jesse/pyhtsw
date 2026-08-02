@@ -1,10 +1,18 @@
 import hashlib
 import posixpath
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
+from .types import (
+    ALL_CHAT_SPEEDS,
+    ALL_COMMAND_MODES,
+    ALL_DEFAULT_GAMEMODES,
+    ALL_HOUSING_COLORS,
+    ALL_PERMISSIONS,
+)
 from .utils.kebab import into_kebab
 from .utils.log import log
 
@@ -284,7 +292,11 @@ def _clone_block_into_current(block: 'Block | None') -> 'Block | None':
     from .block import NamedBlock
     from .container import get_current_container
 
-    fresh = NamedBlock(block.get_name(), callback=_block_replayer(block))
+    fresh = NamedBlock(
+        block.get_name(),
+        callback=_block_replayer(block),
+        importable_kind=block.importable_kind,
+    )
     get_current_container().add_block(fresh)
     return fresh
 
@@ -650,6 +662,7 @@ class NpcImportable(Importable):
         pos: Coord,
         left: 'Block | None' = None,
         right: 'Block | None' = None,
+        left_click_redirect: bool | None = None,
         look_at_players: bool | None = None,
         hide_name_tag: bool | None = None,
         skin: str | None = None,
@@ -659,6 +672,7 @@ class NpcImportable(Importable):
         self.pos = pos
         self.left = left
         self.right = right
+        self.left_click_redirect = left_click_redirect
         self.look_at_players = look_at_players
         self.hide_name_tag = hide_name_tag
         self.skin = skin
@@ -676,6 +690,7 @@ class NpcImportable(Importable):
                 pos=self.pos,
                 left=_clone_block_into_current(self.left),
                 right=_clone_block_into_current(self.right),
+                left_click_redirect=self.left_click_redirect,
                 look_at_players=self.look_at_players,
                 hide_name_tag=self.hide_name_tag,
                 skin=self.skin,
@@ -694,6 +709,8 @@ class NpcImportable(Importable):
                 f'{folder}/right',
                 self.right,
             )
+        if self.left_click_redirect is not None:
+            entry['leftClickRedirect'] = self.left_click_redirect
         if self.look_at_players is not None:
             entry['lookAtPlayers'] = self.look_at_players
         if self.hide_name_tag is not None:
@@ -707,7 +724,201 @@ class NpcImportable(Importable):
         return entry
 
 
-SECTION_ORDER = ('items', 'menus', 'npcs', 'regions', 'functions', 'events')
+TAG_PATTERN = re.compile(r'^[A-Za-z0-9 ]*$')
+
+
+def _check_tag(name: str, tag: str | None) -> None:
+    if tag is not None and TAG_PATTERN.match(tag) is None:
+        raise ValueError(
+            f'"{name}": tag {tag!r} must contain only letters, digits and spaces.',
+        )
+
+
+class TeamImportable(Importable):
+    kind = 'teams'
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        tag: str | None = None,
+        color: ALL_HOUSING_COLORS | None = None,
+        friendly_fire: bool | None = None,
+    ) -> None:
+        _check_tag(name, tag)
+        self.name = name
+        self.tag = tag
+        self.color = color
+        self.friendly_fire = friendly_fire
+
+    def identifier(self) -> str:
+        return self.name
+
+    def reexport(self) -> None:
+        from .container import get_current_container
+
+        get_current_container().register_importable(
+            TeamImportable(
+                name=self.name,
+                tag=self.tag,
+                color=self.color,
+                friendly_fire=self.friendly_fire,
+            ),
+        )
+
+    def build(self, project: Project) -> dict[str, Any]:
+        entry: dict[str, Any] = {'name': self.name}
+        if self.tag is not None:
+            entry['tag'] = self.tag
+        if self.color is not None:
+            entry['color'] = self.color
+        if self.friendly_fire is not None:
+            entry['friendlyFire'] = self.friendly_fire
+        return entry
+
+
+class GroupImportable(Importable):
+    kind = 'groups'
+
+    def __init__(
+        self,
+        *,
+        name: str,
+        tag: str | None = None,
+        tag_shown_in_chat: bool | None = None,
+        color: ALL_HOUSING_COLORS | None = None,
+        priority: int | None = None,
+        permissions: dict[ALL_PERMISSIONS, bool] | None = None,
+        chat_speed: ALL_CHAT_SPEEDS | None = None,
+        default_gamemode: ALL_DEFAULT_GAMEMODES | None = None,
+    ) -> None:
+        _check_tag(name, tag)
+        if priority is not None and not 0 <= priority <= 20:
+            raise ValueError(f'Group "{name}": priority {priority} must be 0-20.')
+        self.name = name
+        self.tag = tag
+        self.tag_shown_in_chat = tag_shown_in_chat
+        self.color = color
+        self.priority = priority
+        self.permissions = permissions
+        self.chat_speed = chat_speed
+        self.default_gamemode = default_gamemode
+
+    def identifier(self) -> str:
+        return self.name
+
+    def reexport(self) -> None:
+        from .container import get_current_container
+
+        get_current_container().register_importable(
+            GroupImportable(
+                name=self.name,
+                tag=self.tag,
+                tag_shown_in_chat=self.tag_shown_in_chat,
+                color=self.color,
+                priority=self.priority,
+                permissions=dict(self.permissions) if self.permissions else None,
+                chat_speed=self.chat_speed,
+                default_gamemode=self.default_gamemode,
+            ),
+        )
+
+    def build(self, project: Project) -> dict[str, Any]:
+        entry: dict[str, Any] = {'name': self.name}
+        if self.tag is not None:
+            entry['tag'] = self.tag
+        if self.tag_shown_in_chat is not None:
+            entry['tagShownInChat'] = self.tag_shown_in_chat
+        if self.color is not None:
+            entry['color'] = self.color
+        if self.priority is not None:
+            entry['priority'] = self.priority
+        if self.permissions:
+            entry['permissions'] = dict(self.permissions)
+        if self.chat_speed is not None:
+            entry['chatSpeed'] = self.chat_speed
+        if self.default_gamemode is not None:
+            entry['defaultGameMode'] = self.default_gamemode
+        return entry
+
+
+class CommandImportable(Importable):
+    kind = 'commands'
+
+    def __init__(
+        self,
+        block: 'Block',
+        *,
+        name: str,
+        mode: ALL_COMMAND_MODES | None = None,
+        required_priority: int | None = None,
+        listed: bool | None = None,
+    ) -> None:
+        if required_priority is not None and not 0 <= required_priority <= 20:
+            raise ValueError(
+                f'Command "{name}": required_priority {required_priority} must be 0-20.',
+            )
+        self.block = block
+        self.name = name
+        self.mode = mode
+        self.required_priority = required_priority
+        self.listed = listed
+
+    def identifier(self) -> str:
+        return self.name
+
+    def reexport(self) -> None:
+        from .actions.create_command import create_command
+
+        command = create_command(
+            name=self.name,
+            mode=self.mode,
+            required_priority=self.required_priority,
+            listed=self.listed,
+        )(_block_replayer(self.block))
+        command.__htsw_importable__.module = self.module
+
+    def build(self, project: Project) -> dict[str, Any]:
+        entry: dict[str, Any] = {'name': self.name}
+        if not self.block.is_empty():
+            entry['actions'] = project.write_block(
+                f'commands/{into_kebab(self.name)}',
+                self.block,
+            )
+        if self.mode is not None:
+            entry['mode'] = self.mode
+        if self.required_priority is not None:
+            entry['requiredPriority'] = self.required_priority
+        if self.listed is not None:
+            entry['listed'] = self.listed
+        return entry
+
+
+# Items first so a menu/npc referencing one resolves its .snbt path; the rest
+# follows the order htsw's own schema lists them in.
+SECTION_ORDER = (
+    'items',
+    'menus',
+    'npcs',
+    'regions',
+    'functions',
+    'events',
+    'teams',
+    'groups',
+    'commands',
+)
+
+JSON_SECTION_ORDER = (
+    'functions',
+    'events',
+    'regions',
+    'items',
+    'menus',
+    'teams',
+    'groups',
+    'commands',
+    'npcs',
+)
 
 
 def build_import_json(
@@ -721,7 +932,7 @@ def build_import_json(
                 entries[kind].append(importable.build(project))
 
     data: dict[str, Any] = {}
-    for kind in ('functions', 'events', 'items', 'regions', 'menus', 'npcs'):
+    for kind in JSON_SECTION_ORDER:
         if entries[kind]:
             data[kind] = entries[kind]
     return data

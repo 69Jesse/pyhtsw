@@ -4,8 +4,6 @@ from typing import Any, Self
 
 import numpy as np
 
-from .base_object import BaseObject
-
 
 class NBT[T](ABC):
     value: T
@@ -14,7 +12,7 @@ class NBT[T](ABC):
         self.value = value
 
     @abstractmethod
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         """
         Convert the NBT object to a string in SNBT format.
         """
@@ -27,13 +25,26 @@ class NBT[T](ABC):
         """
         raise NotImplementedError
 
+    WHITESPACE: str = ' \t\n\r'
+
+    @staticmethod
+    def skip_whitespace(s: str, offset: int = 0) -> int:
+        """
+        Return the first offset at or after `offset` that isn't whitespace.
+        """
+        while offset < len(s) and s[offset] in NBT.WHITESPACE:
+            offset += 1
+        return offset
+
     @classmethod
     def from_snbt(cls, s: str) -> 'NBT':
         """
         Load the NBT object from a string in SNBT format.
         Raises an exception if the string is not valid SNBT.
         """
-        nbt, offset = cls._parse_snbt(s)
+        start = cls.skip_whitespace(s)
+        nbt, length = cls._parse_snbt(s[start:])
+        offset = cls.skip_whitespace(s, start + length)
         if offset == len(s):
             return nbt
         raise ValueError(
@@ -42,11 +53,9 @@ class NBT[T](ABC):
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
-        for subclass in cls.__subclasses__():
-            if subclass is NBT:
-                continue
+        for subclass in PARSE_ORDER:
             try:
-                return subclass._parse_snbt(s)
+                return subclass._parse_snbt(s)  # type: ignore
             except ValueError:
                 continue
         raise ValueError(f'Invalid SNBT format: {repr(s)}')
@@ -83,7 +92,7 @@ class NBTByte(NBT[int]):
             raise ValueError('Value must be between -128 and 127')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         return f'{self.into_object()}b'
 
     def into_object(self) -> int:
@@ -116,7 +125,7 @@ class NBTBoolean(NBTByte):
             raise TypeError('Value must be a boolean')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         return 'true' if self.value else 'false'
 
     def into_object(self) -> bool:
@@ -151,7 +160,7 @@ class NBTShort(NBT[int]):
             raise ValueError('Value must be between -32768 and 32767')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         return f'{self.into_object()}s'
 
     def into_object(self) -> int:
@@ -182,13 +191,13 @@ class NBTInt(NBT[int]):
             raise ValueError('Value must be between -2147483648 and 2147483647')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         return str(self.into_object())
 
     def into_object(self) -> int:
         return self.value
 
-    INT_REGEX: re.Pattern[str] = re.compile(r'^-?\d{1,10}', re.ASCII)
+    INT_REGEX: re.Pattern[str] = re.compile(r'^-?\d+(?![.\d])', re.ASCII)
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
@@ -215,7 +224,7 @@ class NBTLong(NBT[int]):
             )
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         return f'{self.into_object()}l'
 
     def into_object(self) -> int:
@@ -244,7 +253,7 @@ class NBTFloat(NBT[float]):
             raise TypeError('Value must be a float')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         formatted = np.format_float_positional(self.into_object(), trim='-')
         if '.' not in formatted:
             formatted += '.0'
@@ -253,7 +262,10 @@ class NBTFloat(NBT[float]):
     def into_object(self) -> float:
         return self.value
 
-    FLOAT_REGEX: re.Pattern[str] = re.compile(r'^-?\d+(\.\d+)?[fF]', re.ASCII)
+    FLOAT_REGEX: re.Pattern[str] = re.compile(
+        r'^-?(?:\d+\.\d*|\.\d+|\d+)[fF]',
+        re.ASCII,
+    )
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
@@ -276,7 +288,7 @@ class NBTDouble(NBT[float]):
             raise TypeError('Value must be a float')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         formatted = np.format_float_positional(self.into_object(), trim='-')
         if '.' not in formatted:
             formatted += '.0'
@@ -285,7 +297,11 @@ class NBTDouble(NBT[float]):
     def into_object(self) -> float:
         return self.value
 
-    DOUBLE_REGEX: re.Pattern[str] = re.compile(r'^-?\d+(\.\d+)?[dD]?', re.ASCII)
+    # An unsuffixed double needs a decimal point, otherwise it would swallow ints.
+    DOUBLE_REGEX: re.Pattern[str] = re.compile(
+        r'^-?(?:\d+\.\d*|\.\d+|\d+)[dD]|^-?(?:\d+\.\d*|\.\d+)',
+        re.ASCII,
+    )
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
@@ -311,28 +327,41 @@ class NBTString(NBT[str]):
             raise TypeError('Value must be a string')
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
-        return BaseObject.inline_quoted(self.into_object())
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
+        return f'"{self.escaped(self.into_object())}"'
 
     def into_object(self) -> str:
         return self.value
 
-    QUOTES: tuple[tuple[str, str], tuple[str, str]] = (('"', '"'), ("'", "'"))
+    QUOTES: tuple[str, str] = ('"', "'")
+
+    @staticmethod
+    def escaped(value: str) -> str:
+        return value.replace('\\', '\\\\').replace('"', '\\"')
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
-        for start, end in cls.QUOTES:
-            if not s.startswith(start):
+        if not s or s[0] not in cls.QUOTES:
+            raise ValueError(f'Invalid SNBT format for {cls.__name__}')
+        quote = s[0]
+        characters: list[str] = []
+        offset = 1
+        while offset < len(s):
+            character = s[offset]
+            if character == '\\':
+                if offset + 1 >= len(s):
+                    break
+                following = s[offset + 1]
+                # Only `\\` and `\<quote>` are escapes; anything else stays literal.
+                characters.append(
+                    following if following in ('\\', quote) else character + following,
+                )
+                offset += 2
                 continue
-            offset = len(start)
-            while offset < len(s) and (
-                s[offset] != end or (offset > 0 and s[offset - 1] == '\\')
-            ):
-                offset += 1
-            if offset >= len(s) or s[offset] != end:
-                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-            value = s[1:offset]
-            return cls(value), offset + 1
+            if character == quote:
+                return cls(''.join(characters)), offset + 1
+            characters.append(character)
+            offset += 1
         raise ValueError(f'Invalid SNBT format for {cls.__name__}')
 
     @classmethod
@@ -358,9 +387,9 @@ class NBTList[T: NBT](NBT[list[T]]):
                     )
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         if indent is None:
-            return f'[{",".join(item.into_snbt() for item in self.value)}]'
+            return f'[{",".join(item.into_snbt(None) for item in self.value)}]'
         if not self.value:
             return '[]'
         inner = ' ' * (indent * (level + 1))
@@ -377,31 +406,37 @@ class NBTList[T: NBT](NBT[list[T]]):
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
         if not s.startswith('['):
             raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-        offset = 1
+        offset = cls.skip_whitespace(s, 1)
         items: list[T] = []
-        while offset < len(s) and s[offset] != ']':
-            rest = s[offset:]
-            maybe_prefix = f'{len(items)}:'
-            if rest.startswith(maybe_prefix):
-                rest = rest[len(maybe_prefix) :]
-                offset += len(maybe_prefix)
-
-            item, length = NBT._parse_snbt(rest)
-            items.append(item)  # type: ignore
-            offset += length
-
+        while True:
+            if offset >= len(s):
+                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
             if s[offset] == ']':
-                break
+                return cls(items), offset + 1
+
+            maybe_prefix = f'{len(items)}:'
+            if s.startswith(maybe_prefix, offset):
+                offset = cls.skip_whitespace(s, offset + len(maybe_prefix))
+
+            item, length = NBT._parse_snbt(s[offset:])
+            items.append(item)  # type: ignore
+            offset = cls.skip_whitespace(s, offset + length)
+
+            if offset >= len(s):
+                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
+            if s[offset] == ']':
+                return cls(items), offset + 1
             if s[offset] != ',':
                 raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-            offset += 1
-        return cls(items), offset + 1
+            offset = cls.skip_whitespace(s, offset + 1)
 
     @classmethod
     def from_object(cls, obj: list[T]) -> 'NBTList[T]':
         if isinstance(obj, NBTList):
             return obj
-        return cls(obj)
+        if not isinstance(obj, list):
+            raise TypeError('Value must be a list')
+        return cls([NBT.from_object(item) for item in obj])  # type: ignore
 
     def __len__(self) -> int:
         return len(self.value)
@@ -450,15 +485,15 @@ class NBTCompound[V: NBT](NBT[dict[str, V]]):
     @staticmethod
     def _format_key(key: str) -> str:
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', key):
-            return BaseObject.inline_quoted(key)
+            return f'"{NBTString.escaped(key)}"'
         return key
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
         if indent is None:
             return (
                 '{'
                 + ','.join(
-                    f'{self._format_key(key)}:{item.into_snbt()}'
+                    f'{self._format_key(key)}:{item.into_snbt(None)}'
                     for key, item in self.value.items()
                 )
                 + '}'
@@ -476,44 +511,52 @@ class NBTCompound[V: NBT](NBT[dict[str, V]]):
     def into_object(self) -> dict[str, Any]:
         return {key: item.into_object() for key, item in self.value.items()}
 
-    KEY_REGEX: re.Pattern[str] = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+    # Wider than `_format_key`: unquoted keys may legally contain digits, `-`, `.` and `+`.
+    KEY_REGEX: re.Pattern[str] = re.compile(r'^[a-zA-Z0-9_+.\-]+$')
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
         if not s.startswith('{'):
             raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-        offset = 1
+        offset = cls.skip_whitespace(s, 1)
         compound: dict[str, V] = {}
-        while offset < len(s) and s[offset] != '}':
-            key_start = offset
-            while offset < len(s) and s[offset] not in (':', ',', '}'):
-                offset += 1
-            if offset >= len(s) or s[offset] != ':':
+        while True:
+            if offset >= len(s):
                 raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-            key = s[key_start:offset].strip()
-            if not cls.KEY_REGEX.match(key):
-                try:
-                    key = NBTString._parse_snbt(s[key_start:offset])[0].into_object()
-                except Exception as exc:
+            if s[offset] == '}':
+                return cls(compound), offset + 1
+
+            if s[offset] in NBTString.QUOTES:
+                key_nbt, length = NBTString._parse_snbt(s[offset:])
+                key = key_nbt.into_object()
+                offset = cls.skip_whitespace(s, offset + length)
+            else:
+                key_start = offset
+                while offset < len(s) and s[offset] not in (':', ',', '}'):
+                    offset += 1
+                key = s[key_start:offset].strip()
+                if not cls.KEY_REGEX.match(key):
                     raise ValueError(
                         f'Invalid key format in {cls.__name__}: {repr(key)}',
-                    ) from exc
+                    )
+            if offset >= len(s) or s[offset] != ':':
+                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
 
             if key in compound:
                 raise ValueError(f'Duplicate key found in {cls.__name__}: {repr(key)}')
 
-            offset += 1
+            offset = cls.skip_whitespace(s, offset + 1)
             value, length = NBT._parse_snbt(s[offset:])
             compound[key] = value  # type: ignore
-            offset += length
+            offset = cls.skip_whitespace(s, offset + length)
 
+            if offset >= len(s):
+                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
             if s[offset] == '}':
-                break
+                return cls(compound), offset + 1
             if s[offset] != ',':
                 raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-            offset += 1
-
-        return cls(compound), offset + 1
+            offset = cls.skip_whitespace(s, offset + 1)
 
     @classmethod
     def from_object(cls, obj: dict[str, Any]) -> 'NBTCompound[V]':
@@ -575,31 +618,37 @@ class NBTGenericArray[IT: NBT, OT](NBT[list[IT]]):
                 )
         super().__init__(value)
 
-    def into_snbt(self, indent: int | None = None, level: int = 0) -> str:
-        return (
-            f'[{self.id_character};{",".join(item.into_snbt() for item in self.value)}]'
-        )
+    def into_snbt(self, indent: int | None = 4, level: int = 0) -> str:
+        items = ','.join(item.into_snbt(None) for item in self.value)
+        return f'[{self.id_character};{items}]'
 
     def into_object(self) -> list[OT]:
         return [item.into_object() for item in self.value]
 
     @classmethod
-    def parse_nbt(cls, s: str) -> tuple[Self, int]:
-        assert len(cls.id_character) == 1
-        if not s.startswith(f'[{cls.id_character};'):
+    def _parse_snbt(cls, s: str) -> tuple[Self, int]:
+        prefix = f'[{cls.id_character};'
+        if not s.startswith(prefix):
             raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-        offset = 3
+        offset = cls.skip_whitespace(s, len(prefix))
         items: list[IT] = []
-        while offset < len(s) and s[offset] != ']':
+        while True:
+            if offset >= len(s):
+                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
+            if s[offset] == ']':
+                return cls(items), offset + 1
+
             item, length = cls.item_type._parse_snbt(s[offset:])
             items.append(item)
-            offset += length
+            offset = cls.skip_whitespace(s, offset + length)
+
+            if offset >= len(s):
+                raise ValueError(f'Invalid SNBT format for {cls.__name__}')
             if s[offset] == ']':
-                break
+                return cls(items), offset + 1
             if s[offset] != ',':
                 raise ValueError(f'Invalid SNBT format for {cls.__name__}')
-            offset += 1
-        return cls(items), offset + 1
+            offset = cls.skip_whitespace(s, offset + 1)
 
     @classmethod
     def from_object(cls, obj: Any) -> Self:
@@ -644,3 +693,22 @@ class NBTIntArray(NBTGenericArray[NBTInt, int], item_type=NBTInt, id_character='
 
 class NBTLongArray(NBTGenericArray[NBTLong, int], item_type=NBTLong, id_character='L'):
     pass
+
+
+# Order matters: a suffixed number must be tried before the unsuffixed types whose
+# regex would otherwise match a prefix of it, and `1b` is a byte while `true` is not.
+PARSE_ORDER: tuple[type[NBT], ...] = (
+    NBTByte,
+    NBTBoolean,
+    NBTShort,
+    NBTLong,
+    NBTFloat,
+    NBTDouble,
+    NBTInt,
+    NBTString,
+    NBTByteArray,
+    NBTIntArray,
+    NBTLongArray,
+    NBTList,
+    NBTCompound,
+)

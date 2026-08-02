@@ -122,7 +122,17 @@ class Counter:
         """Rendered HTSL actions, by class, for one expression at its own block
         level. A `BinaryExpression` / `CompoundExpression` flattens into several
         actions (temps, modulo's if-block, ...), so counting the object as one
-        undercounts the real actions and lets a block slip past its limit."""
+        undercounts the real actions and lets a block slip past its limit.
+
+        Uses the flatten-only decomposition, not `into_executable_expressions()`:
+        that method also runs the peephole optimizer and temp-stat renaming,
+        which assume they see a whole block at once. Run on one expression in
+        isolation (as every count here is), the optimizer can mistake a live
+        store for a dead one, and renaming mutates not-yet-finalized temp-stat
+        numbers as a side effect - so two different temp stats can end up
+        compared as equal, undercounting a statement as a no-op it isn't (seen
+        in practice: a `chunked()` chunk that measured under the limit still
+        overflowed once the real, full-block finalize pass rendered it)."""
         from .expression.binary_expression import BinaryExpression
         from .expression.compound_expression import CompoundExpression
 
@@ -132,11 +142,12 @@ class Counter:
             return cached
 
         counts: ActionCounts = {}
-        rendered = (
-            expression.into_executable_expressions()
-            if isinstance(expression, BinaryExpression | CompoundExpression)
-            else (expression,)
-        )
+        if isinstance(expression, BinaryExpression):
+            rendered = expression.flatten()
+        elif isinstance(expression, CompoundExpression):
+            rendered = expression._flattened_expressions()  # noqa: SLF001
+        else:
+            rendered = (expression,)
         for rendered_expr in rendered:
             cls = self.expression_into_cls(rendered_expr)
             counts[cls] = counts.get(cls, 0) + 1

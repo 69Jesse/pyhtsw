@@ -1,0 +1,580 @@
+{
+  "contractVersion": 1,
+  "topLevel": {
+    "houseUuid": {
+      "required": false,
+      "kind": "string"
+    },
+    "include": {
+      "required": false,
+      "kind": "array"
+    },
+    "functions": {
+      "required": false,
+      "kind": "array"
+    },
+    "events": {
+      "required": false,
+      "kind": "array"
+    },
+    "regions": {
+      "required": false,
+      "kind": "array"
+    },
+    "items": {
+      "required": false,
+      "kind": "array"
+    },
+    "menus": {
+      "required": false,
+      "kind": "array"
+    },
+    "teams": {
+      "required": false,
+      "kind": "array"
+    },
+    "groups": {
+      "required": false,
+      "kind": "array"
+    },
+    "commands": {
+      "required": false,
+      "kind": "array"
+    },
+    "npcs": {
+      "required": false,
+      "kind": "array"
+    }
+  },
+  "importables": {
+    "functions": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "actions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      },
+      "repeatTicks": {
+        "required": false,
+        "kind": "number",
+        "minimum": 4,
+        "maximum": 18000
+      },
+      "icon": {
+        "required": false,
+        "kind": "ref",
+        "ref": "functionIcon"
+      }
+    },
+    "events": {
+      "event": {
+        "required": true,
+        "kind": "string",
+        "enum": [
+          "Player Join",
+          "Player Quit",
+          "Player Death",
+          "Player Kill",
+          "Player Respawn",
+          "Group Change",
+          "PvP State Change",
+          "Fish Caught",
+          "Player Enter Portal",
+          "Player Damage",
+          "Player Block Break",
+          "Start Parkour",
+          "Complete Parkour",
+          "Player Drop Item",
+          "Player Pick Up Item",
+          "Player Change Held Item",
+          "Player Toggle Sneak",
+          "Player Toggle Flight"
+        ]
+      },
+      "actions": {
+        "required": true,
+        "kind": "ref",
+        "ref": "htslPath"
+      }
+    },
+    "regions": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "bounds": {
+        "required": false,
+        "kind": "ref",
+        "ref": "bounds"
+      },
+      "onEnterActions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      },
+      "onExitActions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      }
+    },
+    "items": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "nbt": {
+        "required": true,
+        "kind": "ref",
+        "ref": "snbtPath"
+      },
+      "leftClickActions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      },
+      "rightClickActions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      }
+    },
+    "menus": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "size": {
+        "required": false,
+        "kind": "number",
+        "integer": true,
+        "minimum": 1,
+        "maximum": 6
+      },
+      "slots": {
+        "required": true,
+        "kind": "array",
+        "items": "menuSlot"
+      }
+    },
+    "teams": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "tag": {
+        "required": false,
+        "kind": "string",
+        "pattern": "^[A-Za-z0-9 ]*$"
+      },
+      "color": {
+        "required": false,
+        "kind": "ref",
+        "ref": "color"
+      },
+      "friendlyFire": {
+        "required": false,
+        "kind": "boolean"
+      }
+    },
+    "groups": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "tag": {
+        "required": false,
+        "kind": "string",
+        "pattern": "^[A-Za-z0-9 ]*$"
+      },
+      "tagShownInChat": {
+        "required": false,
+        "kind": "boolean"
+      },
+      "color": {
+        "required": false,
+        "kind": "ref",
+        "ref": "color"
+      },
+      "priority": {
+        "required": false,
+        "kind": "number",
+        "integer": true,
+        "minimum": 0,
+        "maximum": 20
+      },
+      "permissions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "permissions"
+      },
+      "chatSpeed": {
+        "required": false,
+        "kind": "ref",
+        "ref": "chatSpeed"
+      },
+      "defaultGameMode": {
+        "required": false,
+        "kind": "ref",
+        "ref": "defaultGameMode"
+      }
+    },
+    "commands": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "actions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      },
+      "mode": {
+        "required": false,
+        "kind": "ref",
+        "ref": "commandMode"
+      },
+      "requiredPriority": {
+        "required": false,
+        "kind": "number",
+        "integer": true,
+        "minimum": 0,
+        "maximum": 20
+      },
+      "listed": {
+        "required": false,
+        "kind": "boolean"
+      }
+    },
+    "npcs": {
+      "name": {
+        "required": true,
+        "kind": "string"
+      },
+      "pos": {
+        "required": true,
+        "kind": "ref",
+        "ref": "pos"
+      },
+      "leftClickActions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      },
+      "rightClickActions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      },
+      "leftClickRedirect": {
+        "required": false,
+        "kind": "boolean"
+      },
+      "lookAtPlayers": {
+        "required": false,
+        "kind": "boolean"
+      },
+      "hideNameTag": {
+        "required": false,
+        "kind": "boolean"
+      },
+      "skin": {
+        "required": false,
+        "kind": "ref",
+        "ref": "npcSkin"
+      },
+      "equipment": {
+        "required": false,
+        "kind": "ref",
+        "ref": "npcEquipment"
+      }
+    }
+  },
+  "nested": {
+    "functionIcon": {
+      "item": {
+        "required": true,
+        "kind": "string"
+      },
+      "count": {
+        "required": false,
+        "kind": "number",
+        "integer": true,
+        "minimum": 1,
+        "maximum": 64
+      },
+      "enchanted": {
+        "required": false,
+        "kind": "boolean"
+      }
+    },
+    "menuSlot": {
+      "slot": {
+        "required": true,
+        "kind": "number",
+        "integer": true,
+        "minimum": 0,
+        "maximum": 53
+      },
+      "nbt": {
+        "required": true,
+        "kind": "ref",
+        "ref": "snbtPath"
+      },
+      "actions": {
+        "required": false,
+        "kind": "ref",
+        "ref": "htslPath"
+      }
+    },
+    "npcEquipment": {
+      "helmet": {
+        "required": false,
+        "kind": "ref",
+        "ref": "snbtPath"
+      },
+      "chestplate": {
+        "required": false,
+        "kind": "ref",
+        "ref": "snbtPath"
+      },
+      "leggings": {
+        "required": false,
+        "kind": "ref",
+        "ref": "snbtPath"
+      },
+      "boots": {
+        "required": false,
+        "kind": "ref",
+        "ref": "snbtPath"
+      },
+      "hand": {
+        "required": false,
+        "kind": "ref",
+        "ref": "snbtPath"
+      }
+    },
+    "pos": {
+      "x": {
+        "required": true,
+        "kind": "number"
+      },
+      "y": {
+        "required": true,
+        "kind": "number"
+      },
+      "z": {
+        "required": true,
+        "kind": "number"
+      }
+    },
+    "bounds": {
+      "from": {
+        "required": true,
+        "kind": "ref",
+        "ref": "pos"
+      },
+      "to": {
+        "required": true,
+        "kind": "ref",
+        "ref": "pos"
+      }
+    }
+  },
+  "enums": {
+    "events": [
+      "Player Join",
+      "Player Quit",
+      "Player Death",
+      "Player Kill",
+      "Player Respawn",
+      "Group Change",
+      "PvP State Change",
+      "Fish Caught",
+      "Player Enter Portal",
+      "Player Damage",
+      "Player Block Break",
+      "Start Parkour",
+      "Complete Parkour",
+      "Player Drop Item",
+      "Player Pick Up Item",
+      "Player Change Held Item",
+      "Player Toggle Sneak",
+      "Player Toggle Flight"
+    ],
+    "colors": [
+      "Dark Blue",
+      "Dark Green",
+      "Dark Aqua",
+      "Dark Red",
+      "Dark Purple",
+      "Gold",
+      "Gray",
+      "Dark Gray",
+      "Blue",
+      "Green",
+      "Aqua",
+      "Red",
+      "Light Purple",
+      "Yellow"
+    ],
+    "chatSpeeds": [
+      "Off",
+      "On",
+      "Slow 1s",
+      "Slow 2s",
+      "Slow 3s",
+      "Slow 5s",
+      "Slow 10s",
+      "Slow 15s",
+      "Slow 30s",
+      "Slow 45s",
+      "Slow 60s"
+    ],
+    "defaultGameModes": [
+      "ADVENTURE",
+      "SURVIVAL",
+      "CREATIVE"
+    ],
+    "commandModes": [
+      "Self",
+      "Targeted"
+    ],
+    "npcSkins": [
+      "Steve",
+      "Alex",
+      "Players Skin"
+    ],
+    "permissions": [
+      "Fly",
+      "Wood Door",
+      "Iron Door",
+      "Wood Trap Door",
+      "Iron Trap Door",
+      "Fence Gate",
+      "Button",
+      "Lever",
+      "Use Launch Pads",
+      "/tp",
+      "/tp Other Players",
+      "Jukebox",
+      "Kick",
+      "Ban",
+      "Mute",
+      "Pet Spawning",
+      "Build",
+      "Offline Build",
+      "Fluid",
+      "Pro Tools",
+      "Use Chests",
+      "Use Ender Chests",
+      "Item Editor",
+      "Switch Game Mode",
+      "Edit Variables",
+      "Change Player Group",
+      "Change Gamerules",
+      "Housing Menu",
+      "Team Chat Spy",
+      "Edit Actions",
+      "Edit Regions",
+      "Edit Scoreboard",
+      "Edit Event Actions",
+      "Edit Commands",
+      "Edit Functions",
+      "Edit Inventory Layouts",
+      "Edit Teams",
+      "Edit Custom Menus",
+      "View Analytics",
+      "View Logger",
+      "Item: Mailbox",
+      "Item: Egg Hunt",
+      "Item: Teleport Pad",
+      "Item: Launch Pad",
+      "Item: Action Pad",
+      "Item: Hologram",
+      "Item: NPCs",
+      "Item: Action Button",
+      "Item: Leaderboard",
+      "Item: Trash Can",
+      "Item: Biome Stick"
+    ]
+  },
+  "actionLimits": {
+    "CONDITIONAL": 25,
+    "SET_GROUP": 1,
+    "KILL": 1,
+    "HEAL": 5,
+    "TITLE": 5,
+    "ACTION_BAR": 5,
+    "RESET_INVENTORY": 1,
+    "CHANGE_MAX_HEALTH": 5,
+    "PARKOUR_CHECKPOINT": 1,
+    "GIVE_ITEM": 40,
+    "REMOVE_ITEM": 40,
+    "MESSAGE": 20,
+    "APPLY_POTION_EFFECT": 22,
+    "CLEAR_POTION_EFFECTS": 5,
+    "GIVE_EXPERIENCE_LEVELS": 5,
+    "SEND_TO_LOBBY": 1,
+    "CHANGE_VAR": 25,
+    "TELEPORT": 5,
+    "FAIL_PARKOUR": 1,
+    "PLAY_SOUND": 25,
+    "SET_COMPASS_TARGET": 5,
+    "SET_GAMEMODE": 1,
+    "CHANGE_HEALTH": 5,
+    "CHANGE_HUNGER": 5,
+    "RANDOM": 25,
+    "FUNCTION": 10,
+    "APPLY_INVENTORY_LAYOUT": 5,
+    "ENCHANT_HELD_ITEM": 24,
+    "PAUSE": 30,
+    "SET_TEAM": 1,
+    "SET_MENU": 10,
+    "DROP_ITEM": 5,
+    "SET_VELOCITY": 5,
+    "LAUNCH": 5,
+    "SET_PLAYER_WEATHER": 5,
+    "SET_PLAYER_TIME": 5,
+    "TOGGLE_NAMETAG_DISPLAY": 5,
+    "EXIT": 1,
+    "CANCEL_EVENT": 1,
+    "CLOSE_MENU": 1,
+    "USE_HELD_ITEM": 1
+  },
+  "conditionLimits": {
+    "REQUIRE_GROUP": 20,
+    "COMPARE_VAR": 20,
+    "REQUIRE_PERMISSION": 20,
+    "IS_IN_REGION": 20,
+    "REQUIRE_ITEM": 20,
+    "IS_DOING_PARKOUR": 1,
+    "REQUIRE_POTION_EFFECT": 22,
+    "IS_SNEAKING": 20,
+    "IS_FLYING": 20,
+    "COMPARE_HEALTH": 20,
+    "COMPARE_MAX_HEALTH": 20,
+    "COMPARE_HUNGER": 20,
+    "REQUIRE_GAMEMODE": 20,
+    "COMPARE_PLACEHOLDER": 20,
+    "REQUIRE_TEAM": 20,
+    "PVP_ENABLED": 20,
+    "FISHING_ENVIRONMENT": 20,
+    "PORTAL_TYPE": 20,
+    "DAMAGE_CAUSE": 20,
+    "COMPARE_DAMAGE": 20,
+    "BLOCK_TYPE": 20,
+    "IS_ITEM": 20
+  },
+  "contextLimits": {
+    "CONDITIONAL@events": 40,
+    "CONDITIONAL@functions": 25,
+    "CONDITIONAL@events/random": 25,
+    "HEAL@functions/random": 10,
+    "KILL@functions/random": 10,
+    "GIVE_ITEM@functions/random": 40
+  }
+}

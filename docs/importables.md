@@ -1,9 +1,9 @@
 # Importables
 
 Importables are the entities HTSW imports: functions, events, items, regions,
-menus, and NPCs. PyHTSW declares them with decorators and class definitions; see
-htsw's `language/src/importjson/schemaSpec.ts` for the underlying
-import.json schema.
+menus, NPCs, teams, groups and commands. PyHTSW declares them with decorators
+and class definitions; see htsw's `language/src/importjson/schemaSpec.ts`
+for the underlying import.json schema.
 
 ## Functions
 

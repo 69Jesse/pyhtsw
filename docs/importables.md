@@ -130,6 +130,7 @@ class Guide(
 - `name` is **required** — the NPC's displayed name (formatting codes allowed).
 - `pos` is `(x, y, z)`.
 - `skin` is one of `'Steve'`, `'Alex'`, `'Players Skin'`.
+- `left_click_redirect=True` makes a left click run the right-click actions.
 - `NPC.Equipment(helmet=, chestplate=, leggings=, boots=, hand=)` — each is an
   `Item` or `Item` subclass.
 
@@ -169,3 +170,79 @@ class Shop(Menu, name='Magic Shop', size=6):
   - An element body of just `pass` is decoration (no actions).
 - Later elements override earlier ones per cell. Overriding a cell that a
   fully-explicit element (both `x` and `y` given) already set logs a warning.
+
+## Teams and Groups
+
+Teams and groups hold no actions, so they are declared with factory functions
+rather than classes. Each returns the same `Team` / `Group` value the actions
+already take, so a declared team is used exactly like an undeclared one.
+
+```python
+from pyhtsw import create_team, create_group, set_player_team, change_player_group
+
+
+Red = create_team('Red', tag='RED', color='Dark Red', friendly_fire=False)
+
+VIP = create_group(
+    'VIP',
+    tag='VIP',
+    tag_shown_in_chat=True,
+    color='Gold',
+    priority=5,
+    allow=['Fly', 'Build', 'Use Chests', '/tp'],
+    deny=['Ban', 'Kick'],
+    chat_speed='Slow 1s',
+    default_gamemode='ADVENTURE',
+)
+
+set_player_team(Red)
+change_player_group(VIP)
+Red.stat('kills').value += 1
+```
+
+- `tag` may contain only letters, digits and spaces.
+- `color` is one of Housing's 14 named colours (`'Dark Blue'` … `'Yellow'`).
+- `priority` is `0`–`20`.
+- `allow=` / `deny=` are sequences of Housing's 51 permission names, typed as a
+  `Literal` so a typo is a type error. A permission left out of both is
+  **absent** from `import.json`, which is not the same as denying it. Naming one
+  in both raises.
+- `permissions={'Fly': True, 'Ban': False}` is the raw 1:1 form, accepted
+  alongside `allow`/`deny` as an escape hatch.
+
+## Commands
+
+A command owns a single action list, so it is a decorator like
+`@create_function`.
+
+```python
+from pyhtsw import create_command, chat, teleport_player, Location
+
+
+@create_command('warp', mode='Self', required_priority=0, listed=True)
+def warp() -> None:
+    teleport_player(Location.custom(0, 100, 0))
+    chat('&aWarped!')
+```
+
+- `mode` is `'Self'` or `'Targeted'`.
+- `required_priority` is `0`–`20`.
+- `listed` controls whether the command shows in the in-game list.
+
+Housing has no trigger-command action, so unlike a `Function` the returned
+`Command` cannot be called from other actions.
+
+## Binding a house
+
+`import.json` can carry a `houseUuid` that binds the project to one specific
+house. It is opt-in and written only into the entry `import.json` — htsw
+ignores the field in included files.
+
+```python
+import pyhtsw
+
+pyhtsw.set_house_uuid('3fcc64f4-0000-4000-8000-b517afa9958e')
+
+# or, per export, which wins over the global setting:
+container.export('MyHouse', house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e')
+```

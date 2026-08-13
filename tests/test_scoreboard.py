@@ -123,31 +123,40 @@ assert fixed == f'&6&lCoins: &l&6&l{C}', fixed
 assert remove_formatting(fixed) == remove_formatting(f'&6&lCoins: {C}')
 assert_safe(fixed, C, COINS)
 
-# the same line with a longer variable name has no budget left for that
-with expect_exception(ValueError):
-    fix_scoreboard_line(
-        '&6&lCoins: %var.player/coins%',
-        {'%var.player/coins%': COINS},
-    )
+# a longer variable name only costs source characters, which are cheap
+LONG = '%var.player/coins%'
+fixed = fix_scoreboard_line(f'&6&lCoins: {LONG}', {LONG: COINS})
+assert fixed == f'&6&lCoins: &l&6&l{LONG}', fixed
+assert_safe(fixed, LONG, COINS)
+
+# T9's line: the seam falls inside the placeholder for some of its lengths, so
+# the placeholder is padded past the seam entirely. The padding pushes its tail
+# off the screen, which is warned about (covered below) rather than refused.
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    fixed = fix_scoreboard_line(f'&a&l{X}abcdefghijklm', {X: (1, 5)})
+    # a dirty placeholder takes the same fix: with the seam ahead of it, what
+    # it resolves to no longer matters
+    same = fix_scoreboard_line(f'&a&l{X}abcdefghijklm', {X: (1, 5)}, dirty=[X])
+assert fixed == f'&a&l&l&l&l&l&l&a&l{X}abcdefghijklm', fixed
+assert remove_formatting(fixed) == remove_formatting(f'&a&l{X}abcdefghijklm')
+assert_safe(fixed, X, (1, 5))
+assert same == fixed
 
 
-# over the editor's cap before anything is inserted
-with expect_exception(ValueError):
-    fix_scoreboard_line('&a&l' + 'a' * 29)
+# a line written by hand in game, whose fix was confirmed to close the gap
+HOUSE = '%house.players%'
+line = f'&4htsw &lHUMANITY&a {HOUSE}✌'
+assert simulate_hypixel_split(line.replace(HOUSE, '1')).has_gap
+fixed = fix_scoreboard_line(line, {HOUSE: (1, 2, 3)})
+assert fixed == f'&4htsw &lHUMAN&4&lITY&a {HOUSE}✌', fixed
+assert remove_formatting(fixed) == remove_formatting(line)
+assert_safe(fixed, HOUSE, (1, 2, 3))
 
-# T1's line is exactly at the cap, so there is no room for the 4 characters a
-# fix costs -- the line has to lose 4 characters first
-with expect_exception(ValueError):
-    fix_scoreboard_line('&4&l1234567890123456789012345678')
 
 # an undeclared placeholder is never guessed at
 with expect_exception(ValueError):
     fix_scoreboard_line(f'&a&labcdefghij{X}')
-
-# T9's line: the seam falls inside the placeholder for some of its lengths,
-# and there is no room left to push it past
-with expect_exception(ValueError):
-    fix_scoreboard_line(f'&a&l{X}abcdefghijklm', {X: (1, 5)})
 
 
 # the styling behind a dirty placeholder is unknowable, so the seam is only
@@ -156,16 +165,22 @@ fixed = fix_scoreboard_line(f'&a&l{X}abcdefg', {X: (6, 7)}, dirty=[X])
 assert fixed == f'&a&l{X}abc&a&ldefg', fixed
 assert remove_formatting(fixed) == remove_formatting(f'&a&l{X}abcdefg')
 
-# and when there is no room to reassert them, it raises rather than guessing
-with expect_exception(ValueError):
-    fix_scoreboard_line(f'&a&l{X}abcdefghijklm', {X: (1, 5)}, dirty=[X])
 
-
+# T1's line: fixable, but 4 of its digits never reach the screen
 with warnings.catch_warnings(record=True) as caught:
     warnings.simplefilter('always')
-    fix_scoreboard_line('&aabcdefghijklmnopqrstuvwxyzABCD')
+    fixed = fix_scoreboard_line('&4&l1234567890123456789012345678')
+assert fixed == '&4&l1234567890&4&l123456789012345678', fixed
 assert len(caught) == 1, caught
 assert 'cut off in game' in str(caught[0].message)
+
+# past the longest source length observed to work in game, the result is
+# flagged rather than refused -- the editor's own cap has never been measured
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter('always')
+    fixed = fix_scoreboard_line(f'&a&l{X}abcdefghijklmno', {X: (1, 5)})
+assert len(fixed) == 47
+assert any('are known to be accepted in game' in str(c.message) for c in caught)
 
 
 assert number_lengths(0, 9) == (1,)

@@ -10,17 +10,23 @@ if TYPE_CHECKING:
 
 __all__ = (
     'FIELD_MAX_LENGTH',
-    'SOURCE_MAX_LENGTH',
+    'KNOWN_GOOD_SOURCE_LENGTH',
+    'MAX_INSERTED_LENGTH',
     'HypixelSplit',
     'fix_scoreboard_line',
     'number_lengths',
     'simulate_hypixel_split',
 )
 
-# The in-game editor caps the line it accepts, counting `&` codes and the raw
-# placeholder text. The render caps are per scoreboard team field.
-SOURCE_MAX_LENGTH: int = 32
+# Per scoreboard team field, and certain. Whatever the editor caps its input at
+# is not: 45 characters of source are accepted in game, and the render window
+# hides anything that would prove a limit beyond that.
 FIELD_MAX_LENGTH: int = 16
+KNOWN_GOOD_SOURCE_LENGTH: int = 45
+
+# Padding only ever has to push text across a 16-character window, and a
+# re-emit is a color plus at most five formats.
+MAX_INSERTED_LENGTH: int = 24
 
 COLOR_CODES: frozenset[str] = frozenset('0123456789abcdef')
 FORMAT_CODES: frozenset[str] = frozenset('klmno')
@@ -420,12 +426,6 @@ def fix_scoreboard_line(
     so the seam is only ever allowed to land somewhere the codes have since
     been reasserted.
     """
-    if len(text) > SOURCE_MAX_LENGTH:
-        raise ValueError(
-            f'scoreboard line is {len(text)} characters, '
-            f'the editor accepts at most {SOURCE_MAX_LENGTH}: {text!r}',
-        )
-
     declared, dirty_strings = _collect(placeholders, dirty)
     template, mapping = _normalize(text)
     spans = _placeholder_spans(template)
@@ -462,26 +462,29 @@ def fix_scoreboard_line(
 
     if problem.check(()):
         _warn_dropped(text, problem, ())
+        _warn_length(text)
         return text
 
-    budget = SOURCE_MAX_LENGTH - len(text)
+    budget = MAX_INSERTED_LENGTH
     points = _insertion_points(template, spans)
     states = _states(template)
     for insertions in _candidates(points, states, budget):
         if not problem.check(insertions):
             continue
         _warn_dropped(text, problem, insertions)
-        return _splice(
+        result = _splice(
             text,
             tuple(
                 (mapping[point], payload.replace('§', '&'))
                 for point, payload in insertions
             ),
         )
+        _warn_length(result)
+        return result
 
     raise ValueError(
-        f'cannot keep the seam off bold text within '
-        f'{SOURCE_MAX_LENGTH} characters: {text!r}'
+        f'cannot keep the seam off bold text by inserting at most '
+        f'{MAX_INSERTED_LENGTH} characters: {text!r}'
         + (
             ' -- a placeholder straddles the seam for at least one of its '
             'declared lengths, so shorten the text before it or declare '
@@ -489,6 +492,16 @@ def fix_scoreboard_line(
             if spans
             else ''
         ),
+    )
+
+
+def _warn_length(text: str) -> None:
+    if len(text) <= KNOWN_GOOD_SOURCE_LENGTH:
+        return
+    warn(
+        f'{text!r} is {len(text)} characters of source; lines up to '
+        f'{KNOWN_GOOD_SOURCE_LENGTH} are known to be accepted in game and '
+        f'longer ones are untested, so check it is not truncated',
     )
 
 

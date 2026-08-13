@@ -341,6 +341,8 @@ from .actions.set_player_weather import (
     SetPlayerWeatherExpression as SetPlayerWeatherExpression,
 )
 from .actions.set_player_weather import set_player_weather as set_player_weather
+from .actions.strict_order import StrictOrder as StrictOrder
+from .actions.strict_order import strict_order as strict_order
 from .actions.team import Team as Team
 from .actions.team_color import TeamColor as TeamColor
 from .actions.team_color import TeamColorPlaceholder as TeamColorPlaceholder

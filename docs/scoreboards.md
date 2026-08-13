@@ -59,12 +59,19 @@ against every line observed in game.
 
 | cap | applies to | counts |
 | --- | --- | --- |
-| 32 | what the in-game editor accepts | `&` codes as 2, `%var.player/x%` as 14 |
+| 32 (unconfirmed) | what the in-game editor accepts | `&` codes as 2, `%var.player/x%` as 14 |
 | 16 + 16 | what renders | the resolved line, minus the reapplied codes |
 
 They are unrelated: a 31-character line holding a placeholder can render as 60
 characters and lose the tail. `fix_scoreboard_line` raises when a line exceeds
 the editor's cap and warns when the render caps cut text off.
+
+The render caps are measured and certain. The source cap is **not**: a
+36-character line with a placeholder in it is accepted in game, so 32 is at
+best a lower bound. It was inferred from a line whose source and resolved
+lengths were nearly equal, where a source cap and the render cap predict the
+same result and cannot be told apart. Until it is measured, `fix_scoreboard_line`
+may refuse a line Housing would have taken.
 
 ## What the fix costs
 
@@ -106,9 +113,9 @@ the seam instead, which is what the padding in the example above does, and that
 costs more than the usual 4 characters.
 
 This is where the editor's cap bites, because the *token* is what counts
-against it: `%var.player/coins%` spends 18 of the 32 characters and
-`%var.player/c%` spends 14. Renaming the variable is often the difference
-between a line that can be fixed and one that raises.
+against it: `%var.player/coins%` spends 18 of the assumed 32 characters and
+`%var.player/c%` spends 14. Until that cap is measured, renaming the variable
+is often the difference between a line that can be fixed and one that raises.
 
 Pass a placeholder in `dirty` when it can resolve to text that itself contains
 color codes. The styling behind it is then unknowable, so the seam is only

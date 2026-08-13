@@ -169,6 +169,11 @@ class Container:
         return self.contexts[-1 - go_back].expressions_ref
 
     def write_expression(self, expression: 'Expression') -> None:
+        from .actions.strict_order import (
+            current_strict_order_region,
+            tag_strict_order_region,
+        )
+
         if WRITE_EXPRESSION_OVERRIDE_STACK:
             WRITE_EXPRESSION_OVERRIDE_STACK[-1](expression)
             return
@@ -176,6 +181,7 @@ class Container:
         if self.is_finalized:
             return
 
+        tag_strict_order_region(expression, current_strict_order_region())
         self.get_expressions_ref_in_context().append(expression)
 
     def add_block(self, block: 'Block', *, index: int | None = None) -> None:
@@ -238,6 +244,10 @@ class Container:
         expressions: list['Expression'],
     ) -> None:
         from . import deferred
+        from .actions.strict_order import (
+            strict_order_region_of,
+            tag_strict_order_region,
+        )
         from .expression.binary_expression import BinaryExpression
         from .expression.compound_expression import CompoundExpression
 
@@ -286,6 +296,11 @@ class Container:
                     )
             for key, deferred_id in direct_fields:
                 setattr(expression, key, editables[deferred_id])
+            # The setup belongs to the statement that reads it, so it inherits
+            # its strict-order region instead of being free to drift out of one.
+            region = strict_order_region_of(expression)
+            for setup_expression in setup:
+                tag_strict_order_region(setup_expression, region)
             expressions[index:index] = setup
             index += len(setup) + 1
 
@@ -382,7 +397,7 @@ class Container:
         """Finalize one block's expressions. Returns the block's reserved temp
         numbers (consumer names + this block's held temps) so the caller can
         activate the same set while rendering/executing the block."""
-        from .actions.no_optimization import no_optimization
+        from .actions.no_optimization import optimization_enabled
         from .expression.binary_expression import BinaryExpression
         from .stats.temporary_stat import reserved_temp_numbers
 
@@ -403,9 +418,26 @@ class Container:
                     expression.finalize(self)
                     index -= 1
 
-            if not no_optimization():
-                BinaryExpression.optimize_binary_expressions(expressions)
+            BinaryExpression.optimize_binary_expressions(expressions)
+            if optimization_enabled('reorder'):
+                self._reorder_for_folding(expressions)
         return block_reserved
+
+    @staticmethod
+    def _reorder_for_folding(expressions: list['Expression']) -> None:
+        from .expression.binary_expression import BinaryExpression
+        from .limits import total_action_count
+        from .schedule import reorder_for_folding
+
+        candidate = reorder_for_folding(expressions)
+        if candidate is None:
+            return
+        trial = [expression.cloned() for expression in candidate]
+        BinaryExpression.optimize_binary_expressions(trial)
+        if total_action_count(trial) >= total_action_count(expressions):
+            return
+        expressions[:] = candidate
+        BinaryExpression.optimize_binary_expressions(expressions)
 
     def _collect_reserved_temp_numbers(
         self,

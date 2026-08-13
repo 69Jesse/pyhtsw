@@ -107,6 +107,30 @@ class Block(BaseObject):
         with BlockContextManager(self):
             self.callback()
 
+    def simplify(self) -> None:
+        """Merge conditionals that check the same thing and drop what cannot
+        run. Both remove actions outright, so they are worth doing whether or not
+        the block is anywhere near a limit."""
+        from .simplify import simplify_expressions
+
+        simplify_expressions(self.expressions, importable=self.importable_kind)
+
+    def reorder_for_limits(self) -> None:
+        """Resequence so the fixer needs as few wrapper conditionals and overflow
+        functions as possible. Pure reshuffling - it only runs when the block
+        would otherwise overflow, so a block that fits keeps its source order."""
+        from .actions.no_optimization import optimization_enabled
+        from .schedule import reorder_for_packing
+
+        if not optimization_enabled('reorder'):
+            return
+        reordered = reorder_for_packing(
+            self.expressions,
+            importable=self.importable_kind,
+        )
+        if reordered is not None:
+            self.expressions = reordered
+
     def fix_action_limits(self, container: 'Container', index: int) -> None:
         root = self._overflow_root_ref or self
         base_name = root.get_name()
@@ -156,7 +180,9 @@ class Block(BaseObject):
             self._reserved_temp_numbers = container.finalize_expressions(
                 self.expressions,
             )
+        self.simplify()
         if not self.container.ignore_action_limits:
+            self.reorder_for_limits()
             self.fix_action_limits(container, index)
 
     def execute_all_expressions(self, context: 'ExecutionContext') -> None:

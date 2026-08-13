@@ -55,23 +55,29 @@ Three details are easy to get wrong, and all three were confirmed in game:
 `simulate_hypixel_split` implements exactly this, and the test suite pins it
 against every line observed in game.
 
-## The two different caps
+## Length
 
-| cap | applies to | counts |
-| --- | --- | --- |
-| 32 (unconfirmed) | what the in-game editor accepts | `&` codes as 2, `%var.player/x%` as 14 |
-| 16 + 16 | what renders | the resolved line, minus the reapplied codes |
+What renders is capped at 16 + 16 characters of *resolved* text, reapplied
+codes included. What the editor accepts as *source* is a separate question, and
+the answer is: more than you are likely to need. A 45-character line of nothing
+but placeholder tokens comes through whole, and the 40-character output of a
+fix is accepted.
 
-They are unrelated: a 31-character line holding a placeholder can render as 60
-characters and lose the tail. `fix_scoreboard_line` raises when a line exceeds
-the editor's cap and warns when the render caps cut text off.
+The two are easy to conflate, because source and resolved length are usually
+close and then a source cap and the render cap predict the same output. They
+come apart when a placeholder is involved -- a token is long in source and
+short once resolved:
 
-The render caps are measured and certain. The source cap is **not**: a
-36-character line with a placeholder in it is accepted in game, so 32 is at
-best a lower bound. It was inferred from a line whose source and resolved
-lengths were nearly equal, where a source cap and the render cap predict the
-same result and cannot be told apart. Until it is measured, `fix_scoreboard_line`
-may refuse a line Housing would have taken.
+```
+&4htsw &lHUMANITY&a %house.players%✌      36 characters of source
+§4htsw §lHUMANITY§a 1✌                    22 once resolved, comfortably inside
+```
+
+So `fix_scoreboard_line` enforces no source limit. Beyond
+`KNOWN_GOOD_SOURCE_LENGTH` -- the longest line actually observed to survive --
+it warns rather than refuses, since the real cap has never been measured and
+guessing at one would reject lines Housing accepts. It also warns when the
+render caps cut visible text off, which is the limit that genuinely bites.
 
 ## What the fix costs
 
@@ -86,8 +92,7 @@ fix_scoreboard_line('&7abcdefghij&6&l1234567')
 # '&7abcdefghij&6&6&l1234567'
 ```
 
-A line already at the editor's 32-character cap has no room for either, so it
-raises -- shorten the line first.
+Source characters are cheap; the 16-character prefix is the scarce resource.
 
 ## Placeholders
 
@@ -109,14 +114,35 @@ placeholder raises rather than being guessed at.
 A placeholder that sits past the seam is free -- the fix goes in front of it.
 One that straddles the seam for some of its lengths cannot be fixed in place,
 since no code can be inserted inside a placeholder. It has to be pushed past
-the seam instead, which is what the padding in the example above does, and that
-costs more than the usual 4 characters.
-
-This is where the editor's cap bites, because the *token* is what counts
-against it: `%var.player/coins%` spends 18 of the assumed 32 characters and
-`%var.player/c%` spends 14. Until that cap is measured, renaming the variable
-is often the difference between a line that can be fixed and one that raises.
+the seam entirely, which is what the padding in the example above does. That
+costs more source characters than the usual 4, but source characters are the
+cheap resource; what it really costs is the visible text the padding displaces
+out of the prefix, which is what the truncation warning reports.
 
 Pass a placeholder in `dirty` when it can resolve to text that itself contains
 color codes. The styling behind it is then unknowable, so the seam is only
 allowed to land somewhere the codes have since been reasserted.
+
+## Where this came from
+
+None of the above is documented by Hypixel. It was reverse-engineered by
+putting lines on a scoreboard and reading back what rendered, so every rule
+traces to a specific observation:
+
+| line entered | what it established |
+| --- | --- |
+| Hypixel's own `www.hypixel.net` and date lines | the cut at 16, and that colors are reapplied after it |
+| `&1&l123456789012345` | a bold seam opens the gap |
+| `&6&l1234567890&6&l12345` | a color code on the seam closes it -- and a remainder starting `§l` does *not* suppress the reapply |
+| `&3&l12345678901&3&l2345` | the cut backs off to 15 rather than splitting a code pair |
+| `&4&l1234567890123456789012345678` | only 24 of 28 digits render: the reapplied codes are charged to the suffix, and truncation happens after they are prepended |
+| `&a&labcdefghijk&c&lLMNOPQRSTUVW` | all 12 trailing letters render: the reapply is skipped when the remainder already starts with a color |
+| `&a&l%var.player/x%abcdefghijklm`, with x at 1 and 1234 | the seam moves four letters, not three: placeholders resolve before the cut, and Housing groups thousands |
+| the same runs under `&n`, `&m`, `&o` and `&k` | no artifacts -- bold is the only code that matters |
+| `&labcdefgh&fijklmnop` | uncolored text is white, so `&f` is a safe reassertion |
+| `%house.players%` three times over, 45 characters | no source truncation at 45 |
+| `&4htsw &lHUMAN&4&lITY&a %house.players%✌` | a generated fix closing a real gap in game |
+
+The last one is the end-to-end check: `fix_scoreboard_line` produces exactly
+that line from the unfixed original, and the gap it predicted was there before
+and gone after.

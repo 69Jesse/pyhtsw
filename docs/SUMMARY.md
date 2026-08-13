@@ -8,5 +8,6 @@
 - [Items](./items.md)
 - [Locations](./locations.md)
 - [Expressions](./expressions.md)
+- [Scoreboards](./scoreboards.md)
 - [Optimizer](./optimizer.md)
 - [Simulator](./simulator.md)

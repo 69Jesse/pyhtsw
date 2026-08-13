@@ -5,6 +5,7 @@ from typing import Any, NoReturn, Self, final
 
 import numpy as np
 
+from ..actions.no_optimization import optimization_enabled
 from ..actions.no_type_casting import no_type_casting
 from ..checkable import Checkable
 from ..editable import Editable
@@ -304,19 +305,29 @@ class BinaryExpression[
     @staticmethod
     def take_out_useless_expressions(expressions: list[Expression]) -> bool:
         """Run the peephole passes to a fixed point, returning whether anything changed."""
+        no_ops = optimization_enabled('no_ops')
         # The merge/fold/dead-store passes need at least two expressions; for the
         # many empty/one-line conditional bodies finalize produces, only the
         # single-expression no-op removal can apply, so run just that.
         if len(expressions) < 2:
-            return BinaryExpression._remove_no_op_expressions(expressions)
+            return no_ops and BinaryExpression._remove_no_op_expressions(expressions)
+        identity_merge = optimization_enabled('identity_merge')
+        fold = optimization_enabled('fold')
+        dead_stores = optimization_enabled('dead_stores')
         changed_any = False
         has_changed = True
         while has_changed:
             has_changed = False
-            has_changed |= BinaryExpression._remove_no_op_expressions(expressions)
-            has_changed |= BinaryExpression._merge_identity_set_with_op(expressions)
-            has_changed |= BinaryExpression._fold_consecutive_constant_ops(expressions)
-            has_changed |= BinaryExpression._eliminate_dead_stores(expressions)
+            if no_ops:
+                has_changed |= BinaryExpression._remove_no_op_expressions(expressions)
+            if identity_merge:
+                has_changed |= BinaryExpression._merge_identity_set_with_op(expressions)
+            if fold:
+                has_changed |= BinaryExpression._fold_consecutive_constant_ops(
+                    expressions,
+                )
+            if dead_stores:
+                has_changed |= BinaryExpression._eliminate_dead_stores(expressions)
             changed_any |= has_changed
         return changed_any
 
@@ -813,7 +824,7 @@ class BinaryExpression[
         # The temp-stat merge needs at least two expressions; for the very many
         # empty/one-line conditional bodies finalize produces, only the no-op
         # removal can apply.
-        if len(expressions) < 2:
+        if len(expressions) < 2 or not optimization_enabled('temp_merge'):
             BinaryExpression.take_out_useless_expressions(expressions)
             return
 

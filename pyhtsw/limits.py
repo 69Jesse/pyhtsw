@@ -358,6 +358,19 @@ class Counter:
         ).would_exceed(expression)
 
 
+def total_action_count(expressions: list['Expression']) -> int:
+    """Every HTSL action these expressions render to, nested action lists
+    included. The measure the fold-enabling reorder has to beat before its order
+    is adopted."""
+    counter = Counter()
+    total = 0
+    for expression in expressions:
+        total += sum(counter.action_counts(expression).values())
+        for nested in expression.nested_expressions_refs():
+            total += total_action_count(nested)
+    return total
+
+
 def nesting_of(expression: 'Expression') -> Nesting | None:
     """Which kind of container an expression's nested action lists live in."""
     from .actions.random import RandomExpression
@@ -384,31 +397,35 @@ def is_within_limits(
     return True
 
 
-def fix_action_limits(
+type PlanItem = tuple[str, list['Expression']]
+
+
+def plan_packing(
     expressions: list['Expression'],
     *,
     nesting_possible: bool = True,
-    function_if_exceeds: 'Function | None' = None,
     always_in_conditional: bool = False,
     importable: ImportableKind = 'functions',
-) -> tuple[list['Expression'], list['Expression']]:
-    """Fix action limits for a list of expressions.
-
-    Returns a tuple of the fixed expressions that fit within a single block,
-    and the remaining expressions that exceed the limits and need to be put in a new block.
-    """
-    from .actions.trigger_function import TriggerFunctionExpression
+    memo: dict[int, ActionCounts] | None = None,
+) -> tuple[list[PlanItem], int, 'Counter']:
+    """Decide how a block's expressions pack into the container without building
+    anything: a list of `('direct', [expr])` / `('wrap', [exprs...])` items, the
+    index where the block ran out of room, and the counter holding the resulting
+    action counts. `fix_action_limits` builds the objects from this, and the
+    scheduler costs candidate orders with it."""
     from .expression.condition.conditional_expression import (
         ConditionalExpression,
         ConditionalMode,
     )
 
-    check_all_condition_limits(expressions)
-
-    result: list[Expression] = []
-    memo: dict[int, ActionCounts] = {}
+    if memo is None:
+        memo = {}
+    items: list[PlanItem] = []
     global_counter = Counter(memo, importable=importable)
     index = 0
+    # Counting a wrapper never inspects its body, so one instance serves for
+    # every wrapper this plan measures.
+    dummy = ConditionalExpression([], ConditionalMode.ALL)
 
     while index < len(expressions):
         expr = expressions[index]
@@ -421,18 +438,17 @@ def fix_action_limits(
             if global_counter.would_exceed(expr):
                 break
             global_counter.increment(expr)
-            result.append(expr)
+            items.append(('direct', [expr]))
             index += 1
         elif should_wrap:
             # A lone expression rendering to more actions than fit in a block can
             # neither be wrapped nor moved; emit it as-is so we don't loop.
             if global_counter.exceeds_on_its_own(expr):
                 global_counter.increment(expr)
-                result.append(expr)
+                items.append(('direct', [expr]))
                 index += 1
                 continue
 
-            dummy = ConditionalExpression([], ConditionalMode.ALL)
             if global_counter.would_exceed(dummy):
                 break
 
@@ -448,19 +464,119 @@ def fix_action_limits(
             if not group:
                 break
 
-            cond = ConditionalExpression(
-                conditions=[],
-                mode=ConditionalMode.ALL,
-                if_expressions=group,
-            )
-            global_counter.increment(cond)
-            result.append(cond)
+            global_counter.increment(dummy)
+            items.append(('wrap', group))
         else:
             if global_counter.would_exceed(expr):
                 break
             global_counter.increment(expr)
-            result.append(expr)
+            items.append(('direct', [expr]))
             index += 1
+
+    return items, index, global_counter
+
+
+def packing_cost(
+    expressions: list['Expression'],
+    *,
+    importable: ImportableKind = 'functions',
+    memo: dict[int, ActionCounts] | None = None,
+) -> tuple[int, int]:
+    """`(overflow functions, wrapper conditionals)` this order would cost, over
+    the whole overflow chain. This is the objective the scheduler minimises:
+    functions first (each one is a whole extra importable), then wrappers.
+
+    Pass `memo` when costing many orders of the same expressions: the counts are
+    keyed by expression identity, which reordering does not change, so the
+    flatten behind them happens once instead of once per candidate.
+
+    The cost comes from running the real fixer rather than a model of it. An
+    estimate that drifts from what `fix_action_limits` actually does lets the
+    scheduler pick an order it believes is cheaper and is not - the trailing
+    trigger alone has three placements and a fallback that pushes expressions
+    back into the overflow.
+    """
+    from .actions.function import Function
+    from .expression.condition.conditional_expression import ConditionalExpression
+
+    if memo is None:
+        memo = {}
+    functions = 0
+    wrappers = 0
+    remaining = expressions
+    current: ImportableKind = importable
+
+    while True:
+        original = {id(expression) for expression in remaining}
+        result, rest = fix_action_limits(
+            remaining,
+            function_if_exceeds=Function('overflow'),
+            importable=current,
+            memo=memo,
+            check_conditions=False,
+        )
+        wrappers += sum(
+            1
+            for expression in result
+            if id(expression) not in original
+            and isinstance(expression, ConditionalExpression)
+        )
+        if not rest:
+            break
+        functions += 1
+        remaining = rest
+        # Overflow always lands in a function block, whatever the original was.
+        current = 'functions'
+
+    return functions, wrappers
+
+
+def fix_action_limits(
+    expressions: list['Expression'],
+    *,
+    nesting_possible: bool = True,
+    function_if_exceeds: 'Function | None' = None,
+    always_in_conditional: bool = False,
+    importable: ImportableKind = 'functions',
+    memo: dict[int, ActionCounts] | None = None,
+    check_conditions: bool = True,
+) -> tuple[list['Expression'], list['Expression']]:
+    """Fix action limits for a list of expressions.
+
+    Returns a tuple of the fixed expressions that fit within a single block,
+    and the remaining expressions that exceed the limits and need to be put in a new block.
+    """
+    from .actions.trigger_function import TriggerFunctionExpression
+    from .expression.condition.conditional_expression import (
+        ConditionalExpression,
+        ConditionalMode,
+    )
+
+    if check_conditions:
+        check_all_condition_limits(expressions)
+
+    if memo is None:
+        memo = {}
+    items, index, global_counter = plan_packing(
+        expressions,
+        nesting_possible=nesting_possible,
+        always_in_conditional=always_in_conditional,
+        importable=importable,
+        memo=memo,
+    )
+
+    result: list[Expression] = []
+    for kind, group in items:
+        if kind == 'wrap':
+            result.append(
+                ConditionalExpression(
+                    conditions=[],
+                    mode=ConditionalMode.ALL,
+                    if_expressions=group,
+                ),
+            )
+        else:
+            result.append(group[0])
 
     remaining = list(expressions[index:])
 

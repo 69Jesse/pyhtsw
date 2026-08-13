@@ -10,6 +10,18 @@ from ..utils.formatting import (
 from ..utils.placeholders import (
     get_placeholder_parts as get_placeholder_parts,
 )
+from ..utils.scoreboard import (
+    HypixelSplit as HypixelSplit,
+)
+from ..utils.scoreboard import (
+    fix_scoreboard_line as fix_scoreboard_line,
+)
+from ..utils.scoreboard import (
+    number_lengths as number_lengths,
+)
+from ..utils.scoreboard import (
+    simulate_hypixel_split as simulate_hypixel_split,
+)
 from .approximate import (
     approximate_sin_cos as approximate_sin_cos,
 )

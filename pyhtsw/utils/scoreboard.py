@@ -39,6 +39,10 @@ DIRTY_FILLER: str = '\x01'
 
 MAX_COMBINATIONS: int = 4096
 
+# Stood in for a placeholder that lands too late to move the seam, and so never
+# had to be declared. It only feeds the truncation estimate.
+ASSUMED_LENGTH: int = 1
+
 PlaceholderKey = Union[str, 'Checkable']
 
 
@@ -387,6 +391,26 @@ def _candidates(
     return candidates
 
 
+def _reaching_the_seam(
+    template: str,
+    spans: list[tuple[int, int]],
+    declared: dict[str, tuple[int, ...]],
+) -> list[str]:
+    # The seam is decided by the first FIELD_MAX_LENGTH resolved characters, so
+    # a placeholder that cannot start before them cannot move it. Resolved
+    # starts only grow along the line, so the first one past is the last check.
+    missing: list[str] = []
+    offset = 0
+    for start, end in spans:
+        if start - offset > FIELD_MAX_LENGTH:
+            break
+        token = template[start:end]
+        if token not in declared:
+            missing.append(token)
+        offset += len(token) - min(declared.get(token, (ASSUMED_LENGTH,)))
+    return missing
+
+
 def _collect(
     placeholders: Mapping[PlaceholderKey, int | Iterable[int]] | None,
     dirty: Iterable[PlaceholderKey],
@@ -421,7 +445,10 @@ def fix_scoreboard_line(
     ``placeholders`` declares, per placeholder, every rendered length it may
     take; the result is checked against all combinations of them. Rendered
     means what Housing prints, including thousands separators, so use
-    :func:`number_lengths` for numeric variables. Placeholders in ``dirty`` may
+    :func:`number_lengths` for numeric variables. Only placeholders that can
+    resolve early enough to move the seam need declaring -- one that starts
+    past it is counted as :data:`ASSUMED_LENGTH` for the truncation estimate
+    alone, which makes that estimate a lower bound. Placeholders in ``dirty`` may
     themselves resolve to color codes: the styling behind them is unknowable,
     so the seam is only ever allowed to land somewhere the codes have since
     been reasserted.
@@ -430,19 +457,18 @@ def fix_scoreboard_line(
     template, mapping = _normalize(text)
     spans = _placeholder_spans(template)
 
-    missing = [
-        template[start:end]
-        for start, end in spans
-        if template[start:end] not in declared
-    ]
+    missing = _reaching_the_seam(template, spans, declared)
     if missing:
         raise ValueError(
             'no lengths declared for placeholder(s) '
             + ', '.join(repr(token) for token in missing)
-            + ' -- pass them in `placeholders`',
+            + ' -- they resolve early enough to move the seam, so pass them '
+            'in `placeholders`',
         )
 
-    per_placeholder = [declared[template[start:end]] for start, end in spans]
+    per_placeholder = [
+        declared.get(template[start:end], (ASSUMED_LENGTH,)) for start, end in spans
+    ]
     total = 1
     for lengths in per_placeholder:
         total *= len(lengths)

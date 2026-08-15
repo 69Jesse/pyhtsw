@@ -108,8 +108,22 @@ fix_scoreboard_line(f'&6&lCoins: {COINS}', {COINS: number_lengths(0, 999_999)})
 
 Lengths are what Housing *prints*, which is why `number_lengths` exists: it
 accounts for the thousands separators, the sign, and optional decimals. Keys
-may be the placeholder string or the `Checkable` itself. An undeclared
-placeholder raises rather than being guessed at.
+may be the placeholder string or the `Checkable` itself.
+
+Only placeholders that can reach the seam need declaring. The seam is decided
+by the first 16 resolved characters, so one that cannot start before them
+cannot move it, whatever it resolves to:
+
+```python
+fix_scoreboard_line('&4htsw &lHUMANITY&a %house.players%✌')
+# '&4htsw &lHUMAN&4&lITY&a %house.players%✌'
+```
+
+An undeclared placeholder that *can* reach the seam raises rather than being
+guessed at. One past it is assumed to be `ASSUMED_LENGTH` characters for the
+truncation estimate alone, which makes that estimate a lower bound -- a longer
+value pushes more off the end, so the warning can understate but never
+overstate what is lost.
 
 A placeholder that sits past the seam is free -- the fix goes in front of it.
 One that straddles the seam for some of its lengths cannot be fixed in place,

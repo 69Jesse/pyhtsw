@@ -153,6 +153,11 @@ assert fixed == f'&4htsw &lHUMAN&4&lITY&a {HOUSE}✌', fixed
 assert remove_formatting(fixed) == remove_formatting(line)
 assert_safe(fixed, HOUSE, (1, 2, 3))
 
+# that placeholder starts past the seam, so it cannot move it and never had to
+# be declared in the first place
+assert fix_scoreboard_line(line) == fixed
+assert fix_scoreboard_line(fixed) == fixed
+
 
 # an undeclared placeholder is never guessed at
 with expect_exception(ValueError):

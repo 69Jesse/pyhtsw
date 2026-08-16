@@ -170,6 +170,10 @@ def export_project(
     prefix: tuple[str, ...] | None = None,
     house_uuid: str | None = None,
 ) -> None:
+    from .item_plan import promoted_importables
+
+    if project.item_plan is not None:
+        importables = [*importables, *promoted_importables(project.item_plan)]
     if prefix is None:
         prefix = _common_prefix(importables)
     nodes = _build_tree(importables, prefix)

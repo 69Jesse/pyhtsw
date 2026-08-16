@@ -1,7 +1,7 @@
 from typing import Self, final
 
 from ..expression.condition.condition import Condition
-from .item import Item, item_action_reference
+from .item import Item, item_action_reference, item_referenced_importables
 
 __all__ = ('BlockType',)
 
@@ -24,6 +24,9 @@ class BlockType(Condition):
         return (
             f'blockType {self.inline_quoted(name)} {self.inline(self.match_type_only)}'
         )
+
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return item_referenced_importables(self.block)
 
     def cloned_raw(self) -> Self:
         return self.__class__(

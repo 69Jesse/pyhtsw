@@ -66,16 +66,34 @@ assert resolve_location(Location.house_spawn()) == ('house_spawn', None)
 assert resolve_location(Location.custom(1, 2, 3)) == ('custom_coordinates', '1 2 3')
 
 
-# give_item with a declared class references by name; an instance by path.
+# A declared class references by its class name; a plain instance is promoted
+# to an items[] entry and referenced by a derived name, never by path.
 with Container() as c:
 
     class Sword(Item, key='diamond_sword', name='&bSword'):
         pass
 
-    give_item(Sword)  # by name
-    give_item(Item('apple'))  # anonymous -> path
+    give_item(Sword)  # by class name
+    give_item(Item('apple'))  # no display name -> the vanilla title
+    give_item(Item('apple', count=3))  # ...plus the stack size
+    give_item(Item('gold_ingot', name='&6Coin'))  # display name wins
+    give_item(Item('bone', name='&fSecret', importable=False))  # opted out
 c.export('Ref Test')
-text = (tmp / 'ref-test' / 'functions' / 'ref-test.htsl').read_text()
+ref_root = tmp / 'ref-test'
+text = (ref_root / 'functions' / 'ref-test.htsl').read_text()
 assert 'giveItem "Sword"' in text
-# anonymous .snbt path, resolved relative to the action file (in functions/)
-assert 'giveItem "../items/apple-' in text
+assert 'giveItem "Apple"' in text
+assert 'giveItem "Apple x3"' in text
+assert 'giveItem "Coin"' in text
+# `importable=False` stays a path reference, relative to the action file, but
+# still gets a readable filename rather than a content hash.
+assert 'giveItem "../items/secret.snbt"' in text
+
+ref_items = json.loads((ref_root / 'import.json').read_text())['items']
+assert {item['name'] for item in ref_items} == {'Sword', 'Apple', 'Apple x3', 'Coin'}
+assert {item['nbt'] for item in ref_items} == {
+    'items/sword.snbt',
+    'items/apple.snbt',
+    'items/apple-x3.snbt',
+    'items/coin.snbt',
+}

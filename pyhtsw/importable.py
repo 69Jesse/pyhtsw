@@ -52,6 +52,7 @@ if TYPE_CHECKING:
     from .actions.item import Item
     from .actions.menu import Menu
     from .block import Block
+    from .item_plan import ItemPlan
 
 __all__ = (
     'EVENTS',
@@ -144,16 +145,18 @@ class Project:
     root: Path
     used_paths: set[str]
     written_paths: set[Path]
-    item_paths: dict[tuple[str, str], str]
+    item_paths: dict[str, str]
+    item_plan: 'ItemPlan | None'
     current_block_relpath: str | None
     node_folder: str
     module_folder: Callable[[str | None], str]
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, item_plan: 'ItemPlan | None' = None) -> None:
         self.root = root
         self.used_paths = set()
         self.written_paths = set()
         self.item_paths = {}
+        self.item_plan = item_plan
         self.current_block_relpath = None
         self.node_folder = ''
         self.module_folder = module_to_folder
@@ -229,33 +232,40 @@ class Project:
             return root_relpath
         return posixpath.relpath(root_relpath, block_dir)
 
-    def item_path(self, item: 'Item | type[Item]', *, name: str | None = None) -> str:
-        """Write `item`'s .snbt under its *owning* module's folder and return the
-        root-relative path. Anonymous items dedupe by (owner folder, snbt)."""
+    def item_path(self, item: 'Item | type[Item]') -> str:
+        """Write `item`'s .snbt and return the root-relative path. One file per
+        distinct item: the plan folded identical items across modules together
+        and picked the name and owning module, so two menus showing the same
+        item share a file instead of each writing their own copy."""
         from .actions.item import normalize_item
-
-        if isinstance(item, type):
-            owner = getattr(item, '__module__', None)
-        else:
-            owner = getattr(item, '__htsw_module__', None)
-        owner_folder = self.module_folder(owner)
 
         resolved = normalize_item(item)
         snbt = resolved.into_snbt()
-        key = (owner_folder, snbt)
-        if name is None and key in self.item_paths:
-            return self.item_paths[key]
-        if name is not None:
-            base = f'items/{into_kebab(name)}'
+        existing = self.item_paths.get(snbt)
+        if existing is not None:
+            return existing
+
+        entry = self.item_plan.lookup(resolved) if self.item_plan is not None else None
+        if entry is not None:
+            owner = entry.owner_module
+            base = f'items/{into_kebab(entry.name)}'
         else:
+            # No plan (a bare `Project`, or an item built after finalize): keep
+            # the content-addressed name so the file is at least stable.
+            owner = (
+                getattr(item, '__module__', None)
+                if isinstance(item, type)
+                else getattr(item, '__htsw_module__', None)
+            )
             suffix = hashlib.md5(snbt.encode()).hexdigest()[:8]
             base = f'items/{into_kebab(resolved.key)}-{suffix}'
+        owner_folder = self.module_folder(owner)
         relpath = self._unique(
             posixpath.join(owner_folder, base) if owner_folder else base,
             '.snbt',
         )
         self.write(relpath, snbt + '\n')
-        self.item_paths[key] = relpath
+        self.item_paths[snbt] = relpath
         return relpath
 
     def icon(self, item: 'Item | type[Item]') -> dict[str, Any]:
@@ -424,9 +434,7 @@ class ItemImportable(Importable):
     def build(self, project: Project) -> dict[str, Any]:
         entry: dict[str, Any] = {
             'name': self.name,
-            'nbt': project.relative_to_node(
-                project.item_path(self.item, name=self.name),
-            ),
+            'nbt': project.relative_to_node(project.item_path(self.item)),
         }
         folder = f'items/{into_kebab(self.name)}'
         if self.left is not None and not self.left.is_empty():

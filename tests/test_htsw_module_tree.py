@@ -105,14 +105,18 @@ modx_to_mody = 'mody' in str(includes('modx/import.json'))
 mody_to_modx = 'modx' in str(includes('mody/import.json'))
 assert modx_to_mody != mody_to_modx, (modx_to_mody, mody_to_modx)
 
-# The anonymous potion .snbt lands under its owning module (items.abilities),
-# and the give-item action in features.cookie references it by a path that
-# resolves to that file.
-snbts = list((root / 'items-module/abilities/items').glob('*.snbt'))
-assert snbts, 'potion .snbt was not placed under the owning module'
+# The potion is promoted to an items[] entry in its owning module's node
+# (items.abilities), named after its display name, with the .snbt beside it.
+abilities_node = load('items-module/abilities/import.json')
+assert [item['name'] for item in abilities_node['items']] == ['Potion']
+assert abilities_node['items'][0]['nbt'] == 'items/potion.snbt'
+assert (root / 'items-module/abilities/items/potion.snbt').exists()
+
+# The give-item action in features.cookie refers to it by name, not by path,
+# which is what the cross-module include edge above exists to resolve.
 give = (cookie_dir / 'functions/cookie.htsl').read_text(encoding='utf-8')
-ref = next(line.split('"')[1] for line in give.splitlines() if '.snbt' in line)
-assert (cookie_dir / 'functions' / ref).resolve() == snbts[0].resolve()
+assert 'giveItem "Potion"' in give
+assert '.snbt' not in give
 
 # Exporting a single module roots it at the project root, with anything it pulls
 # in from another package nesting as a referenced sub-project.

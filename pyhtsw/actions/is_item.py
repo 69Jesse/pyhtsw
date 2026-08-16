@@ -2,7 +2,7 @@ from typing import Self, final
 
 from ..expression.condition.condition import Condition
 from ..types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
-from .item import Item, item_action_reference
+from .item import Item, item_action_reference, item_referenced_importables
 
 __all__ = ('IsItem',)
 
@@ -34,6 +34,9 @@ class IsItem(Condition):
             f'{self.inline(self.where_to_check)} '
             f'{self.inline(self.required_amount)}'
         )
+
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return item_referenced_importables(self.item)
 
     def cloned_raw(self) -> Self:
         return self.__class__(

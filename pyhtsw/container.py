@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from .editable import Editable
     from .expression.expression import Expression
     from .importable import Importable, Project
+    from .item_plan import ItemPlan
 
 
 __all__ = (
@@ -84,6 +85,7 @@ class Container:
     importables: list['Importable']
     importable_keys: set[tuple[str, str]]
     project: 'Project | None'
+    item_plan: 'ItemPlan | None'
     _consumer_reserved: set[int]
 
     is_finalized: bool
@@ -105,6 +107,7 @@ class Container:
         self.importables = []
         self.importable_keys = set()
         self.project = None
+        self.item_plan = None
         self._consumer_reserved = set()
 
         self.is_finalized = False
@@ -472,11 +475,16 @@ class Container:
         return numbers
 
     def finalize(self) -> None:
+        from .item_plan import plan_items
+
         if self.is_finalized:
             raise RuntimeError('Container is already finalized')
         self._consumer_reserved = self.compute_reserved_temp_numbers()
         for index, block in enumerate(self.blocks):
             block.finalize(self, index)
+        # Last: overflow functions carved out above own expressions too, and
+        # every item has to be named before anything renders one.
+        self.item_plan = plan_items(self.blocks, self.importables)
         self.is_finalized = True
 
     @staticmethod
@@ -530,9 +538,15 @@ class Container:
     ) -> None:
         from .config import get_house_uuid
         from .importable import Project
+        from .item_plan import plan_items
         from .module_export import export_project
 
         importables = self._collect_importables(name)
+        # Replanned here rather than reusing finalize's: which module owns an
+        # item decides where its .snbt is written, and a module may still be
+        # (re)assigned between finalize and export. Naming is content-determined,
+        # so the names themselves come out the same either way.
+        self.item_plan = plan_items(self.blocks, importables)
         if not importables:
             log(
                 'Nothing found to export. \x1b[38;2;255;0;0mPyHTSW will not do anything.\x1b[0m',
@@ -555,7 +569,7 @@ class Container:
         )
 
         root = self.project_path(name)
-        project = Project(root)
+        project = Project(root, self.item_plan)
         self.project = project
         CONTAINERS.append(self)
         try:

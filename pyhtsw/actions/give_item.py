@@ -2,7 +2,7 @@ from typing import Self, final
 
 from ..expression.expression import Expression
 from ..types import _INVENTORY_SLOTS_PRETTY_NAME_MAPPING, INVENTORY_SLOTS
-from .item import Item, item_action_reference
+from .item import Item, item_action_reference, item_referenced_importables
 
 __all__ = (
     'GiveItemExpression',
@@ -44,11 +44,7 @@ class GiveItemExpression(Expression):
         )
 
     def referenced_importables(self) -> list[tuple[str, str]]:
-        if isinstance(self.item, type):
-            name = self.item.__htsw_name__
-            return [('items', name)] if name is not None else []
-        name = getattr(self.item, '_importable_name', None)
-        return [('items', name)] if name is not None else []
+        return item_referenced_importables(self.item)
 
     def cloned(self) -> Self:
         return self.__class__(

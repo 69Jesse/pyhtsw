@@ -113,6 +113,12 @@ class ConditionalExpression(Expression):
         for cond in self.conditions:
             yield from cond.get_all_stats_used()
 
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        refs = list(super().referenced_importables())
+        for cond in self.conditions:
+            refs.extend(cond.referenced_importables())
+        return refs
+
     def __repr__(self) -> str:
         return f'If<{self.mode.name}, conditions={len(self.conditions)}, if_exprs={len(self.if_expressions)}, else_exprs={len(self.else_expressions)}>'
 

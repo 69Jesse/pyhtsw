@@ -1,7 +1,7 @@
 from typing import Self, final
 
 from ..expression.expression import Expression
-from .item import Item, item_action_reference
+from .item import Item, item_action_reference, item_referenced_importables
 
 __all__ = (
     'RemoveItemExpression',
@@ -19,6 +19,9 @@ class RemoveItemExpression(Expression):
     def into_htsl(self) -> str:
         name = item_action_reference(self.item)
         return f'removeItem {self.inline_quoted(name)}'
+
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return item_referenced_importables(self.item)
 
     def cloned(self) -> Self:
         return self.__class__(item=self.item)

@@ -70,6 +70,11 @@ class Condition(BaseObject):
     def related_debug_parts(self) -> list['Checkable | HousingType']:
         return []
 
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        """`(kind, name)` of every importable this condition refers to, surfaced
+        through the owning `ConditionalExpression`. See `Expression`."""
+        return []
+
     def finalize(self, container: Container) -> None:
         self.into_htsl()
 

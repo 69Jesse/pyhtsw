@@ -2,7 +2,7 @@ from typing import Self, final
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
-from .item import Item, item_action_reference
+from .item import Item, item_action_reference, item_referenced_importables
 
 __all__ = (
     'DropItemExpression',
@@ -47,6 +47,9 @@ class DropItemExpression(Expression):
             f' {self.inline(self.drop_naturally)} {self.inline(self.disable_item_merging)}'
             f' {self.inline(self.prioritize_player)} {self.inline(self.fallback_to_inventory)}'
         )
+
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return item_referenced_importables(self.item)
 
     def cloned(self) -> Self:
         return self.__class__(

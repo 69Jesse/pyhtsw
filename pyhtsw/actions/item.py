@@ -144,6 +144,13 @@ class Item:
     __htsw_item_defaults__: ClassVar[dict[str, Any]] = {}
     __htsw_importable__: ClassVar['ItemImportable']
     __htsw_module__: 'str | None'
+    # Filled in by the export-time item plan (see pyhtsw/item_plan.py): the htsw
+    # name this instance is referenced by, and the module its .snbt is written
+    # under once identical items across modules have been folded together.
+    _reference_name: str | None
+    _owner_module: str | None
+    # `Item(..., importable=False)` keeps an item out of import.json.
+    _promotable: bool
 
     left_click = staticmethod(left_click)
     right_click = staticmethod(right_click)
@@ -189,8 +196,12 @@ class Item:
         on_left_click: 'ItemHandler | None' = None,
         on_right_click: 'ItemHandler | None' = None,
         importable_name: str | None = None,
+        importable: bool = True,
     ) -> None:
         self.__htsw_module__ = caller_module()
+        self._reference_name = None
+        self._owner_module = None
+        self._promotable = importable
         defaults = type(self).__htsw_item_defaults__
         explicit: dict[str, Any] = {
             'name': name,
@@ -350,10 +361,17 @@ class Item:
             module=caller_module(),
         )
 
+    # Where the item came from and what export decided to call it, neither of
+    # which is part of the item. `_snbt_cache` is lazy, so comparing it would
+    # make an item stop equalling its twin the moment one of them rendered.
+    _EQ_IGNORE: ClassVar[frozenset[str]] = frozenset(
+        {'__htsw_module__', '_snbt_cache', '_reference_name', '_owner_module'},
+    )
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Item):
             return False
-        ignore = {'__htsw_module__'}
+        ignore = self._EQ_IGNORE
         return {k: v for k, v in vars(self).items() if k not in ignore} == {
             k: v for k, v in vars(other).items() if k not in ignore
         }
@@ -598,7 +616,24 @@ class Item:
             field: getattr(self, field) if isinstance(value, _MissingType) else value
             for field, value in overrides.items()
         }
-        return Item(self.key if isinstance(key, _MissingType) else key, **resolved)
+        return Item(
+            self.key if isinstance(key, _MissingType) else key,
+            importable=self._promotable,
+            **resolved,
+        )
+
+    def derived_name(self) -> str:
+        """The htsw name this item wants, before uniquifying. Its display name
+        wins; otherwise the vanilla title, with the stack size appended so the
+        very common `Item(key, count=n)` variants do not all want one name."""
+        if self.name is not None:
+            derived = remove_formatting(self.name).strip()
+            # htsw reads any reference ending in .snbt as a path, so a display
+            # name that looks like one cannot be the htsw name.
+            if derived and not derived.lower().endswith('.snbt'):
+                return derived
+        title = self.get_item_name()
+        return f'{title} x{self.count}' if self.count > 1 else title
 
     def anonymous_path(self) -> str:
         """Relative .snbt path for this item, registering it with the active
@@ -663,10 +698,10 @@ def normalize_item(value: 'Item | type[Item]') -> Item:
     raise TypeError(f'Expected an Item or Item subclass, got {value!r}')
 
 
-def item_action_reference(value: 'Item | type[Item]') -> str:
-    """How an item is referenced from an action: a declared subclass by its
-    htsw name, an interactive instance by its importable name, a plain instance
-    by its .snbt path."""
+def item_reference_name(value: 'Item | type[Item]') -> str | None:
+    """The htsw items[] name `value` is referenced by, or None when it has none
+    (a plain instance in a container that was never planned, which falls back to
+    a direct .snbt path)."""
     if isinstance(value, type):
         if not issubclass(value, Item):
             raise TypeError(f'Expected an Item subclass, got {value!r}')
@@ -675,7 +710,27 @@ def item_action_reference(value: 'Item | type[Item]') -> str:
             raise TypeError(f'{value!r} is not a declared item importable')
         return name
     if isinstance(value, Item):
-        if getattr(value, '_importable_name', None) is not None:
-            return value._importable_name  # type: ignore[return-value]
-        return value.anonymous_path()
+        return value._importable_name or value._reference_name
     raise TypeError(f'Expected an Item or Item subclass, got {value!r}')
+
+
+def item_action_reference(value: 'Item | type[Item]') -> str:
+    """How an item is referenced from an action: by its htsw name when it has
+    one (a declared subclass, an interactive instance, or a plain instance the
+    item plan promoted), otherwise by its .snbt path."""
+    name = item_reference_name(value)
+    if name is not None:
+        return name
+    assert isinstance(value, Item)
+    return value.anonymous_path()
+
+
+def item_referenced_importables(
+    value: 'Item | type[Item]',
+) -> list[tuple[str, str]]:
+    """`referenced_importables()` entry for an item field. A name that no
+    importable claims (an item named only so its .snbt file reads nicely) is
+    dropped by the include resolver, which looks names up against the real
+    importables."""
+    name = item_reference_name(value)
+    return [('items', name)] if name is not None else []

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyhtsw"
 version = "4.0.0"
-description = "Python wrapper for HTSW created to simplify the process of making housings on Hypixel"
+description = "Python DSL that compiles to HTSW projects for Hypixel Housing"
 requires-python = ">=3.13"
 authors = [{ name = "Jesse Janssen" }]
 urls = { Homepage = "https://github.com/69Jesse/PyHTSW" }

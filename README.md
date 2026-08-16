@@ -1,7 +1,9 @@
 # PyHTSW
 *(formerly PyHTSL)*
 
-PyHTSW is a Python frontend for [HTSW](https://github.com/LGHousing/htsw) created to simplify the process of making housings on [Hypixel](https://hypixel.net/)
+PyHTSW is a Python DSL that compiles to [HTSW](https://github.com/LGHousing/htsw) projects, created to simplify the process of making housings on [Hypixel](https://hypixel.net/)
+
+You write ordinary Python; running it builds an expression tree, optimizes it, and emits a full HTSW project — `import.json`, the `.htsl` action scripts and the `.snbt` items — ready to import.
 
 ## Prerequisites
 - [HTSW](https://github.com/LGHousing/htsw)

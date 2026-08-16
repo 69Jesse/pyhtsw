@@ -28,9 +28,16 @@ _counter = 0
 
 
 def register_deferred(checkable: 'Checkable', include_fallback_value: bool) -> str:
+    from .actions.no_fallback_values import no_fallback_values
+
     global _counter
     _counter += 1
-    _registry[_counter] = DeferredEntry(checkable, include_fallback_value)
+    # Resolution happens long after the `NoFallbackValues` block has exited, so
+    # capture it here instead.
+    _registry[_counter] = DeferredEntry(
+        checkable,
+        include_fallback_value and not no_fallback_values(),
+    )
     return f'{_PREFIX}{_counter}{_SUFFIX}'
 
 

@@ -69,7 +69,7 @@ assert container.into_htsl() == (
 
 # Mixed paths in one statement: a computed coordinate (string field) and a
 # computed strength (direct field) share the materialize batch and get distinct
-# temps
+# temps. Only the strength keeps its fallback — custom coordinates reject one.
 with Container() as container:
     x = PlayerStat('x').as_long()
     launch_to_target(Location.custom(x + 1, 0, 0), strength=x * 2)
@@ -79,7 +79,7 @@ assert container.into_htsl() == (
     'var "tmp0" += 1 false\n'
     'var "tmp1" = "%var.player/x 0%L" false\n'
     'var "tmp1" *= 2 false\n'
-    'launchTarget "custom_coordinates" "%var.player/tmp0 0% 0 0" %var.player/tmp1 0%'
+    'launchTarget "custom_coordinates" "%var.player/tmp0% 0 0" %var.player/tmp1 0%'
 ), container.into_htsl()
 
 

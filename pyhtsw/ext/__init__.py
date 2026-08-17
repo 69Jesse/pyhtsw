@@ -63,6 +63,27 @@ from .music import (
 from .ordinal import (
     set_ordinal_inline as set_ordinal_inline,
 )
+from .position_raycast import (
+    Block as Block,
+)
+from .position_raycast import (
+    Box as Box,
+)
+from .position_raycast import (
+    PositionRaycastResult as PositionRaycastResult,
+)
+from .position_raycast import (
+    RayTarget as RayTarget,
+)
+from .position_raycast import (
+    Shape as Shape,
+)
+from .position_raycast import (
+    Sphere as Sphere,
+)
+from .position_raycast import (
+    create_position_raycast as create_position_raycast,
+)
 from .raycast import (
     RaycastResult as RaycastResult,
 )

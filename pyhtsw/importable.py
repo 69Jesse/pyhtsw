@@ -16,6 +16,24 @@ from .types import (
 from .utils.kebab import into_kebab
 from .utils.log import log
 
+_ILLEGAL_HTSL_CHARS = frozenset(chr(code) for code in range(0x20)) | {
+    '\x7f',
+    '§',
+}
+
+
+def _verify_chat_safe(relpath: str, content: str) -> None:
+    for number, line in enumerate(content.split('\n'), start=1):
+        for column, char in enumerate(line, start=1):
+            if char not in _ILLEGAL_HTSL_CHARS:
+                continue
+            raise ValueError(
+                f'{relpath}:{number}:{column} emits U+{ord(char):04X}, which '
+                f"Minecraft's chat cannot carry, so Housing would disconnect "
+                f'the importer with "Illegal characters in chat". '
+                f'Line: {line!r}',
+            )
+
 
 def _reserved_folder_names() -> frozenset[str]:
     names: set[str] = set()
@@ -180,6 +198,8 @@ class Project:
 
     def write(self, relpath: str, content: str) -> None:
         path = self.root / relpath
+        if path.suffix.lower() == '.htsl':
+            _verify_chat_safe(relpath, content)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding='utf-8')
         self.written_paths.add(path)

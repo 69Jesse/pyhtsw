@@ -161,3 +161,20 @@ assert BinaryExpression in counts, counts
 # match the BE count.
 n_lines = len(container.into_htsl().split('\n'))
 assert counts[BinaryExpression] == n_lines, (counts, n_lines)
+
+
+from pyhtsw import GroupColor, PlayerName, TemporaryStat  # noqa: E402
+
+with Container() as container:
+    dname = PlayerStat('dname').as_string()
+    name = TemporaryStat().as_string().with_value(PlayerName)
+    # 20 chars of placeholder + a ~25-char marker: well over the 32-char limit,
+    # so set_string has to chunk it.
+    set_string(dname, f'{GroupColor}{name}')
+
+htsl = container.into_htsl()
+assert '\x00' not in htsl, repr(htsl)
+assert 'pyhtsw-deferred' not in htsl, repr(htsl)
+for line in htsl.split('\n'):
+    src = line.split('"', 2)[1]
+    assert len(src) <= SET_STRING_MAX_LENGTH, (len(src), src)

@@ -1,3 +1,4 @@
+from ..deferred import deferred_spans
 from ..editable import Editable
 from ..expression.binary_expression import SET_STRING_MAX_LENGTH
 from ..stats.player_stat import PlayerStat
@@ -6,12 +7,23 @@ from ..utils.placeholders import get_placeholder_parts
 __all__ = ('set_string',)
 
 
+def _atomize_literal(text: str) -> list[str]:
+    atoms: list[str] = []
+    last = 0
+    for start, end in deferred_spans(text):
+        atoms.extend(text[last:start])
+        atoms.append(text[start:end])
+        last = end
+    atoms.extend(text[last:])
+    return atoms
+
+
 def _atomize(value: str) -> list[str]:
     parts = get_placeholder_parts(value)
     atoms: list[str] = []
     for i, part in enumerate(parts):
         if i % 2 == 0:
-            atoms.extend(part)
+            atoms.extend(_atomize_literal(part))
         else:
             atoms.append(part)
     return atoms

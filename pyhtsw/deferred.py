@@ -9,6 +9,7 @@ __all__ = (
     'lookup_deferred',
     'find_deferred_ids',
     'text_has_deferred',
+    'deferred_spans',
     'substitute_deferred',
 )
 
@@ -54,6 +55,17 @@ def find_deferred_ids(text: str) -> list[int]:
     for match in _PATTERN.finditer(text):
         found.setdefault(int(match.group(1)), None)
     return list(found)
+
+
+def deferred_spans(text: str) -> list[tuple[int, int]]:
+    """The (start, end) slice of every marker in ``text``, in order.
+
+    A marker is one indivisible unit: split it and neither half matches
+    ``_PATTERN`` any more, so ``substitute_deferred`` silently leaves both
+    halves in the emitted HTSL. Anything that chops a string up has to skip
+    over markers, and this is how it finds them.
+    """
+    return [match.span() for match in _PATTERN.finditer(text)]
 
 
 def substitute_deferred(text: str, mapping: dict[int, str]) -> str:

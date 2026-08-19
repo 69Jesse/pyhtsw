@@ -262,8 +262,11 @@ class NBTFloat(NBT[float]):
     def into_object(self) -> float:
         return self.value
 
+    # E notation is accepted but never written: `into_snbt` stays positional so
+    # older readers keep working. Vanilla's own writer does emit it for extreme
+    # magnitudes, though, so files from elsewhere can carry it.
     FLOAT_REGEX: re.Pattern[str] = re.compile(
-        r'^-?(?:\d+\.\d*|\.\d+|\d+)[fF]',
+        r'^-?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?[fF]',
         re.ASCII,
     )
 
@@ -297,9 +300,12 @@ class NBTDouble(NBT[float]):
     def into_object(self) -> float:
         return self.value
 
-    # An unsuffixed double needs a decimal point, otherwise it would swallow ints.
+    # An unsuffixed double needs a decimal point or an exponent, otherwise it
+    # would swallow ints. E notation is accepted but never written — see
+    # NBTFloat.FLOAT_REGEX.
     DOUBLE_REGEX: re.Pattern[str] = re.compile(
-        r'^-?(?:\d+\.\d*|\.\d+|\d+)[dD]|^-?(?:\d+\.\d*|\.\d+)',
+        r'^-?(?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?[dD]'
+        r'|^-?(?:(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?|\d+[eE][+-]?\d+)',
         re.ASCII,
     )
 

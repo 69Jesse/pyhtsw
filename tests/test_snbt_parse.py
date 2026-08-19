@@ -87,6 +87,16 @@ for text in ('x"y', 'back\\slash', 'both \\" here', '§4§lADMIN BOW'):
     assert NBT.from_snbt(NBTString(text).into_snbt()).into_object() == text
 
 
+# === E notation is accepted but never written ===
+parses_as('1.0E-7', NBTDouble, 1e-07)
+parses_as('1.5e3f', NBTFloat, 1500.0)
+parses_as('2e3', NBTDouble, 2000.0)
+parses_as('-1.2E+2d', NBTDouble, -120.0)
+assert 'e' not in NBTDouble(1e-07).into_snbt().lower()
+# A bare int must still parse as an int, not get swallowed by the double branch.
+parses_as('7', NBTInt, 7)
+
+
 # === Malformed input raises ValueError, never IndexError ===
 rejects('{a:1')
 rejects('[1,2')

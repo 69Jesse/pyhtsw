@@ -87,6 +87,55 @@ for text in ('x"y', 'back\\slash', 'both \\" here', '§4§lADMIN BOW'):
     assert NBT.from_snbt(NBTString(text).into_snbt()).into_object() == text
 
 
+# === The 1.21.5 escape set, both directions ===
+# Short forms.
+parses_as(r'"a\nb"', NBTString, 'a\nb')
+parses_as(r'"a\tb"', NBTString, 'a\tb')
+parses_as(r'"a\rb"', NBTString, 'a\rb')
+parses_as(r'"a\bb"', NBTString, 'a\bb')
+parses_as(r'"a\fb"', NBTString, 'a\fb')
+parses_as(r'"a\sb"', NBTString, 'a b')  # \s is a space; we never write it
+assert NBTString('a\nb').into_snbt() == r'"a\nb"'
+assert NBTString('a\tb').into_snbt() == r'"a\tb"'
+
+# Hex forms. \s decodes but is never emitted, so a space stays a space.
+parses_as(r'"a\x00b"', NBTString, 'a\x00b')
+parses_as(r'"a\x1fb"', NBTString, 'a\x1fb')
+parses_as(r'"§4"', NBTString, '§4')
+parses_as(r'"\U0001F600"', NBTString, '\U0001f600')
+assert NBTString('a\x00b').into_snbt() == r'"a\x00b"'
+assert NBTString('a\x7fb').into_snbt() == r'"a\x7fb"'
+
+# \N{name} decodes; nothing emits it.
+parses_as(r'"\N{LATIN SMALL LETTER A}"', NBTString, 'a')
+
+# Printable non-ASCII stays literal so files remain readable.
+assert NBTString('§4§lADMIN BOW').into_snbt() == '"§4§lADMIN BOW"'
+assert NBTString('你好 😀').into_snbt() == '"你好 😀"'
+
+# Lone surrogates have no UTF-8 encoding, so they must not be written raw.
+assert NBTString('a\ud83db').into_snbt() == r'"a\ud83db"'
+parses_as(r'"a\ud83db"', NBTString, 'a\ud83db')
+
+# Every control character round trips.
+for code in list(range(0x00, 0x20)) + [0x7F]:
+    text = f'x{chr(code)}y'
+    assert NBT.from_snbt(NBTString(text).into_snbt()).into_object() == text, hex(code)
+
+# Ordinary text is byte-identical to what the pre-1.21.5 dialect produced.
+for text in ('§aLore', 'Player_123', 'a\\b "c" d', '{"text":"hi"}', ''):
+    legacy = '"' + text.replace('\\', '\\\\').replace('"', '\\"') + '"'
+    assert NBTString(text).into_snbt() == legacy, text
+
+# Decoding is strict now: an unknown escape is an error, not a literal.
+rejects(r'"a\qb"')
+rejects(r'"a\x0"')  # \x needs two hex digits
+rejects(r'"a\u12"')  # \u needs four
+rejects('"a\\"')  # trailing backslash
+rejects(r'"\N{NOT A REAL CHARACTER NAME}"')
+rejects(r'"\UFFFFFFFF"')  # past the last code point
+
+
 # === E notation is accepted but never written ===
 parses_as('1.0E-7', NBTDouble, 1e-07)
 parses_as('1.5e3f', NBTFloat, 1500.0)

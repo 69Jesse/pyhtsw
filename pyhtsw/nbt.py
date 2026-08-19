@@ -1,4 +1,6 @@
 import re
+import string
+import unicodedata
 from abc import ABC, abstractmethod
 from typing import Any, Self
 
@@ -341,9 +343,111 @@ class NBTString(NBT[str]):
 
     QUOTES: tuple[str, str] = ('"', "'")
 
+    # The escape set Minecraft 1.21.5 introduced. Before that release SNBT knew
+    # only `\\` and `\<quote>`, so a string carrying control characters had no
+    # representation at all: writers emitted them raw and the resulting file was
+    # unparseable. Decoding is strict — an unknown escape is an error rather than
+    # being kept literally, which is what the old parser did.
+    SHORT_ESCAPES: dict[str, str] = {
+        'b': '\b',
+        'f': '\f',
+        'n': '\n',
+        'r': '\r',
+        's': ' ',
+        't': '\t',
+        '\\': '\\',
+        "'": "'",
+        '"': '"',
+    }
+    # Fixed widths, so the decoder always knows where the escape ends.
+    HEX_ESCAPES: dict[str, int] = {'x': 2, 'u': 4, 'U': 8}
+    # The reverse direction only needs the characters that must not appear raw.
+    ESCAPE_FOR: dict[str, str] = {
+        '\b': '\\b',
+        '\f': '\\f',
+        '\n': '\\n',
+        '\r': '\\r',
+        '\t': '\\t',
+        '\\': '\\\\',
+        '"': '\\"',
+    }
+
     @staticmethod
     def escaped(value: str) -> str:
-        return value.replace('\\', '\\\\').replace('"', '\\"')
+        """
+        Escape `value` for a double-quoted SNBT literal.
+
+        Only what has to be escaped is. Printable non-ASCII stays literal so
+        files remain readable, and text without control characters comes out
+        byte-identical to what the pre-1.21.5 dialect produced.
+        """
+        out: list[str] = []
+        for character in value:
+            short = NBTString.ESCAPE_FOR.get(character)
+            if short is not None:
+                out.append(short)
+                continue
+            code = ord(character)
+            if code < 0x20 or code == 0x7F:
+                out.append(f'\\x{code:02x}')
+                continue
+            if 0xD800 <= code <= 0xDFFF:
+                # A lone surrogate has no UTF-8 encoding, so left literal it
+                # would not survive being written to a file at all.
+                out.append(f'\\u{code:04x}')
+                continue
+            out.append(character)
+        return ''.join(out)
+
+    @classmethod
+    def _parse_escape(cls, s: str, offset: int) -> tuple[str, int]:
+        if offset + 1 >= len(s):
+            raise ValueError(
+                f'Invalid SNBT format for {cls.__name__}: trailing backslash',
+            )
+        marker = s[offset + 1]
+
+        width = cls.HEX_ESCAPES.get(marker)
+        if width is not None:
+            digits = s[offset + 2 : offset + 2 + width]
+            if len(digits) < width or any(c not in string.hexdigits for c in digits):
+                raise ValueError(
+                    f'Invalid SNBT format for {cls.__name__}: '
+                    f'\\{marker} needs {width} hex digits',
+                )
+            code = int(digits, 16)
+            if code > 0x10FFFF:
+                raise ValueError(
+                    f'Invalid SNBT format for {cls.__name__}: '
+                    f'\\{marker}{digits} is not a code point',
+                )
+            return chr(code), 2 + width
+
+        if marker == 'N':
+            if offset + 2 >= len(s) or s[offset + 2] != '{':
+                raise ValueError(
+                    f'Invalid SNBT format for {cls.__name__}: \\N needs a {{name}}',
+                )
+            end = s.find('}', offset + 3)
+            if end == -1:
+                raise ValueError(
+                    f'Invalid SNBT format for {cls.__name__}: unterminated \\N{{',
+                )
+            try:
+                return unicodedata.lookup(s[offset + 3 : end]), end + 1 - offset
+            except KeyError as error:
+                raise ValueError(
+                    f'Invalid SNBT format for {cls.__name__}: '
+                    f'unknown character name {s[offset + 3 : end]!r}',
+                ) from error
+
+        simple = cls.SHORT_ESCAPES.get(marker)
+        if simple is not None:
+            return simple, 2
+
+        raise ValueError(
+            f'Invalid SNBT format for {cls.__name__}: unknown escape \\{marker}',
+        )
 
     @classmethod
     def _parse_snbt(cls, s: str) -> tuple[Self, int]:
@@ -355,14 +459,9 @@ class NBTString(NBT[str]):
         while offset < len(s):
             character = s[offset]
             if character == '\\':
-                if offset + 1 >= len(s):
-                    break
-                following = s[offset + 1]
-                # Only `\\` and `\<quote>` are escapes; anything else stays literal.
-                characters.append(
-                    following if following in ('\\', quote) else character + following,
-                )
-                offset += 2
+                decoded, consumed = cls._parse_escape(s, offset)
+                characters.append(decoded)
+                offset += consumed
                 continue
             if character == quote:
                 return cls(''.join(characters)), offset + 1

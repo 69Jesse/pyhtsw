@@ -1,6 +1,5 @@
 from typing import Literal, overload
 
-from ..actions.conditional.statements import Else, IfAll
 from ..checkable import Checkable
 from ..editable import Editable
 from ..stats.stat import Stat
@@ -177,25 +176,33 @@ def approximate_sin_cos(
         x_or_temp1 = x.as_double()
         if isinstance(x_or_temp1, Stat):
             x_or_temp1 = x_or_temp1.without_auto_unset()
-    original_x = TemporaryStat().as_double()
 
+    fold_sign: TemporaryStat | None = None
     if certain_x_in_range != 90:
-        if certain_x_in_range != 180:
-            original_x.value = x % 360.0
-            x_or_temp1.value = original_x + 90.0
-            x_or_temp1.value = x_or_temp1 % 180.0 - 90.0
-        else:
-            with IfAll(x >= 0.0):
-                original_x.value = x
-            with Else:
-                original_x.value = x + 360.0
-            x_or_temp1.value = original_x + 90.0
-            with IfAll(x_or_temp1 >= 180.0):
-                x_or_temp1.value -= 180.0
-            with IfAll(x_or_temp1 >= 180.0):
-                x_or_temp1.value -= 270.0
-            with Else:
-                x_or_temp1.value -= 90.0
+        # Conditional-free range reduction: shift positive (so the long cast
+        # truncates like floor), fold into [-90, 90) with one division, and
+        # flip both outputs when the fold count is odd. Valid for
+        # |x| <= 36,000 degrees.
+        fold = TemporaryStat().as_double()
+        fold_sign = TemporaryStat().as_double()
+        x_or_temp1.value = x
+        x_or_temp1.value += 36090.0
+        fold.value = x_or_temp1
+        fold.value /= 180.0
+        fold.cast_to_long()
+        fold.cast_to_double()
+        # fold_sign = 1 - 2 * (fold mod 2): +1 on even folds, -1 on odd.
+        fold_sign.value = fold
+        fold_sign.value /= 2.0
+        fold_sign.cast_to_long()
+        fold_sign.cast_to_double()
+        fold_sign.value *= 2.0
+        fold_sign.value -= fold
+        fold_sign.value *= 2.0
+        fold_sign.value += 1.0
+        fold.value *= 180.0
+        x_or_temp1.value -= fold
+        x_or_temp1.value -= 90.0
     else:
         x_or_temp1.value = x
 
@@ -223,10 +230,6 @@ def approximate_sin_cos(
         assign_to_sin.value *= -0.017
         assign_to_sin.value += x_or_temp1
 
-    if certain_x_in_range != 90:
-        with IfAll(
-            original_x >= 90.0,
-            original_x < 270.0,
-        ):
-            assign_to_sin.value *= -1
-            assign_to_cos.value *= -1
+    if fold_sign is not None:
+        assign_to_sin.value *= fold_sign
+        assign_to_cos.value *= fold_sign

@@ -2,7 +2,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from ..actions.conditional.statements import IfAll
+from ..actions.conditional.statements import IfAll, IfAny
 from ..actions.create_function import create_function
 from ..actions.exit_function import exit_function
 from ..actions.function import Function
@@ -164,7 +164,6 @@ def create_raycast(
         ray_dist = player_double('raydist')
         perp2 = player_double('perp2')
         t1 = player_double('t1')
-        t2 = player_double('t2')
         my_hit = player_long('myhit')
         my_headshot = player_long('myheadshot')
 
@@ -188,32 +187,18 @@ def create_raycast(
         t1.value *= look_z
         ray_dist.value += t1
 
-        # perp2 = |offset × look|²  (squared perpendicular distance to the ray)
-        perp2.value = 0.0
-        # (offsetY*lookZ - offsetZ*lookY)²
-        t1.value = offset_y
-        t1.value *= look_z
-        t2.value = offset_z
-        t2.value *= look_y
-        t1.value -= t2
+        # perp2 = |offset|² - ray_dist²: `look` is a unit vector, so this is
+        # |offset × look|² by Pythagoras at less than half the cross product's
+        # cost. The offsets are dead after the dot product, so square in place.
+        offset_x.value *= offset_x
+        offset_y.value *= offset_y
+        offset_z.value *= offset_z
+        perp2.value = offset_x
+        perp2.value += offset_y
+        perp2.value += offset_z
+        t1.value = ray_dist
         t1.value *= t1
-        perp2.value += t1
-        # (offsetZ*lookX - offsetX*lookZ)²
-        t1.value = offset_z
-        t1.value *= look_x
-        t2.value = offset_x
-        t2.value *= look_z
-        t1.value -= t2
-        t1.value *= t1
-        perp2.value += t1
-        # (offsetX*lookY - offsetY*lookX)²
-        t1.value = offset_x
-        t1.value *= look_y
-        t2.value = offset_y
-        t2.value *= look_x
-        t1.value -= t2
-        t1.value *= t1
-        perp2.value += t1
+        perp2.value -= t1
 
         # Hit test: close enough to the ray AND in front of the caster.
         hit_conditions: list[Condition] = [perp2 <= dist2, ray_dist >= 0.0]
@@ -221,43 +206,56 @@ def create_raycast(
             hit_conditions.append(ray_dist <= max_distance)
         hit_conditions.extend(_gather_conditions(conditions))
 
-        my_hit.value = 0
-        with IfAll(*hit_conditions):
-            my_hit.value = 1
+        needs_staging = detect_headshots or headshots_only or max_hits is not None
+        if not needs_staging:
+            # No later step revisits the verdict, so a miss exits directly:
+            # NOT all(conditions) == any(inverted), one conditional in total.
+            with IfAny(*(~condition for condition in hit_conditions)):
+                exit_function()
+        else:
+            my_hit.value = 0
+            with IfAll(*hit_conditions):
+                my_hit.value = 1
 
-        # headshots_only needs the head band too, so it implies detection.
-        if detect_headshots or headshots_only:
-            hit_y = player_double('hity')
-            head_min = player_double('headmin')
-            head_max = player_double('headmax')
+            # headshots_only needs the head band too, so it implies detection.
+            if detect_headshots or headshots_only:
+                hit_y = player_double('hity')
 
-            hit_y.value = ray_dist
-            hit_y.value *= look_y
-            hit_y.value += pos_y
-            head_min.value = PlayerPositionY
-            head_min.value += head_min_offset
-            head_max.value = PlayerPositionY
-            head_max.value += head_max_offset
+                # The band is relative to the target's feet, so compare the
+                # hit height against the literal offsets instead of baking
+                # per-target min/max stats.
+                hit_y.value = ray_dist
+                hit_y.value *= look_y
+                hit_y.value += pos_y
+                hit_y.value -= PlayerPositionY
 
-            my_headshot.value = 0
-            with IfAll(my_hit == 1, hit_y >= head_min, hit_y <= head_max):
-                my_headshot.value = 1
-            if headshots_only:
-                with IfAll(my_hit == 1, my_headshot == 0):
+                my_headshot.value = 0
+                with IfAll(
+                    my_hit == 1,
+                    hit_y >= head_min_offset,
+                    hit_y <= head_max_offset,
+                ):
+                    my_headshot.value = 1
+                if headshots_only:
+                    with IfAll(my_hit == 1, my_headshot == 0):
+                        my_hit.value = 0
+
+            if max_hits is not None:
+                with IfAll(my_hit == 1, hits >= max_hits):
                     my_hit.value = 0
 
-        if max_hits is not None:
-            with IfAll(my_hit == 1, hits >= max_hits):
-                my_hit.value = 0
-
-        # Not a hit → stop here. Everything past this point is the hit path at
-        # top level, so the target callback is free to use its own conditionals.
-        with IfAll(my_hit == 0):
-            exit_function()
+            # Not a hit → stop here. Everything past this point is the hit
+            # path at top level, so the target callback is free to open its
+            # own conditionals.
+            with IfAll(my_hit == 0):
+                exit_function()
 
         hits.value += 1
         length.value = ray_dist
-        headshot.value = my_headshot
+        if detect_headshots or headshots_only:
+            # Only meaningful when the band was computed this cast; otherwise
+            # it would copy a stale flag from an earlier one.
+            headshot.value = my_headshot
 
         if on_hit_target is not None:
             call_with_optional_arg(on_hit_target, result, noun='on_hit_target')

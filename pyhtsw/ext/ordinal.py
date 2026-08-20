@@ -27,25 +27,12 @@ def set_ordinal_inline(
     assign_modulo(last_digit, last_two_digits, 10)
 
     output_stat.value = 'th'
-    reversed_conditions = [
-        ~(last_two_digits == 11),
-        ~(last_two_digits == 12),
-        ~(last_two_digits == 13),
-    ]  # 11/12/13 stay 'th'
-
-    condition = last_digit == 1
-    with IfAll(*reversed_conditions, condition):
+    # Each branch only needs to exclude its own teen: a last digit of 1 rules
+    # out 12/13 by itself, and the digit checks are mutually exclusive.
+    with IfAll(~(last_two_digits == 11), last_digit == 1):
         output_stat.value = 'st'
-    reversed_conditions.append(~condition)
-
-    condition = last_digit == 2
-    with IfAll(*reversed_conditions, condition):
+    with IfAll(~(last_two_digits == 12), last_digit == 2):
         output_stat.value = 'nd'
-    reversed_conditions.append(~condition)
-
-    condition = last_digit == 3
-    with IfAll(*reversed_conditions, condition):
+    with IfAll(~(last_two_digits == 13), last_digit == 3):
         output_stat.value = 'rd'
-    reversed_conditions.append(~condition)
-
     # else: 'th' (already set)

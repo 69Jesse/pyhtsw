@@ -60,7 +60,6 @@ def set_string(stat: Editable, value: str) -> None:
     scratch = PlayerStat('t').as_string()
     scratch_ref = str(scratch)
     continuation_budget = SET_STRING_MAX_LENGTH - len(self_ref)
-    used_scratch = False
 
     atoms = _atomize(value)
     index = 0
@@ -84,8 +83,10 @@ def set_string(stat: Editable, value: str) -> None:
                     f'set_string: target self-reference {self_ref!r} leaves no '
                     f'room to append content within the {SET_STRING_MAX_LENGTH}-char limit',
                 )
+            # The scratch stat `t` deliberately stays set afterwards:
+            # unsetting it was pure hygiene at one action per call, and the
+            # next use overwrites it anyway.
             scratch.value = atom
-            used_scratch = True
             index += 1
             chunk = scratch_ref
 
@@ -94,6 +95,3 @@ def set_string(stat: Editable, value: str) -> None:
             first = False
         else:
             stat.value = self_ref + chunk
-
-    if used_scratch:
-        scratch.unset()

@@ -53,15 +53,20 @@ def _render_var(value: BackendType) -> str:
         whole, dec = fixed.split('.')
         negative = whole.startswith('-')
         digits = whole[1:] if negative else whole
+        rounded = (int((dec + '0000')[:4]) + 5) // 10
+        carried = rounded >= 1000
+        if carried:
+            # .9995 and up round into the whole part.
+            rounded -= 1000
+            digits = str(int(digits) + 1)
+        display = str(rounded).rjust(3, '0').rstrip('0')
+        if not display and not carried:
+            display = dec.rstrip('0')
+        if not display:
+            display = '0'
         grouped = format(int(digits), ',')
         if negative:
             grouped = '-' + grouped
-        rounded = str((int((dec + '0000')[:4]) + 5) // 10).rjust(3, '0')
-        display = rounded.rstrip('0')
-        if not display:
-            display = dec.rstrip('0')
-            if not display:
-                display = '0'
         return f'{grouped}.{display}'
     return backend_into_string(value)
 

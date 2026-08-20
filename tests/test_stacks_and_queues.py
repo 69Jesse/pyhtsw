@@ -1721,3 +1721,34 @@ with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
             _is.add(1)
             _is.remove(output=PlayerStat('fiso').as_long())
         assert _container.into_htsl()
+
+
+for _cap in (10, 25, 30, 50):
+    for _ov in ('ignore', 'override_newest', 'override_oldest'):
+        with ExecutionContext(ignore_action_limits=True) as ctx:
+            _holders = [PlayerStat(f'fq{i}').as_long() for i in range(_cap)]
+            _q = Queue(
+                holders=_holders,
+                counter=PlayerStat('fqc').as_long(),
+                on_overflow=_ov,
+            )
+            _pushed = _cap + 3
+            for _v in range(_pushed):
+                _q.add(1000 + _v)
+
+            def check_fast_queue(
+                _c: int = _cap,
+                _o: str = _ov,
+                _h: list = _holders,
+                _n: int = _pushed,
+            ) -> None:
+                got = [int(ctx.get(s)) for s in _h]
+                if _o == 'ignore':
+                    want = [1000 + v for v in range(_c)]
+                elif _o == 'override_newest':
+                    want = [1000 + v for v in range(_c - 1)] + [1000 + _n - 1]
+                else:  # override_oldest keeps the newest _c values in order
+                    want = [1000 + v for v in range(_n - _c, _n)]
+                assert got == want, (_c, _o, got, want)
+
+            ctx.assert_all(check_fast_queue)

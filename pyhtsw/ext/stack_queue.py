@@ -4,6 +4,7 @@ from types import EllipsisType
 from typing import Literal
 
 from pyhtsw.stats.stat import Stat
+from pyhtsw.stats.temporary_stat import TemporaryStat
 
 from ..actions.conditional.statements import Else, IfAll
 from ..checkable import Checkable
@@ -327,8 +328,12 @@ class IntQueue(_BitPackedBase):
 
         for h in range(n - 1, -1, -1):
             upper = min((h + 1) * cap, self.real_capacity)
+            # The lower bound is vacuous for the first holder; passing the
+            # bare Python `False` the old `and` produced would silently make
+            # the conditional never fire on a signature change.
+            lower = [self.counter >= h * cap] if h != 0 else []
             with IfAll(
-                h != 0 and self.counter >= h * cap,
+                *lower,
                 self.counter < upper,
             ):
                 shift_amount = (self.counter - h * cap) * bits
@@ -516,7 +521,46 @@ class Queue(_SlotContainerBase):
             with chunked(IfAll(self.counter == self.capacity)):
                 self._shift_down(None)
                 self.counter.value -= 1
-        elif self.on_overflow == 'override_newest':
+
+        # An add is a write at slot `counter`, so when the holders take
+        # cheap_write's fast path (long stats named in an arithmetic run) the
+        # per-slot conditional cascade collapses into the composed write plus
+        # one counter guard.
+        from .cheap_read_write import _fast_write_plan, cheap_write
+
+        if (
+            _fast_write_plan(
+                items=self.holders,
+                n=self.capacity,
+                width=self.width,
+            )
+            is not None
+        ):
+            if self.on_overflow == 'override_oldest':
+                # The shift above put counter back in range when full.
+                index: Editable = self.counter  # type: ignore[assignment]
+            else:
+                clamp = TemporaryStat().as_long()
+                index_stat = TemporaryStat().as_long()
+                clamp.value = self.counter
+                clamp.value //= self.capacity
+                if self.on_overflow == 'ignore':
+                    # A full queue steers the index to -1, which misses every
+                    # composed key.
+                    clamp.value *= self.capacity + 1
+                # else: full steers to capacity - 1 (override_newest).
+                index_stat.value = self.counter
+                index_stat.value -= clamp
+                index = index_stat
+            cheap_write(items=self.holders, index=index, input=values)
+            if self.on_overflow == 'override_oldest':
+                self.counter.value += 1
+            else:
+                with IfAll(self.counter < self.capacity):
+                    self.counter.value += 1
+            return
+
+        if self.on_overflow == 'override_newest':
             with IfAll(self.counter == self.capacity):
                 self._write_at_slot(self.capacity - 1, values)
 

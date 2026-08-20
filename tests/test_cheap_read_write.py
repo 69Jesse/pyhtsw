@@ -1,6 +1,9 @@
+import math
 import random
 
 from helpers import expect_exception
+from pyhtsw.actions.conditional.statements import IfAll
+from pyhtsw.actions.random import RandomExpression
 from pyhtsw.ext.cheap_read_write import cheap_read, cheap_write
 
 from pyhtsw import Container, ExecutionContext, GlobalStat, PlayerStat
@@ -137,7 +140,10 @@ assert len(counts) == 1, counts
 assert counts[BinaryExpression] == 5, counts
 
 
-# Width=1, empty prefix (names are just digits) → 4 BinaryExpressions.
+# Width=1, empty prefix (names are just digits) → still 5 BinaryExpressions:
+# the scope head must ride in the prefix variable even with no shared prefix,
+# because a literal `%var.player/` next to the counter placeholder is eaten by
+# htsw's parseString (its `%` pairs with the counter's opening `%`).
 with Container() as container:
     sources = [PlayerStat(f'{i}').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
@@ -146,7 +152,7 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 4, counts
+assert counts[BinaryExpression] == 5, counts
 
 
 # Width=3 Mode A (shared prefix, flat numbering) → 15 BinaryExpressions.
@@ -455,3 +461,351 @@ with expect_exception(ValueError):
         index=PlayerStat('idx').as_long(),
         output=tuple(PlayerStat(f'o{k}').as_long() for k in range(13)),
     )
+
+
+for _width in (1, 2, 3):
+    with ExecutionContext(ignore_action_limits=True) as ctx:
+        _items = [
+            tuple(PlayerStat(f'z{i * _width + k}').as_long() for k in range(_width))
+            for i in range(4)
+        ]
+        for _i, _row in enumerate(_items):
+            for _k, _s in enumerate(_row):
+                ctx.put(_s, _i * 100 + _k + 1)
+        _idx = PlayerStat('idx').as_long()
+        _idx.value = 0
+        _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(_width))
+        cheap_read(
+            items=_items if _width > 1 else [row[0] for row in _items],
+            index=_idx,
+            output=_outputs if _width > 1 else _outputs[0],
+        )
+
+        def check_zero_index(
+            _w: int = _width,
+            _outs: tuple[PlayerStat, ...] = _outputs,
+        ) -> None:
+            for k in range(_w):
+                got = int(ctx.get(_outs[k]))
+                assert got == k + 1, (
+                    f'width={_w} index=0: output[{k}]={got}, want {k + 1}'
+                )
+
+        ctx.assert_all(check_zero_index)
+
+
+for _length, _width in ((2, 1), (5, 1), (13, 1), (30, 1), (60, 1), (6, 2), (10, 3)):
+    for _target in sample_targets(_length):
+        with ExecutionContext(ignore_action_limits=True) as ctx:
+            _slots = [
+                tuple(
+                    PlayerStat(f'fw{i * _width + k}').as_long() for k in range(_width)
+                )
+                for i in range(_length)
+            ]
+            for _i in range(_length):
+                for _k in range(_width):
+                    ctx.put(_slots[_i][_k], value_at(_i, _k))
+            _idx = PlayerStat('idx').as_long()
+            _idx.value = _target
+            _new = tuple(-7_000_000 - k for k in range(_width))
+
+            cheap_write(
+                items=[s[0] for s in _slots] if _width == 1 else list(_slots),
+                index=_idx,
+                input=_new[0] if _width == 1 else _new,
+            )
+
+            def check_fast_write(
+                _len: int = _length,
+                _w: int = _width,
+                _t: int = _target,
+                _s: list[tuple[PlayerStat, ...]] = _slots,
+                _n: tuple[int, ...] = _new,
+            ) -> None:
+                for i in range(_len):
+                    for k in range(_w):
+                        got = int(ctx.get(_s[i][k]))
+                        want = _n[k] if i == _t else value_at(i, k)
+                        assert got == want, (
+                            f'fast write length={_len} width={_w} target={_t}: '
+                            f'slot[{i}][{k}]={got}, want {want}'
+                        )
+
+            ctx.assert_all(check_fast_write)
+
+
+# Writing the value a slot already holds is a no-op: the diff is 0, which
+# auto-unsets the one-hot so every lookup falls back to 0.
+for _target in (0, 3, 7):
+    with ExecutionContext(ignore_action_limits=True) as ctx:
+        _slots = [PlayerStat(f'fz{i}').as_long() for i in range(8)]
+        for _s in _slots:
+            ctx.put(_s, 42)
+        _idx = PlayerStat('idx').as_long()
+        _idx.value = _target
+        cheap_write(items=_slots, index=_idx, input=42)
+
+        def check_no_op(_s: list[PlayerStat] = _slots, _t: int = _target) -> None:
+            for i, stat in enumerate(_s):
+                got = int(ctx.get(stat))
+                assert got == 42, f'no-op target={_t}: slot[{i}]={got}, want 42'
+
+        ctx.assert_all(check_no_op)
+
+
+# Successive writes in one block: each one must see the array the previous one
+# left behind. The one-hot is only ever read through a name assembled at
+# runtime, so nothing in the emitted expressions mentions it -- without a
+# keep-alive reference the dead-store pass drops every write but the last.
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _slots = [PlayerStat(f'fs{i}').as_long() for i in range(13)]
+    for _i, _s in enumerate(_slots):
+        ctx.put(_s, value_at(_i, 0))
+    _idx = PlayerStat('idx').as_long()
+    _written: dict[int, int] = {}
+    for _step, _target in enumerate((1, 5, 12, 0)):
+        _written[_target] = -5_000 - _step
+        _idx.value = _target
+        cheap_write(items=_slots, index=_idx, input=_written[_target])
+
+        def check_successive(
+            _s: list[PlayerStat] = _slots,
+            _w: tuple[tuple[int, int], ...] = tuple(_written.items()),
+            _t: int = _target,
+        ) -> None:
+            _w = dict(_w)  # type: ignore[assignment]
+            for i, stat in enumerate(_s):
+                got = int(ctx.get(stat))
+                want = _w.get(i, value_at(i, 0))
+                assert got == want, (
+                    f'successive write (after target={_t}): '
+                    f'slot[{i}]={got}, want {want}'
+                )
+
+        ctx.assert_all(check_successive)
+
+
+# The fast path costs far fewer conditionals than the chunked cascade, and for
+# arrays of any real size fewer expressions too. One conditional per chunk of
+# blits is irreducible: a branch holds 25 actions, and Housing forbids nesting a
+# conditional inside a conditional, so there is no cheaper way to pick a chunk.
+_FAST_WRITE_COUNTS = {
+    # length: (conditionals, var changes)
+    10: (1, 32),  # one wrapped blit chunk
+    # The chain paths (4 and 5 conditionals at n=100) are disabled: in-game
+    # verification showed Housing's value input cannot express the chain blit
+    # (a bare value must be a single placeholder with no nested `%`) and
+    # `long += double` is a fatal, execution-halting error. The baked-table
+    # path below is the one whose mechanism is in-game verified (T3).
+    100: (6, 162),
+    1000: (42, 1062),
+}
+for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
+    with Container() as container:
+        cheap_write(
+            items=[PlayerStat(f'w{i:,}').as_long() for i in range(_length)],
+            index=PlayerStat('idx').as_long(),
+            input=PlayerStat('inp').as_long(),
+        )
+    counts = container.expression_counts(nested=True)
+    assert counts.get(ConditionalExpression, 0) == _want_cond, (_length, counts)
+    assert counts.get(BinaryExpression, 0) == _want_be, (_length, counts)
+    assert counts.get(RandomExpression, 0) == 0, (_length, counts)
+
+# Four of the 100-slot conditionals are the blit chunks; the rest is the setup
+# spilling past the enclosing list's 25 var-change budget.
+assert _FAST_WRITE_COUNTS[100][0] >= math.ceil(100 / 25)
+
+
+# Neither a conditional nor a Random can be nested inside a conditional, so a
+# cheap_write that needs either cannot be emitted from inside one. That has
+# always been true of the cascade; the fast path defers to it rather than
+# failing later inside the limit fixer.
+with expect_exception(SyntaxError):
+    with Container():
+        with IfAll(PlayerStat('gate').as_long() == 1):
+            cheap_write(
+                items=[PlayerStat(f'q{i}').as_long() for i in range(100)],
+                index=PlayerStat('idx').as_long(),
+                input=PlayerStat('inp').as_long(),
+            )
+
+# A write small enough to fit one action list needs neither, so it still works.
+with Container() as container:
+    with IfAll(PlayerStat('gate').as_long() == 1):
+        cheap_write(
+            items=[PlayerStat(f'r{i}').as_long() for i in range(3)],
+            index=PlayerStat('idx').as_long(),
+            input=PlayerStat('inp').as_long(),
+        )
+counts = container.expression_counts(nested=True)
+assert counts.get(RandomExpression, 0) == 0, counts
+
+
+# The one-hot patch is arithmetic, so non-LONG slots keep the chunked cascade.
+for _stats in (
+    [PlayerStat(f'd{i}').as_double() for i in range(30)],
+    [PlayerStat(f's{i}').as_string() for i in range(30)],
+):
+    with Container() as container:
+        cheap_write(
+            items=_stats,
+            index=PlayerStat('idx').as_long(),
+            input=_stats[0],
+        )
+    counts = container.expression_counts(nested=True)
+    assert counts.get(ConditionalExpression, 0) > 10, counts
+
+
+# Names that don't form an arithmetic run have no dynamic read, so likewise.
+with Container() as container:
+    cheap_write(
+        items=[PlayerStat(letter_name(i)).as_long() for i in range(30)],
+        index=PlayerStat('idx').as_long(),
+        input=PlayerStat('inp').as_long(),
+    )
+counts = container.expression_counts(nested=True)
+assert counts.get(ConditionalExpression, 0) > 10, counts
+
+
+# Exhaustive index sweep at the headline size.
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _slots = [PlayerStat(f'fx{i}').as_long() for i in range(100)]
+    for _i, _s in enumerate(_slots):
+        ctx.put(_s, value_at(_i, 0))
+    _idx = PlayerStat('idx').as_long()
+    _expected = [value_at(_i, 0) for _i in range(100)]
+    for _target in range(100):
+        _idx.value = _target
+        _new = -3_000_000 - _target
+        _expected[_target] = _new
+        cheap_write(items=_slots, index=_idx, input=_new)
+
+    def check_fw_exhaustive(
+        _s: list[PlayerStat] = _slots,
+        _want: list[int] = _expected,
+    ) -> None:
+        for i, stat in enumerate(_s):
+            got = int(ctx.get(stat))
+            assert got == _want[i], (
+                f'fast-write sweep: slot[{i}]={got}, want {_want[i]}'
+            )
+
+    ctx.assert_all(check_fw_exhaustive)
+
+
+# Extreme magnitudes: the diff wraps modulo 2**64, and the wrap cancels so the
+# slot still lands exactly on the input.
+for _old, _new in (
+    (2**63 - 1, -(2**63)),
+    (-(2**63), 2**63 - 1),
+    (2**63 - 1, 2**63 - 1),
+    (-1, 1),
+    (0, 2**63 - 1),
+    (2**63 - 1, 0),
+):
+    for _target in (0, 13, 24, 25, 99):
+        with ExecutionContext(ignore_action_limits=True) as ctx:
+            _slots = [PlayerStat(f'fy{i}').as_long() for i in range(100)]
+            for _i, _s in enumerate(_slots):
+                ctx.put(_s, _old)
+            _idx = PlayerStat('idx').as_long()
+            _idx.value = _target
+            cheap_write(items=_slots, index=_idx, input=_new)
+
+            def check_fw_extreme(
+                _s: list[PlayerStat] = _slots,
+                _t: int = _target,
+                _o: int = _old,
+                _n: int = _new,
+            ) -> None:
+                for i, stat in enumerate(_s):
+                    got = int(ctx.get(stat))
+                    want = _n if i == _t else _o
+                    assert got == want, (
+                        f'fast-write extremes old={_o} new={_n} target={_t}: '
+                        f'slot[{i}]={got}, want {want}'
+                    )
+
+            ctx.assert_all(check_fw_extreme)
+
+
+# Non-zero start and a comma boundary in the composed names.
+for _start, _len in ((100, 30), (990, 20)):
+    for _target in (0, 7, 8, 15, 16, _len - 1):
+        with ExecutionContext(ignore_action_limits=True) as ctx:
+            _slots = [PlayerStat(f'n{_start + i:,}').as_long() for i in range(_len)]
+            for _i, _s in enumerate(_slots):
+                ctx.put(_s, value_at(_i, 0))
+            _idx = PlayerStat('idx').as_long()
+            _idx.value = _target
+            cheap_write(items=_slots, index=_idx, input=-42_424)
+
+            def check_fw_start(
+                _s: list[PlayerStat] = _slots,
+                _t: int = _target,
+                _st: int = _start,
+            ) -> None:
+                for i, stat in enumerate(_s):
+                    got = int(ctx.get(stat))
+                    want = -42_424 if i == _t else value_at(i, 0)
+                    assert got == want, (
+                        f'fast-write start={_st}: slot[{i}]={got}, want {want}'
+                    )
+
+            ctx.assert_all(check_fw_start)
+
+
+# GlobalStat arrays route the composed read through var.global while the
+# helper's own bookkeeping stays player-side.
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _gslots = [GlobalStat(f'g{i}').as_long() for i in range(40)]
+    for _i, _s in enumerate(_gslots):
+        ctx.put(_s, value_at(_i, 0))
+    _idx = PlayerStat('idx').as_long()
+    for _target in (0, 24, 25, 39):
+        _idx.value = _target
+        cheap_write(items=_gslots, index=_idx, input=7_777_000 + _target)
+
+    def check_fw_global(_s: list[GlobalStat] = _gslots) -> None:
+        for i, stat in enumerate(_s):
+            got = int(ctx.get(stat))
+            want = 7_777_000 + i if i in (0, 24, 25, 39) else value_at(i, 0)
+            assert got == want, f'fast-write global: slot[{i}]={got}, want {want}'
+
+    ctx.assert_all(check_fw_global)
+
+
+# Items whose shared prefix is a single letter would collide with a temp of
+# the same name: htsw's parseString replaces each placeholder at its FIRST
+# occurrence, so a counter named like the prefix would match inside the
+# freshly inserted prefix text and mangle the composed name. The name pool
+# skips such letters; this pins the guard for both the read and the write.
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _aslots = [PlayerStat(f'a{i}').as_long() for i in range(60)]
+    for _i, _s in enumerate(_aslots):
+        ctx.put(_s, 3_000 + _i)
+    _idx = PlayerStat('idx').as_long()
+    _idx.value = 42
+    cheap_write(items=_aslots, index=_idx, input=424_242)
+
+    def check_fw_prefix_collision(_s: list[PlayerStat] = _aslots) -> None:
+        for i, stat in enumerate(_s):
+            got = int(ctx.get(stat))
+            want = 424_242 if i == 42 else 3_000 + i
+            assert got == want, f'prefix-collision write: slot[{i}]={got}, want {want}'
+
+    ctx.assert_all(check_fw_prefix_collision)
+
+
+# Items living inside the helper's own one-hot namespaces cannot use the fast
+# paths at all — the composed keys would read the items themselves.
+with Container() as container:
+    cheap_write(
+        items=[PlayerStat(f'hw{i}').as_long() for i in range(30)],
+        index=PlayerStat('idx').as_long(),
+        input=PlayerStat('inp').as_long(),
+    )
+counts = container.expression_counts(nested=True)
+assert counts.get(ConditionalExpression, 0) > 10, counts

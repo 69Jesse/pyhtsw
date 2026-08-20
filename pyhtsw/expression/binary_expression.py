@@ -14,6 +14,7 @@ from ..execute.backend_type import (
     BackendType,
     JavaLong,
     backend_to_default_backend,
+    into_backend_type,
     is_default_backend,
 )
 from ..execute.context import ExecutionContext
@@ -93,6 +94,11 @@ def _rhs_references_stat(rhs: object, stat: 'Stat') -> bool:
         for ref in Checkable.iter_in_string(rhs):
             if isinstance(ref, Stat) and ref.is_same_stat(stat):
                 return True
+    # Composite values (e.g. a fallback-chain read) expose the stats they
+    # reference at runtime through `iter_referenced_stats`.
+    iter_refs = getattr(rhs, 'iter_referenced_stats', None)
+    if iter_refs is not None:
+        return any(ref.is_same_stat(stat) for ref in iter_refs())
     return False
 
 
@@ -355,6 +361,10 @@ class BinaryExpression[
             for s, _ in expr.get_all_stats_used():
                 direct.add((type(s), s.name))
             for value in expr._get_all_values().values():
+                iter_refs = getattr(value, 'iter_referenced_stats', None)
+                if iter_refs is not None:
+                    for ref in iter_refs():
+                        direct.add((type(ref), ref.name))
                 if not isinstance(value, str):
                     continue
                 for ref in Checkable.iter_in_string(value):
@@ -1012,54 +1022,41 @@ class BinaryExpression[
         expression: AssignmentExpression,
         context: 'ExecutionContext',
     ) -> None:
+        right_value = BinaryExpression._resolve_assignment_rhs(
+            expression.right,
+            context,
+        )
+
         if expression.operator is BinaryOperator.Set:
-            rhs = expression.right
-            if isinstance(rhs, str) and not (
-                no_type_casting() and _is_single_placeholder(rhs)
-            ):
-                substituted = context._substitute_all_placeholders(rhs)
-                if len(substituted) > SET_STRING_MAX_LENGTH:
-                    value_to_store: BackendType = rhs
-                else:
-                    cast_value: BackendType | None = None
-                    if context._has_any_placeholders(rhs):
-                        cast_value = context._maybe_cast_to_backend(substituted)
-                    value_to_store = (
-                        cast_value if cast_value is not None else substituted
-                    )
-                context.put(expression.left, value_to_store, ignore_warning=True)
-                return
-            context.put(
+            BinaryExpression._store_assignment_result(
                 expression.left,
-                context.get(rhs, output='backend'),
-                ignore_warning=True,
+                right_value,
+                context,
             )
             return
 
-        right_identifier = (
-            expression.right
-            if not isinstance(expression.right, Checkable)
-            else expression.right.into_string_rhs()
+        # htsw reads the left side by key, defaulting an unset variable to the
+        # right side's type-zero (`holder.get(key, rhs.unsetValue())`).
+        left_raw = context._get_raw(expression.left)
+        left_value = (
+            left_raw
+            if left_raw is not None
+            else backend_to_default_backend(right_value)
         )
-        left_value = context.get(expression.left, output='backend')
-        right_value = context.get(right_identifier, output='backend')
-
-        # If either operand is unset and has no fallback (`ctx.get` returns `''`),
-        # substitute the type-zero of the other operand so arithmetic gets a
-        # matching type instead of a string.
         if isinstance(left_value, str) and not left_value:
             left_value = backend_to_default_backend(right_value)
-        if isinstance(right_value, str) and not right_value:
-            right_value = backend_to_default_backend(left_value)
 
+        # In-game (verified 2026-08-18) a non-Set operation on mismatched
+        # types is a FATAL error that halts execution — "You cannot add whole
+        # numbers with decimal numbers" for long vs double, "The value
+        # provided is not a number" for a string operand. Raising here models
+        # the halt. (htsw's runtime under-modeled this as a warn + no-op.)
         if type(left_value) is not type(right_value):
             MismatchedTypeException.throw(
                 left=(expression.left, left_value),
                 right=(expression.right, right_value),
                 operator=expression.operator,
             )
-
-        # String operations are not supported
         if isinstance(left_value, str):
             NotANumberException.throw(
                 left=(expression.left, left_value),
@@ -1111,12 +1108,17 @@ class BinaryExpression[
                 result_long = java_long.ushr(left_long, right_long)
 
             result = np.float64(int(result_long)) if original_is_double else result_long
-            context.put(expression.left, result, ignore_warning=True)
+            BinaryExpression._store_assignment_result(expression.left, result, context)
             return
 
-        # Divide-by-zero is left as a no-op for both longs and doubles — HTSL
-        # does not abort the house over it.
+        # Divide-by-zero keeps the old value as the result — a no-op in htsw,
+        # which still runs the store-and-unset-flag step.
         if expression.operator is BinaryOperator.Divide and right_value == 0:
+            BinaryExpression._store_assignment_result(
+                expression.left,
+                left_value,
+                context,
+            )
             return
 
         # Arithmetic operators. Longs and doubles never mix here (the type
@@ -1149,12 +1151,35 @@ class BinaryExpression[
             else:
                 raise ValueError(f'Unexpected operator: {expression.operator}')
 
-        if isinstance(expression.left, Stat) and expression.left.auto_unset:
-            if is_default_backend(result):
-                context.pop(expression.left)
-                return
+        BinaryExpression._store_assignment_result(expression.left, result, context)
 
-        context.put(expression.left, result, ignore_warning=True)
+    @staticmethod
+    def _resolve_assignment_rhs(
+        rhs: 'Checkable | HousingType',
+        context: 'ExecutionContext',
+    ) -> BackendType:
+        from ..execute.value_parser import parse_string, parse_value
+
+        if isinstance(rhs, Checkable):
+            return parse_value(context, rhs.into_string_rhs())
+        if isinstance(rhs, str):
+            if no_type_casting() and _is_single_placeholder(rhs):
+                # Emitted as a raw bare value.
+                return parse_value(context, rhs)
+            # Everything else is emitted as a quoted string: one pass.
+            return parse_string(context, rhs)
+        return into_backend_type(rhs)
+
+    @staticmethod
+    def _store_assignment_result(
+        left: Editable,
+        result: BackendType,
+        context: 'ExecutionContext',
+    ) -> None:
+        if isinstance(left, Stat) and left.auto_unset and is_default_backend(result):
+            context.pop(left)
+            return
+        context.put(left, result, ignore_warning=True)
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
         for expr in self.into_executable_expressions():

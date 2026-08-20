@@ -1,13 +1,14 @@
 from pyhtsw import Container, ExecutionContext, PlayerStat
 from pyhtsw.ext import round_double
 
-# 1.234567 rounded to 2 decimals -> 1.24
+# 1.234567 rounded to 2 decimals -> 1.23 (the +0.5-then-truncate happens on
+# 123.4567, so the .95 residue truncates away exactly like htsw's L-cast)
 with ExecutionContext() as ctx:
     x = PlayerStat('x').as_double()
     ctx.put(x, 1.234567)
     round_double(x, 2)
 
-assert float(ctx.get_raw(x)) == 1.24, ctx.get_raw(x)
+assert float(ctx.get_raw(x)) == 1.23, ctx.get_raw(x)
 
 
 # 0.5 rounded to 0 decimals -> 1.0 (rounds via +0.5 then truncate)

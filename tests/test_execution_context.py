@@ -184,10 +184,10 @@ assert 'var "b" = %var.player/a%' in ctx.into_htsl(), ctx.into_htsl()
 assert 'var "c" = "%var.player/a%"' in ctx.into_htsl(), ctx.into_htsl()
 assert isinstance(ctx.get_raw(b), float), type(ctx.get_raw(b))
 assert ctx.get_raw(b) == 123.0, ctx.get_raw(b)
-assert isinstance(ctx.get_raw(c), int) and not isinstance(ctx.get_raw(c), bool), type(
-    ctx.get_raw(c),
-)
-assert ctx.get_raw(c) == 123, ctx.get_raw(c)
+# htsw renders a whole double as `123.0` (formatNumber of toFixed(4)), so the
+# one-pass string re-parses as a double, not a long.
+assert isinstance(ctx.get_raw(c), float), type(ctx.get_raw(c))
+assert ctx.get_raw(c) == 123.0, ctx.get_raw(c)
 
 
 # === Long precision: matches Java's Long, no float64 round-trip drift ===

@@ -4,6 +4,11 @@ import time
 import traceback
 from pathlib import Path
 
+# Test the repo's pyhtsw, not whatever happens to be installed: running as
+# `python3 tests/main.py` puts tests/ (not the repo root) on sys.path, which
+# silently resolves `import pyhtsw` to site-packages.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from pyhtsw import disable_global_export
 
 disable_global_export()

@@ -1,9 +1,13 @@
+import random
 from collections.abc import Generator
-from typing import Self, final
+from typing import TYPE_CHECKING, Self, final
 
 from ..config import INDENT
-from ..container import ContainerContextManager, ExpressionContext
+from ..container import Container, ContainerContextManager, ExpressionContext
 from ..expression.expression import Expression
+
+if TYPE_CHECKING:
+    from ..execute.context import ExecutionContext
 
 __all__ = (
     'RandomContextManager',
@@ -54,6 +58,19 @@ class RandomExpression(Expression):
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<exprs={len(self.expressions)}>'
+
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        # A Random action runs exactly *one* of its actions, chosen uniformly —
+        # it is a list of alternatives, not a block. With a single action inside
+        # it is therefore deterministic, which is what makes it usable as a way
+        # to spend an action outside the enclosing list's per-type budget.
+        if not self.expressions:
+            return
+        chosen = self.expressions[random.randrange(len(self.expressions))]
+        context.run_expressions([chosen])
+
+    def finalize(self, container: Container) -> None:
+        container.finalize_expressions(self.expressions)
 
     def nested_expressions_refs(self) -> list[list['Expression']]:
         return [self.expressions]

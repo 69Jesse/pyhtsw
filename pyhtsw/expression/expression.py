@@ -82,6 +82,11 @@ class Expression(BaseObject):
                     return True
             # Stats can also be referenced by their placeholders inside string fields, kind of hacky but whatever
             for value in expr._get_all_values().values():
+                iter_refs = getattr(value, 'iter_referenced_stats', None)
+                if iter_refs is not None and any(
+                    ref.is_same_stat(stat) for ref in iter_refs()
+                ):
+                    return True
                 if not isinstance(value, str):
                     continue
                 for ref in Checkable.iter_in_string(value):

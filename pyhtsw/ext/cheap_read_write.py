@@ -1,6 +1,6 @@
 import math
-from collections.abc import Iterable, Sequence
-from typing import Any
+from collections.abc import Generator, Iterable, Sequence
+from typing import Any, Self
 
 from ..actions.conditional.statements import Else, IfAll, IfAny
 from ..editable import Checkable, Editable, HousingType
@@ -179,6 +179,15 @@ def _detect_pattern(
 _FAST_READ_NAMES = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
+def _fast_names_pool(pattern: list[ColumnInfo]) -> str:
+    excluded = {
+        prefix
+        for cls, prefix, _suffix, _coeff, _offset in pattern
+        if cls is PlayerStat and len(prefix) == 1
+    }
+    return ''.join(c for c in _FAST_READ_NAMES if c not in excluded)
+
+
 def _emit_fast_read(
     *,
     pattern: list[ColumnInfo],
@@ -186,11 +195,17 @@ def _emit_fast_read(
     output: Sequence[Editable],
 ) -> None:
     width = len(pattern)
-    if 3 * width > len(_FAST_READ_NAMES):
+    names = _fast_names_pool(pattern)
+    if 3 * width > len(names):
         raise ValueError(f'cheap_read fast path: width {width} too large')
-    n_stats = [PlayerStat(_FAST_READ_NAMES[k]).as_long() for k in range(width)]
-    tmp_str_stats = [PlayerStat(_FAST_READ_NAMES[width + k]) for k in range(width)]
-    p_stats = [PlayerStat(_FAST_READ_NAMES[2 * width + k]) for k in range(width)]
+    # The index is interpolated into a name, so it has to survive as a literal
+    # `0`: with auto-unset on, a zero index removes the stat and the placeholder
+    # resolves to nothing, leaving the prefix on its own as the name.
+    n_stats = [
+        PlayerStat(names[k]).as_long().without_auto_unset() for k in range(width)
+    ]
+    tmp_str_stats = [PlayerStat(names[width + k]) for k in range(width)]
+    p_stats = [PlayerStat(names[2 * width + k]) for k in range(width)]
 
     for k, (cls, prefix, suffix, coeff, offset) in enumerate(pattern):
         scope = cls.right_side_keyword()
@@ -202,12 +217,12 @@ def _emit_fast_read(
         else:
             n_k.value = index * coeff if offset == 0 else index * coeff + offset
 
-        if prefix:
-            p_k = p_stats[k]
-            p_k.value = f'%var.{scope}/{prefix}'
-            template = f'%var.player/{p_k.name}%%var.player/{n_k.name}%{suffix}%'
-        else:
-            template = f'%var.{scope}/%var.player/{n_k.name}%{suffix}%'
+        # The scope head always rides in the prefix variable — even when the
+        # item names have no shared prefix. A literal `%var.player/` written
+        # inline would pair its `%` with the counter's and be eaten.
+        p_k = p_stats[k]
+        p_k.value = f'%var.{scope}/{prefix}'
+        template = f'%var.player/{p_k.name}%%var.player/{n_k.name}%{suffix}%'
 
         set_string(tmp_str_k, template)
         tmp_str_k.set(tmp_str_k, is_intentional_self_assignment=True)
@@ -219,6 +234,525 @@ type MaybeSequence[T] = T | Sequence[T]
 
 def into_sequence[T](item: MaybeSequence[T]) -> Sequence[T]:
     return item if isinstance(item, Sequence) else (item,)
+
+
+# Housing's per-action-list caps; a conditional's branch gets its own budget.
+_BE_LIMIT = 25
+
+
+# `set_string` splits a value longer than 32 characters into several
+# assignments, so the two names interpolated into the one-hot template have to
+# be single characters: '%var.player/q%%var.player/d% 0%L' is exactly 32.
+_FAST_WRITE_NAMES = _FAST_READ_NAMES
+
+
+def _in_nested_container() -> bool:
+    from ..container import get_current_container
+
+    return any(
+        ctx.parent_expression is not None for ctx in get_current_container().contexts
+    )
+
+
+class _FallbackChainRead(Checkable):
+    def __init__(self, first: PlayerStat, fallback: PlayerStat) -> None:
+        super().__init__(internal_type=InternalType.ANY)
+        self.first = first
+        self.fallback = fallback
+
+    def into_string_rhs(self, *, include_internal_type: bool = True) -> str:
+        return f'%var.player/{self.first.name} %var.player/{self.fallback.name}%%'
+
+    def iter_referenced_stats(self) -> Generator[Stat]:
+        yield self.first
+        yield self.fallback
+
+    def into_hashable(self) -> tuple[object, ...]:
+        return (self.__class__, self.first.name, self.fallback.name)
+
+    def equals_raw(self, other: object) -> bool:
+        return (
+            isinstance(other, _FallbackChainRead)
+            and other.first.is_same_stat(self.first)
+            and other.fallback.is_same_stat(self.fallback)
+        )
+
+    def cloned_raw(self) -> Self:
+        return self.__class__(self.first, self.fallback)
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}<{self.first.name} -> {self.fallback.name}>'
+
+
+def _fast_write_costs(n: int, width: int, chunk_size: int) -> tuple[int, int]:
+    chunks = math.ceil(n / chunk_size)
+    # read (5) + negate/add input (2) + one-hot prefix (1) per column, plus the
+    # shared chunk index and the three that set up the slot counter.
+    setup = 9 * width + 4
+    per_slot = width * chunk_size + (chunk_size - 1)
+    top_level = setup + per_slot
+    if chunks == 1:
+        # Nothing to select between, so the blit is unconditional and shares the
+        # enclosing list rather than getting a branch of its own.
+        top_level += n * width
+    wrappers = max(0, math.ceil((top_level - _BE_LIMIT) / _BE_LIMIT))
+    # Two chunks fit an if/else; more than two cannot, since Housing forbids
+    # nesting a conditional inside a conditional (so there is no `else if`).
+    conditionals = (0 if chunks == 1 else 1 if chunks == 2 else chunks) + wrappers
+    expressions = top_level if chunks == 1 else n * width + top_level
+    return conditionals, expressions
+
+
+def _best_fast_write_chunk_size(n: int, width: int) -> tuple[int, int, int] | None:
+    max_chunk = min(_BE_LIMIT // width, n)
+    if max_chunk < 1:
+        return None
+    best: tuple[int, int, int] | None = None
+    for chunk_size in range(1, max_chunk + 1):
+        conditionals, expressions = _fast_write_costs(n, width, chunk_size)
+        if best is None or (conditionals, expressions) < (best[1], best[2]):
+            best = (chunk_size, conditionals, expressions)
+    return best
+
+
+# The fallback-chain fast path works on chunks of 25 slots; the position
+# within a chunk is factored as p = 5a + b with a, b in 0..4, so per-position
+# one-hot state shrinks from 25 variables to 5 + 5.
+_V3_CHUNK = 25
+
+
+def _v4_layout(n: int) -> tuple[int, list[int]] | None:
+    if n < 27:
+        return None
+    for lists in range(2, 26):
+        cap = 24 * (lists - 2) + 50
+        if cap + 2 < n:
+            continue
+        loose = max(0, n - cap)
+        rem = n - loose
+        last = min(25, rem)
+        rem -= last
+        carrier = min(25, rem)
+        rem -= carrier
+        sizes: list[int] = []
+        while rem > 0:
+            take = min(24, rem)
+            sizes.append(take)
+            rem -= take
+        if len(sizes) != lists - 2 or carrier == 0:
+            return None
+        sizes.reverse()
+        return loose, [*sizes, carrier, last]
+    return None
+
+
+def _v4_write_costs(
+    n: int,
+    offset: int,
+    suffix: str,
+) -> tuple[int, int] | None:
+    if offset != 0 or suffix != '':
+        return None
+    layout = _v4_layout(n)
+    if layout is None:
+        return None
+    loose, sizes = layout
+    if loose > 0:
+        pair = 3 * loose + 1
+        gate = 3 + (1 if loose >= 2 else 0)
+    else:
+        pair = 0
+        gate = 1  # the payload keep-alive
+    if1 = 14 + pair + gate
+    if if1 > _BE_LIMIT:
+        return None
+    kills = len(sizes) - 2
+    # the always-true setup if, plus one if per chunk list except the last,
+    # which rides in the carrier's else
+    conditionals = 1 + (len(sizes) - 1)
+    expressions = 25 + if1 + (n - loose) + kills
+    return conditionals, expressions
+
+
+def _emit_fast_write_v4(
+    *,
+    pattern: list[ColumnInfo],
+    items: Sequence[Sequence[Editable]],
+    index: Editable,
+    input: Sequence[Checkable | HousingType],
+) -> None:
+    n = len(items)
+    _cls, _prefix, _suffix, _coeff, _offset = pattern[0]
+    layout = _v4_layout(n)
+    assert layout is not None and _offset == 0 and _suffix == ''
+    loose, sizes = layout
+
+    pool = ''.join(c for c in _fast_names_pool(pattern) if c != 'h')
+    if len(pool) < 21 + loose:
+        raise ValueError('cheap_write v4: name pool exhausted')
+    n_stat = PlayerStat(pool[0]).as_long().without_auto_unset()
+    tmp = PlayerStat(pool[1])
+    pfx = PlayerStat(pool[2])
+    q = PlayerStat(pool[3])
+    u = PlayerStat(pool[4]).as_long().without_auto_unset()
+    v = PlayerStat(pool[5]).as_long().without_auto_unset()
+    idc = PlayerStat(pool[6]).as_long()
+    d2 = PlayerStat(pool[7]).as_long().without_auto_unset()
+    s_stats = [PlayerStat(c) for c in pool[8:13]]
+    t_stats = [PlayerStat(c) for c in pool[13:18]]
+    a_stats = [PlayerStat(c) for c in pool[18:23]]
+    g_stats = [PlayerStat(c) for c in pool[23 : 23 + loose]]
+    payload = PlayerStat('h0').as_long()
+    pin = PlayerStat('h501').as_long().without_auto_unset()
+
+    scope = _cls.right_side_keyword()
+
+    n_stat.value = index
+    pfx.value = f'%var.{scope}/{_prefix}'
+    set_string(tmp, f'%var.player/{pfx.name}%%var.player/{n_stat.name}% 0%L')
+    payload.value = input[0]
+    payload.as_type(InternalType.ANY).value -= tmp
+    # counter math (9): n -> -(i mod 25), u -> -(a*), v -> 501 - b*
+    n_stat.value //= _V3_CHUNK
+    n_stat.value *= _V3_CHUNK
+    n_stat.value -= index
+    u.value = n_stat
+    u.value //= 5
+    v.value = u
+    v.value *= -5
+    v.value += n_stat
+    v.value += 501
+    # shared prefix, pinned hit source, s-refs (11)
+    q.value = '%var.player/h'
+    pin.value = 0
+    for a in range(5):
+        set_string(s_stats[a], f'%var.player/{q.name}%%var.player/{u.name}% 0%L')
+        if a != 4:
+            u.value += 1
+
+    def chain_blit(slot: int, item: Sequence[Editable]) -> None:
+        p = slot % _V3_CHUNK
+        item[0].as_type(InternalType.ANY).value += _FallbackChainRead(
+            a_stats[p % 5],
+            s_stats[p // 5],
+        )
+
+    with IfAll():
+        for b in range(5):
+            set_string(t_stats[b], f'%var.player/{q.name}%%var.player/{v.name}% .5%')
+            if b != 4:
+                v.value += 1
+        for b in range(5):
+            a_stats[b].as_type(InternalType.ANY).value = _FallbackChainRead(
+                t_stats[b],
+                pin,
+            )
+        if loose:
+            d2.value = index
+            d2.value *= -1
+            for j in range(loose):
+                set_string(
+                    g_stats[j],
+                    f'%var.player/{q.name}%%var.player/{d2.name}% 0%L',
+                )
+                if j != loose - 1:
+                    d2.value += 1
+            for j in range(loose):
+                items[j][0].as_type(InternalType.ANY).value += g_stats[j]
+            idc.value = index
+            if loose >= 2:
+                idc.value //= loose
+            idc.value //= idc
+            payload.value *= idc
+        else:
+            # Without the gate (or kills, in the two-list layout) nothing
+            # mentions the payload syntactically — it is only ever read
+            # through composed references — so successive calls would
+            # dead-store each other's diff. This self-assignment names it.
+            payload.set(payload, is_intentional_self_assignment=True)
+
+    starts: list[int] = []
+    pos = loose
+    for size in sizes:
+        starts.append(pos)
+        pos += size
+    carrier = len(sizes) - 2
+    for k, (start, size) in enumerate(zip(starts, sizes, strict=True)):
+        if k < carrier:
+            with IfAll(index >= start, index <= start + size - 1):
+                for j in range(size):
+                    chain_blit(start + j, items[start + j])
+                payload.value = 0
+        elif k == carrier:
+            with IfAll(index >= start, index <= start + size - 1):
+                for j in range(size):
+                    chain_blit(start + j, items[start + j])
+            with Else:
+                last_start, last_size = starts[-1], sizes[-1]
+                for j in range(last_size):
+                    chain_blit(last_start + j, items[last_start + j])
+        else:
+            break
+
+
+def _v3_write_costs(n: int, offset: int) -> tuple[int, int]:
+    setup = 43 + (1 if offset != 0 else 0)
+    groups = math.ceil(n / _V3_CHUNK)
+    top_level = setup + (n if groups == 1 else 0)
+    wrappers = max(0, math.ceil((top_level - _BE_LIMIT) / _BE_LIMIT))
+    conditionals = (0 if groups == 1 else groups) + wrappers
+    return conditionals, setup + n
+
+
+def _emit_fast_write_v3(
+    *,
+    pattern: list[ColumnInfo],
+    items: Sequence[Sequence[Editable]],
+    index: Editable,
+    input: Sequence[Checkable | HousingType],
+) -> None:
+    n = len(items)
+    _cls, _prefix, _suffix, _coeff, offset = pattern[0]
+
+    # 'Z' is reserved as the prefix of the pinned hit-source entry ("Z501"),
+    # so it must not double as a temp name.
+    pool = ''.join(c for c in _fast_names_pool(pattern) if c != 'Z')
+    if len(pool) < 22:
+        raise ValueError('cheap_write chain path: name pool exhausted')
+    # `_emit_fast_read` claims pool[:3] for itself.
+    q = PlayerStat(pool[3])
+    r = PlayerStat(pool[4])
+    u = PlayerStat(pool[5]).as_long().without_auto_unset()
+    v = PlayerStat(pool[6]).as_long().without_auto_unset()
+    s_stats = [PlayerStat(c) for c in pool[7:12]]
+    t_stats = [PlayerStat(c) for c in pool[12:17]]
+    a_stats = [PlayerStat(c) for c in pool[17:22]]
+    payload = PlayerStat('hw0').as_long()
+    hz = PlayerStat('Z501').as_long().without_auto_unset()
+
+    # payload = input - items[index], via one composed read.
+    _emit_fast_read(pattern=pattern, index=index, output=[payload])
+    payload.value *= -1
+    payload.value += input[0]
+    # The payload is only ever read back through runtime-composed names, which
+    # the optimiser cannot see; this self-assignment keeps the stores alive.
+    payload.set(payload, is_intentional_self_assignment=True)
+
+    # The read's counter still holds offset + index; turn it into -(i mod 25),
+    # then derive the two one-hot counters from it.
+    n_stat = PlayerStat(pool[0]).as_long().without_auto_unset()
+    if offset != 0:
+        n_stat.value -= offset
+    n_stat.value //= _V3_CHUNK
+    n_stat.value *= _V3_CHUNK
+    n_stat.value -= index  # 25*(i div 25) - i = -(i mod 25)
+    u.value = n_stat
+    u.value //= 5  # -(a*): truncation is symmetric, and -(p)/5 = -(p div 5)
+    v.value = u
+    v.value *= -5  # 5*a*
+    v.value += n_stat  # 5*a* - p* = -(b*)
+    v.value += 501  # 501 - b*: keys 497..505 never render with commas
+
+    q.value = '%var.player/hw'
+    r.value = '%var.player/Z'
+    # The A-table's hit source: a pinned long 0 (`false` keeps it set).
+    hz.value = 0
+
+    for a in range(5):
+        set_string(s_stats[a], f'%var.player/{q.name}%%var.player/{u.name}% 0%L')
+        if a != 4:
+            u.value += 1
+    for b in range(5):
+        set_string(t_stats[b], f'%var.player/{r.name}%%var.player/{v.name}% .5%')
+        if b != 4:
+            v.value += 1
+    for b in range(5):
+        # Bare two-pass resolve with the unset flag on: the hit row's 0 is
+        # removed (routing the chain onward), misses keep the 0.5 double. The
+        # first key (the baked reference) is always set, so the chain's
+        # fallback never fires — it exists to reference `hz` syntactically,
+        # which keeps the pinned-0 store visible to the dead-store pass.
+        a_stats[b].as_type(InternalType.ANY).value = _FallbackChainRead(
+            t_stats[b],
+            hz,
+        )
+
+    def blit(start: int) -> None:
+        for j, item in enumerate(items[start : start + _V3_CHUNK]):
+            item[0].as_type(InternalType.ANY).value += _FallbackChainRead(
+                a_stats[j % 5],
+                s_stats[j // 5],
+            )
+
+    if n <= _V3_CHUNK:
+        blit(0)
+        return
+    for start in range(0, n, _V3_CHUNK):
+        end = min(start + _V3_CHUNK, n) - 1
+        with IfAll(index >= start, index <= end):
+            blit(start)
+
+
+def _slow_write_costs(n: int, width: int) -> tuple[int, int]:
+    best: tuple[int, int] = (n, n * width)
+    for hoist in (False, True):
+        max_cs = (25 if hoist else 23) // width
+        for cs in range(1, min(max_cs, n - 1) + 1):
+            chunks = math.ceil(n / cs)
+            conditionals = 2 * chunks - 1 + cs
+            bookkeeping = 0 if hoist else 2
+            expressions = (
+                (3 if hoist else 0)
+                + (chunks - 1) * (cs * width + bookkeeping)
+                + cs * width
+                + (0 if hoist else 1)
+                + cs * width
+                + n * width
+            )
+            if (conditionals, expressions) < best:
+                best = (conditionals, expressions)
+    return best
+
+
+def _fast_write_plan(
+    *,
+    items: Sequence[Sequence[Editable]],
+    n: int,
+    width: int,
+) -> tuple[str, list[ColumnInfo], int] | None:
+    if not all(
+        isinstance(slot, Stat) and slot.internal_type is InternalType.LONG
+        for item in items
+        for slot in item
+    ):
+        return None
+    pattern = _detect_pattern(items)
+    if pattern is None:
+        return None
+    # The fast paths key their one-hot lookups on composed names in the `h`,
+    # `hw` and `Z` namespaces (and stage slots in `sw`/`tmp` ones). Items
+    # living in those namespaces would collide with the machinery, so they
+    # take the cascade instead.
+    if any(
+        prefix in ('h', 'h-') or prefix.startswith(('hw', 'sw', 'tmp', 'Z'))
+        for _cls, prefix, _suffix, _coeff, _offset in pattern
+    ):
+        return None
+
+    candidates: list[tuple[tuple[int, int], tuple[str, list[ColumnInfo], int]]] = []
+    v1 = _best_fast_write_chunk_size(n, width)
+    if v1 is not None:
+        chunk_size, conditionals, expressions = v1
+        candidates.append(((conditionals, expressions), ('v1', pattern, chunk_size)))
+    # The fallback-chain paths (v3/v4) are DISABLED: in-game verification
+    # (2026-08-18) showed Housing's value input only accepts a bare value that
+    # is a single placeholder with no nested `%` (anything else is auto-quoted
+    # into one-pass string semantics), and `long += double` is a fatal,
+    # execution-halting error — so the chain blit and its 0.5 poison cannot
+    # exist in the game. The emitters are kept for the findings record; htsw's
+    # runtime resolves them, but its bare-value path is unreachable in-game.
+    if not candidates:
+        return None
+
+    cost, plan = min(candidates, key=lambda entry: entry[0])
+    if cost >= _slow_write_costs(n, width):
+        return None
+    if _in_nested_container() and (cost[0] > 0 or cost[1] > _BE_LIMIT):
+        # Inside a conditional there is no room to grow: another conditional
+        # cannot be nested, and neither can the Random that would otherwise buy
+        # room. Defer to the cascade so the caller gets its clear "cannot nest"
+        # error rather than a limit failure from deep inside the fixer.
+        return None
+    return plan
+
+
+def _emit_fast_write(
+    *,
+    pattern: list[ColumnInfo],
+    items: Sequence[Sequence[Editable]],
+    index: Editable,
+    input: Sequence[Checkable | HousingType],
+    chunk_size: int,
+) -> None:
+    n = len(items)
+    width = len(pattern)
+    chunk_size = min(chunk_size, n)
+
+    names = _fast_names_pool(pattern)
+    if 4 * width + 2 > len(names):
+        raise ValueError(f'cheap_write fast path: width {width} too large')
+    # `_emit_fast_read` claims names[:3 * width] for itself.
+    q_stats = [PlayerStat(names[3 * width + k]) for k in range(width)]
+    d = PlayerStat(names[4 * width]).as_long().without_auto_unset()
+    c = PlayerStat(names[4 * width + 1]).as_long()
+
+    # `diff` doubles as the one-hot's single assigned entry, so it is named
+    # `<prefix>1` — the key the template resolves to on the matching slot.
+    diffs = [PlayerStat(f'hw{k}1').as_long() for k in range(width)]
+
+    # diff = input - items[index]
+    _emit_fast_read(pattern=pattern, index=index, output=diffs)
+    for k in range(width):
+        diffs[k].value *= -1
+        diffs[k].value += input[k]
+        # Every read of `diff` goes through a name assembled at runtime, so
+        # nothing in the emitted expressions mentions it and the dead-store pass
+        # would drop the assignments above. This self-assignment is a no-op that
+        # names it, which keeps them alive.
+        diffs[k].set(diffs[k], is_intentional_self_assignment=True)
+        q_stats[k].value = f'%var.player/hw{k}'
+
+    chunks = math.ceil(n / chunk_size)
+    if chunks == 1:
+        d.value = index
+        d.value *= -1
+        d.value += 1
+    else:
+        c.value = index // chunk_size
+        d.value = c * chunk_size
+        d.value -= index
+        d.value += 1
+
+    slots = [
+        [PlayerStat(f'sw{k}_{j}') for k in range(width)] for j in range(chunk_size)
+    ]
+    for j in range(chunk_size):
+        for k in range(width):
+            # Exactly 32 characters, the most one assignment holds. The
+            # trailing `L` rides along unresolved and lands on the number the
+            # one-hot yields, which is what lets the blit read it back: that
+            # number is rendered with thousands separators, and only the `…L`
+            # form strips them before parsing.
+            set_string(
+                slots[j][k],
+                f'%var.player/{q_stats[k].name}%%var.player/{d.name}% 0%L',
+            )
+        if j != chunk_size - 1:
+            d.value += 1
+
+    def blit(start: int) -> None:
+        for j, item in enumerate(items[start : start + chunk_size]):
+            for k in range(width):
+                # A slot holds the *unresolved* one-hot reference, so the blit
+                # has to resolve twice. Only a bare `%…%` right-hand side does
+                # that; the quoted `"%… 0%L"` form a typed left side would coerce
+                # it into stops after one pass and yields the text. Widening the
+                # left side to ANY suppresses that coercion — it changes nothing
+                # else, since a name is written the same way whatever its type.
+                item[k].as_type(InternalType.ANY).value += slots[j][k]
+
+    if chunks == 1:
+        blit(0)
+        return
+
+    starts = list(range(0, n, chunk_size))
+    for chunk_idx, start in enumerate(starts):
+        if chunks == 2 and chunk_idx == 1:
+            with Else:
+                blit(start)
+        else:
+            with IfAll(c == chunk_idx):
+                blit(start)
 
 
 def cheap_read(
@@ -309,6 +843,33 @@ def cheap_write(
 
     if n == 1:
         assign(items[0], input)
+        return
+
+    fast = _fast_write_plan(items=items, n=n, width=width)
+    if fast is not None:
+        kind, pattern, chunk_size = fast
+        if kind == 'v4':
+            _emit_fast_write_v4(
+                pattern=pattern,
+                items=items,
+                index=index,
+                input=input,
+            )
+        elif kind == 'v3':
+            _emit_fast_write_v3(
+                pattern=pattern,
+                items=items,
+                index=index,
+                input=input,
+            )
+        else:
+            _emit_fast_write(
+                pattern=pattern,
+                items=items,
+                index=index,
+                input=input,
+                chunk_size=chunk_size,
+            )
         return
 
     best_ce = n

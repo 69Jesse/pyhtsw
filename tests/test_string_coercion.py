@@ -21,9 +21,10 @@ def append_x(suffix: str, value: int) -> str:
     return str(captured['v'])
 
 
-# d / l (any case) read as double/long literal suffixes -> swallowed.
-assert append_x('d', 6) == '6x', append_x('d', 6)
-assert append_x('D', 6) == '6x', append_x('D', 6)
+# d / l (any case) read as double/long literal suffixes -> swallowed. A double
+# interpolates as `6.0` (htsw's formatNumber), so the D-forms carry the `.0`.
+assert append_x('d', 6) == '6.0x', append_x('d', 6)
+assert append_x('D', 6) == '6.0x', append_x('D', 6)
 assert append_x('l', 42) == '42x', append_x('l', 42)
 assert append_x('L', 42) == '42x', append_x('L', 42)
 

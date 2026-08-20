@@ -188,45 +188,146 @@ def _fast_names_pool(pattern: list[ColumnInfo]) -> str:
     return ''.join(c for c in _FAST_READ_NAMES if c not in excluded)
 
 
+def _get_or_bake_composed_prefix(value: str, pool: str) -> PlayerStat:
+    from ..container import get_current_container
+
+    container = get_current_container()
+    top_ref = container.blocks[0].expressions
+    for ctx in container.contexts:
+        if ctx.parent_expression is None:
+            top_ref = ctx.expressions_ref
+    cache: dict[tuple[int, str], str] = container.__dict__.setdefault(
+        '_composed_prefix_cache',
+        {},
+    )
+    key = (id(top_ref), value)
+    name = cache.get(key)
+    if name is not None and name in pool:
+        return PlayerStat(name)
+    used = {n for (ref, _v), n in cache.items() if ref == id(top_ref)}
+    name = next((c for c in reversed(pool) if c not in used), None)
+    if name is None:
+        # Exhausted: reuse the last name, dropping whichever entry held it so
+        # no later read resolves a clobbered prefix.
+        name = pool[-1]
+        for cache_key, cached_name in list(cache.items()):
+            if cache_key[0] == id(top_ref) and cached_name == name:
+                del cache[cache_key]
+    stat = PlayerStat(name)
+    stat.value = value
+    if not _in_nested_container():
+        cache[key] = name
+    return stat
+
+
+def _direct_index_name(
+    index: Editable,
+    *,
+    prefix: str,
+    tail_length: int,
+    coeff: int,
+    offset: int,
+    taken: str,
+) -> str | None:
+    if coeff != 1 or offset != 0:
+        return None
+    if type(index) is not PlayerStat:
+        return None
+    if index.internal_type is not InternalType.LONG or index.auto_unset:
+        return None
+    name = index.name
+    # %var.player/<p>% + %var.player/<name>% + tail of 32 chars total.
+    if 14 + 13 + len(name) + tail_length > 32:
+        return None
+    if name == prefix or name in taken:
+        return None
+    return name
+
+
+def _column_internal_type(
+    items: Sequence[Sequence[Checkable | HousingType]],
+    k: int,
+) -> InternalType:
+    first = items[0][k]
+    if not isinstance(first, Stat):
+        return InternalType.ANY
+    for item in items:
+        slot = item[k]
+        if not isinstance(slot, Stat) or slot.internal_type is not first.internal_type:
+            return InternalType.ANY
+    return first.internal_type
+
+
+def _composed_reference_parts(
+    cls: type[Stat],
+    prefix: str,
+    suffix: str,
+    column_type: InternalType,
+) -> tuple[str, str]:
+    if column_type is InternalType.LONG:
+        return f'%stat.{cls.right_side_keyword()}/{prefix}', f'{suffix}%L'
+    if column_type is InternalType.DOUBLE:
+        return f'%var.{cls.right_side_keyword()}/{prefix}', f'{suffix} 0%D'
+    return f'%var.{cls.right_side_keyword()}/{prefix}', f'{suffix}%'
+
+
 def _emit_fast_read(
     *,
     pattern: list[ColumnInfo],
     index: Editable,
     output: Sequence[Editable],
+    column_types: Sequence[InternalType],
 ) -> None:
     width = len(pattern)
     names = _fast_names_pool(pattern)
-    if 3 * width > len(names):
+    if 2 * width > len(names):
         raise ValueError(f'cheap_read fast path: width {width} too large')
-    # The index is interpolated into a name, so it has to survive as a literal
-    # `0`: with auto-unset on, a zero index removes the stat and the placeholder
-    # resolves to nothing, leaving the prefix on its own as the name.
+    tmp_str_stats = [PlayerStat(names[k]) for k in range(width)]
     n_stats = [
-        PlayerStat(names[k]).as_long().without_auto_unset() for k in range(width)
+        PlayerStat(names[width + k]).as_long().without_auto_unset()
+        for k in range(width)
     ]
-    tmp_str_stats = [PlayerStat(names[width + k]) for k in range(width)]
-    p_stats = [PlayerStat(names[2 * width + k]) for k in range(width)]
 
     for k, (cls, prefix, suffix, coeff, offset) in enumerate(pattern):
-        scope = cls.right_side_keyword()
-        n_k = n_stats[k]
         tmp_str_k = tmp_str_stats[k]
 
-        if coeff == 1:
-            n_k.value = index if offset == 0 else index + offset
-        else:
-            n_k.value = index * coeff if offset == 0 else index * coeff + offset
-
-        # The scope head always rides in the prefix variable — even when the
+        # The scope head always rides in the prefix variable - even when the
         # item names have no shared prefix. A literal `%var.player/` written
-        # inline would pair its `%` with the counter's and be eaten.
-        p_k = p_stats[k]
-        p_k.value = f'%var.{scope}/{prefix}'
-        template = f'%var.player/{p_k.name}%%var.player/{n_k.name}%{suffix}%'
+        # inline would pair its `%` with the counter's and be eaten. Its value
+        # is constant, so it costs one action per list, not per read.
+        p_value, tail = _composed_reference_parts(
+            cls,
+            prefix,
+            suffix,
+            column_types[k],
+        )
+        p_k = _get_or_bake_composed_prefix(p_value, names)
 
+        counter_name = _direct_index_name(
+            index,
+            prefix=prefix,
+            tail_length=len(tail),
+            coeff=coeff,
+            offset=offset,
+            taken=p_k.name + tmp_str_k.name,
+        )
+        if counter_name is None:
+            # The copy also normalizes auto-unset: a zero index would
+            # otherwise vanish from the composed name.
+            n_k = n_stats[k]
+            if coeff == 1:
+                n_k.value = index if offset == 0 else index + offset
+            else:
+                n_k.value = index * coeff if offset == 0 else index * coeff + offset
+            counter_name = n_k.name
+
+        template = f'%var.player/{p_k.name}%%var.player/{counter_name}%{tail}'
         set_string(tmp_str_k, template)
-        tmp_str_k.set(tmp_str_k, is_intentional_self_assignment=True)
-        output[k].value = tmp_str_k
+        # A bare single-placeholder right side resolves in two passes, so this
+        # consumes the composed reference and assigns the value in one action.
+        # Widening the left side to ANY stops a typed coercion from quoting it
+        # into one-pass string semantics.
+        output[k].as_type(InternalType.ANY).value = tmp_str_k
 
 
 type MaybeSequence[T] = T | Sequence[T]
@@ -366,7 +467,12 @@ def _emit_fast_write(
 
     with strict_order(), preserved():
         # lo_k = diff_k = input[k] - items[index][k], via one composed read.
-        _emit_fast_read(pattern=pattern, index=index, output=lo)
+        _emit_fast_read(
+            pattern=pattern,
+            index=index,
+            output=lo,
+            column_types=[InternalType.LONG] * width,
+        )
         for k in range(width):
             lo[k].value *= -1
             lo[k].value += input[k]
@@ -504,7 +610,12 @@ def cheap_read(
 
     pattern = _detect_pattern(items)
     if pattern is not None:
-        _emit_fast_read(pattern=pattern, index=index, output=output)
+        _emit_fast_read(
+            pattern=pattern,
+            index=index,
+            output=output,
+            column_types=[_column_internal_type(items, k) for k in range(width)],
+        )
         return
 
     is_start = True

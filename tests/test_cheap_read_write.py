@@ -128,7 +128,7 @@ for length in (1, 10, 100):
                 ctx.assert_all(check_write)
 
 
-# Width=1, non-empty prefix, simple indexing → 5 BinaryExpressions, no conditionals.
+# Width=1, non-empty prefix, simple indexing → 4 BinaryExpressions, no conditionals.
 with Container() as container:
     sources = [PlayerStat(f'src{i}').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
@@ -137,10 +137,10 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 5, counts
+assert counts[BinaryExpression] == 4, counts
 
 
-# Width=1, empty prefix (names are just digits) → still 5 BinaryExpressions:
+# Width=1, empty prefix (names are just digits) → still 4 BinaryExpressions:
 # the scope head must ride in the prefix variable even with no shared prefix,
 # because a literal `%var.player/` next to the counter placeholder is eaten by
 # htsw's parseString (its `%` pairs with the counter's opening `%`).
@@ -152,10 +152,11 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 5, counts
+assert counts[BinaryExpression] == 4, counts
 
 
-# Width=3 Mode A (shared prefix, flat numbering) → 15 BinaryExpressions.
+# Width=3 Mode A (shared prefix, flat numbering) → 10 BinaryExpressions: the
+# one shared prefix bake serves all three columns.
 with Container() as container:
     items = [
         tuple(PlayerStat(f'a{i * 3 + k}').as_long() for k in range(3))
@@ -167,10 +168,10 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 15, counts
+assert counts[BinaryExpression] == 10, counts
 
 
-# Width=3 Mode B (per-column independent prefix) → 15 BinaryExpressions.
+# Width=3 Mode B (per-column independent prefix) → 12 BinaryExpressions.
 with Container() as container:
     items = [
         (
@@ -186,10 +187,10 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 15, counts
+assert counts[BinaryExpression] == 12, counts
 
 
-# GlobalStat fast path → 5 BinaryExpressions (same shape as PlayerStat).
+# GlobalStat fast path → 4 BinaryExpressions (same shape as PlayerStat).
 with Container() as container:
     sources = [GlobalStat(f'gsrc{i}').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
@@ -198,7 +199,7 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 5, counts
+assert counts[BinaryExpression] == 4, counts
 
 
 # Middle-digit increment (`a101a, a111a, a121a, ...`) → still fast path.
@@ -210,7 +211,7 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 5, counts
+assert counts[BinaryExpression] == 4, counts
 
 
 # Comma boundary: names cross 999 -> 1,000 with comma formatting -> fast path.
@@ -222,7 +223,7 @@ with Container() as container:
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
-assert counts[BinaryExpression] == 5, counts
+assert counts[BinaryExpression] == 4, counts
 
 
 # Comma boundary correctness: substitution applies comma formatting (mirrors
@@ -592,15 +593,15 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 # conditional inside a conditional, so there is no cheaper way to pick a chunk.
 _FAST_WRITE_COUNTS = {
     # length: (conditionals, var changes)
-    10: (1, 32),  # small table, full rebake, one wrapped blit chunk
+    10: (1, 31),  # small table, full rebake, one wrapped blit chunk
     # Larger arrays split-scatter: half the baked table is rebaked per call
     # inside one if/else, then one exact-range conditional per gather chunk.
     # The overhead is a constant ~67 actions - packing chunks into else arms
     # was abandoned because every extra else needs a payload liveness
     # transition (a wrapper conditional plus gate arithmetic) and executes a
     # spurious blit list per call, buying back only ~1 conditional each.
-    100: (5, 167),
-    1000: (41, 1067),
+    100: (5, 166),
+    1000: (41, 1066),
 }
 for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
     with Container() as container:

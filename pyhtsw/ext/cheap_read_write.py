@@ -334,6 +334,10 @@ type MaybeSequence[T] = T | Sequence[T]
 
 
 def into_sequence[T](item: MaybeSequence[T]) -> Sequence[T]:
+    if isinstance(item, str):
+        # A string is itself a Sequence; treat it as one value, not width
+        # many characters.
+        return (item,)  # type: ignore[return-value]
     return item if isinstance(item, Sequence) else (item,)
 
 
@@ -593,6 +597,140 @@ def _fast_write_plan(
     return pattern, chunk
 
 
+def _staged_write_costs(n: int, width: int, cs: int) -> tuple[int, int]:
+    chunks = math.ceil(n / cs)
+    setup = 6 + width  # c*, p, and per-column counter bases
+    loads = 3 * cs * width - width  # bake + consume per slot, walk between
+    top_level = setup + loads
+    budget = _BE_LIMIT
+    wrappers = 0
+    if top_level > budget:
+        wrappers = math.ceil((top_level - budget) / _BE_LIMIT)
+    conditionals = wrappers + cs + chunks
+    expressions = top_level + cs * width + n * width
+    return conditionals, expressions
+
+
+def _staged_write_plan(
+    *,
+    items: Sequence[Sequence[Editable]],
+    n: int,
+    width: int,
+) -> tuple[list[ColumnInfo], list[InternalType], int] | None:
+    pattern = _detect_pattern(items)
+    if pattern is None:
+        return None
+    if any(
+        prefix.startswith(('hw', 'sw', 'tmp'))
+        for _cls, prefix, _suffix, _coeff, _offset in pattern
+    ):
+        return None
+    column_types = [_column_internal_type(items, k) for k in range(width)]
+    # Mixed columns have no single comma-safe reference form.
+    if any(t is InternalType.ANY for t in column_types):
+        return None
+
+    best: tuple[tuple[int, int], int] | None = None
+    for cs in range(1, _BE_LIMIT // width + 1):
+        cost = _staged_write_costs(n, width, cs)
+        if best is None or cost < best[0]:
+            best = (cost, cs)
+    if best is None:
+        return None
+    cost, cs = best
+    if cost >= _slow_write_costs(n, width):
+        return None
+    if _in_nested_container():
+        return None
+    return pattern, column_types, cs
+
+
+def _emit_staged_write(
+    *,
+    pattern: list[ColumnInfo],
+    column_types: Sequence[InternalType],
+    items: Sequence[Sequence[Editable]],
+    index: Editable,
+    input: Sequence[Checkable | HousingType],
+    cs: int,
+) -> None:
+    from ..actions.strict_order import strict_order
+    from ..stats.temporary_stat import TemporaryStat
+
+    n = len(items)
+    width = len(pattern)
+    chunks = math.ceil(n / cs)
+
+    pool = _fast_names_pool(pattern)
+    if 2 * width > len(pool):
+        raise ValueError(f'cheap_write staged path: width {width} too large')
+    counters = [
+        PlayerStat(pool[k]).as_long().without_auto_unset() for k in range(width)
+    ]
+    bakers = [PlayerStat(pool[width + k]) for k in range(width)]
+    staged = [[TemporaryStat() for _ in range(width)] for _ in range(cs)]
+    chunk_no = TemporaryStat().as_long()
+    pos = TemporaryStat().as_long()
+    base = TemporaryStat().as_long()
+
+    with strict_order():
+        chunk_no.value = index
+        chunk_no.value //= cs
+        base.value = chunk_no
+        base.value *= cs
+        pos.value = index
+        pos.value -= base
+
+        for k, (cls, prefix, suffix, coeff, offset) in enumerate(pattern):
+            p_value, tail = _composed_reference_parts(
+                cls,
+                prefix,
+                suffix,
+                column_types[k],
+            )
+            p_k = _get_or_bake_composed_prefix(p_value, pool)
+            d_k = counters[k]
+            d_k.value = base
+            if coeff != 1:
+                d_k.value *= coeff
+            if offset != 0:
+                d_k.value += offset
+            template = f'%var.player/{p_k.name}%%var.player/{d_k.name}%{tail}'
+            for j in range(cs):
+                set_string(bakers[k], template)
+                staged[j][k].as_type(InternalType.ANY).value = bakers[k]
+                if j != cs - 1:
+                    d_k.value += coeff
+
+        for j in range(cs):
+            with IfAll(pos == j):
+                for k in range(width):
+                    if column_types[k] is InternalType.STRING:
+                        # A string-typed left side copies in one quoted pass,
+                        # so a value that looks like a placeholder is not
+                        # resolved a second time.
+                        staged[j][k].as_type(InternalType.STRING).value = input[k]
+                    else:
+                        staged[j][k].value = input[k]
+
+        for c in range(chunks):
+            start = c * cs
+            size = min(cs, n - start)
+            with IfAll(index >= start, index <= start + size - 1):
+                for j in range(size):
+                    for k in range(width):
+                        item = items[start + j][k]
+                        if column_types[k] is InternalType.STRING:
+                            # Typed store: quoted one-pass, verbatim text.
+                            item.value = staged[j][k]
+                        else:
+                            # ANY-widened store: the bare read returns the
+                            # temp's raw numeric value - exact, and without
+                            # the literal L/D tail a quoted typed read would
+                            # keep as text.
+                            item.as_type(InternalType.ANY).value = staged[j][k]
+
+
 def cheap_read(
     *,
     items: Sequence[MaybeSequence[Checkable | HousingType]],
@@ -697,6 +835,19 @@ def cheap_write(
             index=index,
             input=input,
             chunk=chunk,
+        )
+        return
+
+    staged = _staged_write_plan(items=items, n=n, width=width)
+    if staged is not None:
+        pattern, column_types, cs = staged
+        _emit_staged_write(
+            pattern=pattern,
+            column_types=column_types,
+            items=items,
+            index=index,
+            input=input,
+            cs=cs,
         )
         return
 

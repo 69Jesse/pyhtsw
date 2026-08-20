@@ -663,7 +663,9 @@ counts = container.expression_counts(nested=True)
 assert counts.get(RandomExpression, 0) == 0, counts
 
 
-# The one-hot patch is arithmetic, so non-LONG slots keep the chunked cascade.
+# The one-hot patch is arithmetic, so non-LONG slots take the staged write:
+# a conditional-free composed load of the target chunk, sqrt(n)-ish select
+# conditionals, and one exact-range store conditional per chunk.
 for _stats in (
     [PlayerStat(f'd{i}').as_double() for i in range(30)],
     [PlayerStat(f's{i}').as_string() for i in range(30)],
@@ -675,7 +677,7 @@ for _stats in (
             input=_stats[0],
         )
     counts = container.expression_counts(nested=True)
-    assert counts.get(ConditionalExpression, 0) > 10, counts
+    assert counts.get(ConditionalExpression, 0) == 11, counts
 
 
 # Names that don't form an arithmetic run have no dynamic read, so likewise.
@@ -927,3 +929,69 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
             assert got == want, f'v5 global: slot[{i}]={got}, want {want}'
 
     ctx.assert_all(check_v5_global)
+
+
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _sitems = [PlayerStat(f'sv{i}').as_string() for i in range(30)]
+    for _i, _s in enumerate(_sitems):
+        ctx.put(_s, f'word{_i}', ignore_warning=True)
+    ctx.put(_sitems[7], '%var.player/sv3%', ignore_warning=True)
+    _idx = PlayerStat('idx').as_long()
+    _swritten: dict[int, str] = {}
+    for _step, _t in enumerate((0, 12, 25, 29, 7, 12)):
+        _swritten[_t] = f'new{_step}'
+        _idx.value = _t
+        cheap_write(items=_sitems, index=_idx, input=_swritten[_t])
+    for _bad in (-1, 30, 55):
+        _idx.value = _bad
+        cheap_write(items=_sitems, index=_idx, input='nope')
+
+    def check_staged_strings(
+        _items: list[PlayerStat] = _sitems,
+        _w: tuple[tuple[int, str], ...] = tuple(_swritten.items()),
+    ) -> None:
+        _wd = dict(_w)
+        for i, s in enumerate(_items):
+            got = str(ctx.get(s))
+            want = _wd.get(i, '%var.player/sv3%' if i == 7 else f'word{i}')
+            assert got == want, (i, got, want)
+
+    ctx.assert_all(check_staged_strings)
+
+
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _ditems = [PlayerStat(f'dv{i}').as_double() for i in range(30)]
+    for _i, _s in enumerate(_ditems):
+        ctx.put(_s, _i + 0.5, ignore_warning=True)
+    _idx = PlayerStat('idx').as_long()
+    _idx.value = 17
+    cheap_write(items=_ditems, index=_idx, input=-2.25)
+
+    def check_staged_doubles(_items: list[PlayerStat] = _ditems) -> None:
+        for i, s in enumerate(_items):
+            got = float(ctx.get_raw(s))
+            want = -2.25 if i == 17 else i + 0.5
+            assert abs(got - want) < 0.001, (i, got, want)
+
+    ctx.assert_all(check_staged_doubles)
+
+
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _mitems = [
+        (PlayerStat(f'mv{2 * i}').as_long(), PlayerStat(f'mv{2 * i + 1}').as_string())
+        for i in range(15)
+    ]
+    for _i, (_a, _b) in enumerate(_mitems):
+        ctx.put(_a, 1000 + _i, ignore_warning=True)
+        ctx.put(_b, f's{_i}', ignore_warning=True)
+    _idx = PlayerStat('idx').as_long()
+    _idx.value = 9
+    cheap_write(items=_mitems, index=_idx, input=(4242, 'hit'))
+
+    def check_staged_mixed(_items: list = _mitems) -> None:
+        for i, (a, b) in enumerate(_items):
+            got = (int(ctx.get(a)), str(ctx.get(b)))
+            want = (4242, 'hit') if i == 9 else (1000 + i, f's{i}')
+            assert got == want, (i, got, want)
+
+    ctx.assert_all(check_staged_mixed)

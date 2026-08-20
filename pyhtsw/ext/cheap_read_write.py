@@ -1,6 +1,6 @@
 import math
-from collections.abc import Generator, Iterable, Sequence
-from typing import Any, Self
+from collections.abc import Iterable, Sequence
+from typing import Any, NamedTuple
 
 from ..actions.conditional.statements import Else, IfAll, IfAny
 from ..editable import Checkable, Editable, HousingType
@@ -239,11 +239,10 @@ def into_sequence[T](item: MaybeSequence[T]) -> Sequence[T]:
 # Housing's per-action-list caps; a conditional's branch gets its own budget.
 _BE_LIMIT = 25
 
-
-# `set_string` splits a value longer than 32 characters into several
-# assignments, so the two names interpolated into the one-hot template have to
-# be single characters: '%var.player/q%%var.player/d% 0%L' is exactly 32.
-_FAST_WRITE_NAMES = _FAST_READ_NAMES
+_HI_KEY = 500
+# Band gates compute `1 - min(1, (h - a)^2)` via `//`; the divisor bounds the
+# square, so |h - a| up to 2^26 stays exact and overflow-free.
+_BAND_DIV = 1 << 53
 
 
 def _in_nested_container() -> bool:
@@ -254,343 +253,260 @@ def _in_nested_container() -> bool:
     )
 
 
-class _FallbackChainRead(Checkable):
-    def __init__(self, first: PlayerStat, fallback: PlayerStat) -> None:
-        super().__init__(internal_type=InternalType.ANY)
-        self.first = first
-        self.fallback = fallback
-
-    def into_string_rhs(self, *, include_internal_type: bool = True) -> str:
-        return f'%var.player/{self.first.name} %var.player/{self.fallback.name}%%'
-
-    def iter_referenced_stats(self) -> Generator[Stat]:
-        yield self.first
-        yield self.fallback
-
-    def into_hashable(self) -> tuple[object, ...]:
-        return (self.__class__, self.first.name, self.fallback.name)
-
-    def equals_raw(self, other: object) -> bool:
-        return (
-            isinstance(other, _FallbackChainRead)
-            and other.first.is_same_stat(self.first)
-            and other.fallback.is_same_stat(self.fallback)
-        )
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(self.first, self.fallback)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.first.name} -> {self.fallback.name}>'
+class _FastWriteShape(NamedTuple):
+    chunk: int
+    chunks: int
+    table: int
+    split: bool
+    mid: int
+    pairs: int
+    lone: int
+    flip_ok: bool
+    payloads_per_column: int
 
 
-def _fast_write_costs(n: int, width: int, chunk_size: int) -> tuple[int, int]:
-    chunks = math.ceil(n / chunk_size)
-    # read (5) + negate/add input (2) + one-hot prefix (1) per column, plus the
-    # shared chunk index and the three that set up the slot counter.
-    setup = 9 * width + 4
-    per_slot = width * chunk_size + (chunk_size - 1)
-    top_level = setup + per_slot
-    if chunks == 1:
-        # Nothing to select between, so the blit is unconditional and shares the
-        # enclosing list rather than getting a branch of its own.
-        top_level += n * width
-    wrappers = max(0, math.ceil((top_level - _BE_LIMIT) / _BE_LIMIT))
-    # Two chunks fit an if/else; more than two cannot, since Housing forbids
-    # nesting a conditional inside a conditional (so there is no `else if`).
-    conditionals = (0 if chunks == 1 else 1 if chunks == 2 else chunks) + wrappers
-    expressions = top_level if chunks == 1 else n * width + top_level
+def _fast_write_shape(n: int, width: int, chunk: int) -> _FastWriteShape:
+    chunks = math.ceil(n / chunk)
+    table = min(chunk, n)
+    split = table * width + (table - 1) > _BE_LIMIT
+    mid = (table + 1) // 2
+    pairs = chunks // 2 if chunks >= 3 else 0
+    lone = chunks % 2 if chunks >= 3 else 0
+    return _FastWriteShape(
+        chunk=chunk,
+        chunks=chunks,
+        table=table,
+        split=split,
+        mid=mid,
+        pairs=pairs,
+        lone=lone,
+        flip_ok=chunks <= 4,
+        payloads_per_column=2 if split else 1,
+    )
+
+
+def _fast_write_costs(n: int, width: int, chunk: int) -> tuple[int, int]:
+    s = _fast_write_shape(n, width, chunk)
+    npay = s.payloads_per_column * width
+    scatter = s.table * width + (s.table - 1)
+
+    setup = 5 * width + 2 * width + width + 1  # read, diff, prefixes, counter
+    if s.chunks >= 2:
+        setup += 4  # counter -> index mod chunk
+    if s.split:
+        setup += 3 * width + 2  # payload split
+    if s.chunks >= 3:
+        setup += 2  # h = index // (2 * chunk)
+        if s.pairs >= 2:
+            setup += npay  # stashes
+        if not s.lone:
+            setup += npay + (3 if s.pairs > 2 else 0)  # first pair's kill
+    if not s.split:
+        setup += scatter
+    if s.chunks == 1 and not s.split:
+        setup += n * width  # inline blits
+
+    def gate(a: int) -> int:
+        if s.flip_ok:
+            return 2
+        return 6 if a == 0 else 7
+
+    runs = [setup]
+    if s.chunks == 1 and s.split:
+        runs.append(n * width)  # blits after the scatter conditional
+    if s.lone:
+        runs.append(gate(s.pairs - 1) + npay)
+    for a in range(s.pairs - 1, 0, -1):
+        runs.append(npay + gate(a - 1) + npay)
+
+    budget = _BE_LIMIT
+    wrappers = 0
+    for run in runs:
+        if run <= budget:
+            budget -= run
+        else:
+            wrappers += math.ceil(run / _BE_LIMIT)
+
+    conditionals = wrappers + (1 if s.split else 0)
+    if s.chunks == 2:
+        conditionals += 1
+    elif s.chunks >= 3:
+        conditionals += s.lone + s.pairs
+
+    expressions = sum(runs)
+    if s.split:
+        expressions += scatter + 1  # the high branch's counter offset
+    if s.chunks >= 2:
+        expressions += n * width
     return conditionals, expressions
 
 
-def _best_fast_write_chunk_size(n: int, width: int) -> tuple[int, int, int] | None:
-    max_chunk = min(_BE_LIMIT // width, n)
-    if max_chunk < 1:
-        return None
-    best: tuple[int, int, int] | None = None
-    for chunk_size in range(1, max_chunk + 1):
-        conditionals, expressions = _fast_write_costs(n, width, chunk_size)
-        if best is None or (conditionals, expressions) < (best[1], best[2]):
-            best = (chunk_size, conditionals, expressions)
-    return best
-
-
-# The fallback-chain fast path works on chunks of 25 slots; the position
-# within a chunk is factored as p = 5a + b with a, b in 0..4, so per-position
-# one-hot state shrinks from 25 variables to 5 + 5.
-_V3_CHUNK = 25
-
-
-def _v4_layout(n: int) -> tuple[int, list[int]] | None:
-    if n < 27:
-        return None
-    for lists in range(2, 26):
-        cap = 24 * (lists - 2) + 50
-        if cap + 2 < n:
-            continue
-        loose = max(0, n - cap)
-        rem = n - loose
-        last = min(25, rem)
-        rem -= last
-        carrier = min(25, rem)
-        rem -= carrier
-        sizes: list[int] = []
-        while rem > 0:
-            take = min(24, rem)
-            sizes.append(take)
-            rem -= take
-        if len(sizes) != lists - 2 or carrier == 0:
-            return None
-        sizes.reverse()
-        return loose, [*sizes, carrier, last]
-    return None
-
-
-def _v4_write_costs(
-    n: int,
-    offset: int,
-    suffix: str,
-) -> tuple[int, int] | None:
-    if offset != 0 or suffix != '':
-        return None
-    layout = _v4_layout(n)
-    if layout is None:
-        return None
-    loose, sizes = layout
-    if loose > 0:
-        pair = 3 * loose + 1
-        gate = 3 + (1 if loose >= 2 else 0)
-    else:
-        pair = 0
-        gate = 1  # the payload keep-alive
-    if1 = 14 + pair + gate
-    if if1 > _BE_LIMIT:
-        return None
-    kills = len(sizes) - 2
-    # the always-true setup if, plus one if per chunk list except the last,
-    # which rides in the carrier's else
-    conditionals = 1 + (len(sizes) - 1)
-    expressions = 25 + if1 + (n - loose) + kills
-    return conditionals, expressions
-
-
-def _emit_fast_write_v4(
+def _emit_fast_write(
     *,
     pattern: list[ColumnInfo],
     items: Sequence[Sequence[Editable]],
     index: Editable,
     input: Sequence[Checkable | HousingType],
+    chunk: int,
 ) -> None:
+    from ..actions.preserved import preserved
+    from ..actions.strict_order import strict_order
+    from ..stats.temporary_stat import TemporaryStat
+
     n = len(items)
-    _cls, _prefix, _suffix, _coeff, _offset = pattern[0]
-    layout = _v4_layout(n)
-    assert layout is not None and _offset == 0 and _suffix == ''
-    loose, sizes = layout
+    width = len(pattern)
+    s = _fast_write_shape(n, width, chunk)
 
-    pool = ''.join(c for c in _fast_names_pool(pattern) if c != 'h')
-    if len(pool) < 21 + loose:
-        raise ValueError('cheap_write v4: name pool exhausted')
-    n_stat = PlayerStat(pool[0]).as_long().without_auto_unset()
-    tmp = PlayerStat(pool[1])
-    pfx = PlayerStat(pool[2])
-    q = PlayerStat(pool[3])
-    u = PlayerStat(pool[4]).as_long().without_auto_unset()
-    v = PlayerStat(pool[5]).as_long().without_auto_unset()
-    idc = PlayerStat(pool[6]).as_long()
-    d2 = PlayerStat(pool[7]).as_long().without_auto_unset()
-    s_stats = [PlayerStat(c) for c in pool[8:13]]
-    t_stats = [PlayerStat(c) for c in pool[13:18]]
-    a_stats = [PlayerStat(c) for c in pool[18:23]]
-    g_stats = [PlayerStat(c) for c in pool[23 : 23 + loose]]
-    payload = PlayerStat('h0').as_long()
-    pin = PlayerStat('h501').as_long().without_auto_unset()
+    pool = _fast_names_pool(pattern)
+    if 4 * width + 1 > len(pool):
+        raise ValueError(f'cheap_write fast path: width {width} too large')
+    # `_emit_fast_read` claims pool[:3 * width] for itself.
+    q_stats = [PlayerStat(pool[3 * width + k]) for k in range(width)]
+    d = PlayerStat(pool[4 * width]).as_long().without_auto_unset()
+    lo = [PlayerStat(f'hw{k}_0').as_long() for k in range(width)]
+    hi = [PlayerStat(f'hw{k}_{_HI_KEY}').as_long() for k in range(width)]
+    payloads = lo + hi if s.split else lo
+    # The un-rebaked part of the table may be unset (first call), so a blit
+    # needs the explicit 0 fallback: an empty-string resolve is fatal in-game.
+    slots = [
+        [PlayerStat(f'sw{j}_{k}', fallback_value=0) for k in range(width)]
+        for j in range(s.table)
+    ]
+    t = TemporaryStat().as_long()
+    h = TemporaryStat().as_long()
+    band = TemporaryStat().as_long()
+    stashes = [TemporaryStat().as_long() for _ in payloads]
 
-    scope = _cls.right_side_keyword()
-
-    n_stat.value = index
-    pfx.value = f'%var.{scope}/{_prefix}'
-    set_string(tmp, f'%var.player/{pfx.name}%%var.player/{n_stat.name}% 0%L')
-    payload.value = input[0]
-    payload.as_type(InternalType.ANY).value -= tmp
-    # counter math (9): n -> -(i mod 25), u -> -(a*), v -> 501 - b*
-    n_stat.value //= _V3_CHUNK
-    n_stat.value *= _V3_CHUNK
-    n_stat.value -= index
-    u.value = n_stat
-    u.value //= 5
-    v.value = u
-    v.value *= -5
-    v.value += n_stat
-    v.value += 501
-    # shared prefix, pinned hit source, s-refs (11)
-    q.value = '%var.player/h'
-    pin.value = 0
-    for a in range(5):
-        set_string(s_stats[a], f'%var.player/{q.name}%%var.player/{u.name}% 0%L')
-        if a != 4:
-            u.value += 1
-
-    def chain_blit(slot: int, item: Sequence[Editable]) -> None:
-        p = slot % _V3_CHUNK
-        item[0].as_type(InternalType.ANY).value += _FallbackChainRead(
-            a_stats[p % 5],
-            s_stats[p // 5],
-        )
-
-    with IfAll():
-        for b in range(5):
-            set_string(t_stats[b], f'%var.player/{q.name}%%var.player/{v.name}% .5%')
-            if b != 4:
-                v.value += 1
-        for b in range(5):
-            a_stats[b].as_type(InternalType.ANY).value = _FallbackChainRead(
-                t_stats[b],
-                pin,
+    def bake(j: int) -> None:
+        for k in range(width):
+            # Exactly 32 characters, the most one assignment holds. The
+            # trailing `L` rides along unresolved and lands on the number the
+            # one-hot yields, which is what lets the blit read it back: that
+            # number is rendered with thousands separators, and only the `...L`
+            # form strips them before parsing.
+            set_string(
+                slots[j][k],
+                f'%var.player/{q_stats[k].name}%%var.player/{d.name}% 0%L',
             )
-        if loose:
-            d2.value = index
-            d2.value *= -1
-            for j in range(loose):
-                set_string(
-                    g_stats[j],
-                    f'%var.player/{q.name}%%var.player/{d2.name}% 0%L',
-                )
-                if j != loose - 1:
-                    d2.value += 1
-            for j in range(loose):
-                items[j][0].as_type(InternalType.ANY).value += g_stats[j]
-            idc.value = index
-            if loose >= 2:
-                idc.value //= loose
-            idc.value //= idc
-            payload.value *= idc
-        else:
-            # Without the gate (or kills, in the two-list layout) nothing
-            # mentions the payload syntactically — it is only ever read
-            # through composed references — so successive calls would
-            # dead-store each other's diff. This self-assignment names it.
-            payload.set(payload, is_intentional_self_assignment=True)
 
-    starts: list[int] = []
-    pos = loose
-    for size in sizes:
-        starts.append(pos)
-        pos += size
-    carrier = len(sizes) - 2
-    for k, (start, size) in enumerate(zip(starts, sizes, strict=True)):
-        if k < carrier:
-            with IfAll(index >= start, index <= start + size - 1):
-                for j in range(size):
-                    chain_blit(start + j, items[start + j])
-                payload.value = 0
-        elif k == carrier:
-            with IfAll(index >= start, index <= start + size - 1):
-                for j in range(size):
-                    chain_blit(start + j, items[start + j])
+    def blit(chunk_idx: int) -> None:
+        start = chunk_idx * chunk
+        for j, item in enumerate(items[start : start + chunk]):
+            for k in range(width):
+                # A slot holds the *unresolved* one-hot reference, so the blit
+                # has to resolve twice. Only a bare `%...%` right-hand side does
+                # that; the quoted form a typed left side would coerce it into
+                # stops after one pass and yields the text. Widening the left
+                # side to ANY suppresses that coercion.
+                item[k].as_type(InternalType.ANY).value += slots[j][k]
+
+    def gate_flag(a: int) -> Stat:
+        """1 if h == a else 0. The flip shortcut needs h in {0, 1}, which
+        holds for in-range indices whenever there are at most two bands."""
+        if s.flip_ok:
+            assert a == 0
+            h.value *= -1
+            h.value += 1
+            return h
+        band.value = h
+        if a != 0:
+            band.value -= a
+        band.value *= band
+        band.value += _BAND_DIV - 1
+        band.value //= _BAND_DIV
+        band.value *= -1
+        band.value += 1
+        return band
+
+    def kill(flag: Stat) -> None:
+        for payload in payloads:
+            payload.value *= flag
+
+    with strict_order(), preserved():
+        # lo_k = diff_k = input[k] - items[index][k], via one composed read.
+        _emit_fast_read(pattern=pattern, index=index, output=lo)
+        for k in range(width):
+            lo[k].value *= -1
+            lo[k].value += input[k]
+        d.value = index
+        if s.chunks >= 2:
+            # d -> p = index mod chunk.
+            d.value //= chunk
+            d.value *= chunk
+            d.value -= index
+            d.value *= -1
+        if s.split:
+            # Route the diff to the rebaked half's payload key.
+            t.value = d
+            t.value //= s.mid
+            for k in range(width):
+                hi[k].value = lo[k]
+                hi[k].value *= t
+                lo[k].value -= hi[k]
+        for k in range(width):
+            q_stats[k].value = f'%var.player/hw{k}_'
+        if s.chunks >= 3:
+            h.value = index
+            h.value //= 2 * chunk
+            if s.pairs >= 2:
+                for stash, payload in zip(stashes, payloads, strict=True):
+                    stash.value = payload
+            if not s.lone:
+                # The first gather pair is the top band: kill unless it.
+                if s.pairs == 2:
+                    kill(h)
+                else:
+                    band.value = h
+                    band.value += 1
+                    band.value //= s.pairs
+                    kill(band)
+
+        if s.split:
+            # Rebake only the half of the table containing p.
+            with IfAll(d <= s.mid - 1):
+                for j in range(s.mid):
+                    bake(j)
+                    if j != s.mid - 1:
+                        d.value -= 1
             with Else:
-                last_start, last_size = starts[-1], sizes[-1]
-                for j in range(last_size):
-                    chain_blit(last_start + j, items[last_start + j])
+                d.value += _HI_KEY - s.mid
+                for j in range(s.mid, s.table):
+                    bake(j)
+                    if j != s.table - 1:
+                        d.value -= 1
         else:
-            break
+            for j in range(s.table):
+                bake(j)
+                if j != s.table - 1:
+                    d.value -= 1
 
+        if s.chunks == 1:
+            blit(0)
+            return
+        if s.chunks == 2:
+            with IfAll(index <= chunk - 1):
+                blit(0)
+            with Else:
+                blit(1)
+            return
 
-def _v3_write_costs(n: int, offset: int) -> tuple[int, int]:
-    setup = 43 + (1 if offset != 0 else 0)
-    groups = math.ceil(n / _V3_CHUNK)
-    top_level = setup + (n if groups == 1 else 0)
-    wrappers = max(0, math.ceil((top_level - _BE_LIMIT) / _BE_LIMIT))
-    conditionals = (0 if groups == 1 else groups) + wrappers
-    return conditionals, setup + n
-
-
-def _emit_fast_write_v3(
-    *,
-    pattern: list[ColumnInfo],
-    items: Sequence[Sequence[Editable]],
-    index: Editable,
-    input: Sequence[Checkable | HousingType],
-) -> None:
-    n = len(items)
-    _cls, _prefix, _suffix, _coeff, offset = pattern[0]
-
-    # 'Z' is reserved as the prefix of the pinned hit-source entry ("Z501"),
-    # so it must not double as a temp name.
-    pool = ''.join(c for c in _fast_names_pool(pattern) if c != 'Z')
-    if len(pool) < 22:
-        raise ValueError('cheap_write chain path: name pool exhausted')
-    # `_emit_fast_read` claims pool[:3] for itself.
-    q = PlayerStat(pool[3])
-    r = PlayerStat(pool[4])
-    u = PlayerStat(pool[5]).as_long().without_auto_unset()
-    v = PlayerStat(pool[6]).as_long().without_auto_unset()
-    s_stats = [PlayerStat(c) for c in pool[7:12]]
-    t_stats = [PlayerStat(c) for c in pool[12:17]]
-    a_stats = [PlayerStat(c) for c in pool[17:22]]
-    payload = PlayerStat('hw0').as_long()
-    hz = PlayerStat('Z501').as_long().without_auto_unset()
-
-    # payload = input - items[index], via one composed read.
-    _emit_fast_read(pattern=pattern, index=index, output=[payload])
-    payload.value *= -1
-    payload.value += input[0]
-    # The payload is only ever read back through runtime-composed names, which
-    # the optimiser cannot see; this self-assignment keeps the stores alive.
-    payload.set(payload, is_intentional_self_assignment=True)
-
-    # The read's counter still holds offset + index; turn it into -(i mod 25),
-    # then derive the two one-hot counters from it.
-    n_stat = PlayerStat(pool[0]).as_long().without_auto_unset()
-    if offset != 0:
-        n_stat.value -= offset
-    n_stat.value //= _V3_CHUNK
-    n_stat.value *= _V3_CHUNK
-    n_stat.value -= index  # 25*(i div 25) - i = -(i mod 25)
-    u.value = n_stat
-    u.value //= 5  # -(a*): truncation is symmetric, and -(p)/5 = -(p div 5)
-    v.value = u
-    v.value *= -5  # 5*a*
-    v.value += n_stat  # 5*a* - p* = -(b*)
-    v.value += 501  # 501 - b*: keys 497..505 never render with commas
-
-    q.value = '%var.player/hw'
-    r.value = '%var.player/Z'
-    # The A-table's hit source: a pinned long 0 (`false` keeps it set).
-    hz.value = 0
-
-    for a in range(5):
-        set_string(s_stats[a], f'%var.player/{q.name}%%var.player/{u.name}% 0%L')
-        if a != 4:
-            u.value += 1
-    for b in range(5):
-        set_string(t_stats[b], f'%var.player/{r.name}%%var.player/{v.name}% .5%')
-        if b != 4:
-            v.value += 1
-    for b in range(5):
-        # Bare two-pass resolve with the unset flag on: the hit row's 0 is
-        # removed (routing the chain onward), misses keep the 0.5 double. The
-        # first key (the baked reference) is always set, so the chain's
-        # fallback never fires — it exists to reference `hz` syntactically,
-        # which keeps the pinned-0 store visible to the dead-store pass.
-        a_stats[b].as_type(InternalType.ANY).value = _FallbackChainRead(
-            t_stats[b],
-            hz,
-        )
-
-    def blit(start: int) -> None:
-        for j, item in enumerate(items[start : start + _V3_CHUNK]):
-            item[0].as_type(InternalType.ANY).value += _FallbackChainRead(
-                a_stats[j % 5],
-                s_stats[j // 5],
-            )
-
-    if n <= _V3_CHUNK:
-        blit(0)
-        return
-    for start in range(0, n, _V3_CHUNK):
-        end = min(start + _V3_CHUNK, n) - 1
-        with IfAll(index >= start, index <= end):
-            blit(start)
+        if s.lone:
+            # The lone chunk's condition is exact, so it needs no gating and
+            # runs first, while the payloads are still fully alive.
+            with IfAll(index >= (s.chunks - 1) * chunk):
+                blit(s.chunks - 1)
+            kill(gate_flag(s.pairs - 1))
+        for a in range(s.pairs - 1, -1, -1):
+            low_chunk = 2 * a
+            start = low_chunk * chunk
+            with IfAll(index >= start, index <= start + chunk - 1):
+                blit(low_chunk)
+            with Else:
+                blit(low_chunk + 1)
+            if a > 0:
+                for payload, stash in zip(payloads, stashes, strict=True):
+                    payload.value = stash
+                kill(gate_flag(a - 1))
 
 
 def _slow_write_costs(n: int, width: int) -> tuple[int, int]:
@@ -619,7 +535,7 @@ def _fast_write_plan(
     items: Sequence[Sequence[Editable]],
     n: int,
     width: int,
-) -> tuple[str, list[ColumnInfo], int] | None:
+) -> tuple[list[ColumnInfo], int] | None:
     if not all(
         isinstance(slot, Stat) and slot.internal_type is InternalType.LONG
         for item in items
@@ -629,32 +545,23 @@ def _fast_write_plan(
     pattern = _detect_pattern(items)
     if pattern is None:
         return None
-    # The fast paths key their one-hot lookups on composed names in the `h`,
-    # `hw` and `Z` namespaces (and stage slots in `sw`/`tmp` ones). Items
-    # living in those namespaces would collide with the machinery, so they
-    # take the cascade instead.
+    # The fast path keys its one-hot lookups on composed names in the `hw`
+    # namespace (and stage slots in `sw`/`tmp` ones). Items living in those
+    # namespaces would collide with the machinery, so they take the cascade.
     if any(
-        prefix in ('h', 'h-') or prefix.startswith(('hw', 'sw', 'tmp', 'Z'))
+        prefix.startswith(('hw', 'sw', 'tmp'))
         for _cls, prefix, _suffix, _coeff, _offset in pattern
     ):
         return None
 
-    candidates: list[tuple[tuple[int, int], tuple[str, list[ColumnInfo], int]]] = []
-    v1 = _best_fast_write_chunk_size(n, width)
-    if v1 is not None:
-        chunk_size, conditionals, expressions = v1
-        candidates.append(((conditionals, expressions), ('v1', pattern, chunk_size)))
-    # The fallback-chain paths (v3/v4) are DISABLED: in-game verification
-    # (2026-08-18) showed Housing's value input only accepts a bare value that
-    # is a single placeholder with no nested `%` (anything else is auto-quoted
-    # into one-pass string semantics), and `long += double` is a fatal,
-    # execution-halting error — so the chain blit and its 0.5 poison cannot
-    # exist in the game. The emitters are kept for the findings record; htsw's
-    # runtime resolves them, but its bare-value path is unreachable in-game.
-    if not candidates:
+    best: tuple[tuple[int, int], int] | None = None
+    for chunk in range(1, _BE_LIMIT // width + 1):
+        cost = _fast_write_costs(n, width, chunk)
+        if best is None or cost < best[0]:
+            best = (cost, chunk)
+    if best is None:
         return None
-
-    cost, plan = min(candidates, key=lambda entry: entry[0])
+    cost, chunk = best
     if cost >= _slow_write_costs(n, width):
         return None
     if _in_nested_container() and (cost[0] > 0 or cost[1] > _BE_LIMIT):
@@ -663,96 +570,7 @@ def _fast_write_plan(
         # room. Defer to the cascade so the caller gets its clear "cannot nest"
         # error rather than a limit failure from deep inside the fixer.
         return None
-    return plan
-
-
-def _emit_fast_write(
-    *,
-    pattern: list[ColumnInfo],
-    items: Sequence[Sequence[Editable]],
-    index: Editable,
-    input: Sequence[Checkable | HousingType],
-    chunk_size: int,
-) -> None:
-    n = len(items)
-    width = len(pattern)
-    chunk_size = min(chunk_size, n)
-
-    names = _fast_names_pool(pattern)
-    if 4 * width + 2 > len(names):
-        raise ValueError(f'cheap_write fast path: width {width} too large')
-    # `_emit_fast_read` claims names[:3 * width] for itself.
-    q_stats = [PlayerStat(names[3 * width + k]) for k in range(width)]
-    d = PlayerStat(names[4 * width]).as_long().without_auto_unset()
-    c = PlayerStat(names[4 * width + 1]).as_long()
-
-    # `diff` doubles as the one-hot's single assigned entry, so it is named
-    # `<prefix>1` — the key the template resolves to on the matching slot.
-    diffs = [PlayerStat(f'hw{k}1').as_long() for k in range(width)]
-
-    # diff = input - items[index]
-    _emit_fast_read(pattern=pattern, index=index, output=diffs)
-    for k in range(width):
-        diffs[k].value *= -1
-        diffs[k].value += input[k]
-        # Every read of `diff` goes through a name assembled at runtime, so
-        # nothing in the emitted expressions mentions it and the dead-store pass
-        # would drop the assignments above. This self-assignment is a no-op that
-        # names it, which keeps them alive.
-        diffs[k].set(diffs[k], is_intentional_self_assignment=True)
-        q_stats[k].value = f'%var.player/hw{k}'
-
-    chunks = math.ceil(n / chunk_size)
-    if chunks == 1:
-        d.value = index
-        d.value *= -1
-        d.value += 1
-    else:
-        c.value = index // chunk_size
-        d.value = c * chunk_size
-        d.value -= index
-        d.value += 1
-
-    slots = [
-        [PlayerStat(f'sw{k}_{j}') for k in range(width)] for j in range(chunk_size)
-    ]
-    for j in range(chunk_size):
-        for k in range(width):
-            # Exactly 32 characters, the most one assignment holds. The
-            # trailing `L` rides along unresolved and lands on the number the
-            # one-hot yields, which is what lets the blit read it back: that
-            # number is rendered with thousands separators, and only the `…L`
-            # form strips them before parsing.
-            set_string(
-                slots[j][k],
-                f'%var.player/{q_stats[k].name}%%var.player/{d.name}% 0%L',
-            )
-        if j != chunk_size - 1:
-            d.value += 1
-
-    def blit(start: int) -> None:
-        for j, item in enumerate(items[start : start + chunk_size]):
-            for k in range(width):
-                # A slot holds the *unresolved* one-hot reference, so the blit
-                # has to resolve twice. Only a bare `%…%` right-hand side does
-                # that; the quoted `"%… 0%L"` form a typed left side would coerce
-                # it into stops after one pass and yields the text. Widening the
-                # left side to ANY suppresses that coercion — it changes nothing
-                # else, since a name is written the same way whatever its type.
-                item[k].as_type(InternalType.ANY).value += slots[j][k]
-
-    if chunks == 1:
-        blit(0)
-        return
-
-    starts = list(range(0, n, chunk_size))
-    for chunk_idx, start in enumerate(starts):
-        if chunks == 2 and chunk_idx == 1:
-            with Else:
-                blit(start)
-        else:
-            with IfAll(c == chunk_idx):
-                blit(start)
+    return pattern, chunk
 
 
 def cheap_read(
@@ -847,29 +665,14 @@ def cheap_write(
 
     fast = _fast_write_plan(items=items, n=n, width=width)
     if fast is not None:
-        kind, pattern, chunk_size = fast
-        if kind == 'v4':
-            _emit_fast_write_v4(
-                pattern=pattern,
-                items=items,
-                index=index,
-                input=input,
-            )
-        elif kind == 'v3':
-            _emit_fast_write_v3(
-                pattern=pattern,
-                items=items,
-                index=index,
-                input=input,
-            )
-        else:
-            _emit_fast_write(
-                pattern=pattern,
-                items=items,
-                index=index,
-                input=input,
-                chunk_size=chunk_size,
-            )
+        pattern, chunk = fast
+        _emit_fast_write(
+            pattern=pattern,
+            items=items,
+            index=index,
+            input=input,
+            chunk=chunk,
+        )
         return
 
     best_ce = n

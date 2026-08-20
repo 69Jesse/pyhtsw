@@ -592,14 +592,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 # conditional inside a conditional, so there is no cheaper way to pick a chunk.
 _FAST_WRITE_COUNTS = {
     # length: (conditionals, var changes)
-    10: (1, 32),  # one wrapped blit chunk
-    # The chain paths (4 and 5 conditionals at n=100) are disabled: in-game
-    # verification showed Housing's value input cannot express the chain blit
-    # (a bare value must be a single placeholder with no nested `%`) and
-    # `long += double` is a fatal, execution-halting error. The baked-table
-    # path below is the one whose mechanism is in-game verified (T3).
-    100: (6, 162),
-    1000: (42, 1062),
+    10: (1, 32),  # small table, full rebake, one wrapped blit chunk
+    # Larger arrays split-scatter: half the baked table is rebaked per call
+    # inside one if/else, and chunk pairs share if/else conditionals behind
+    # arithmetic payload gates. The payload and slot writes live in a
+    # `preserved()` region instead of paying keep-alive actions.
+    100: (4, 179),
+    1000: (39, 1284),
 }
 for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
     with Container() as container:
@@ -613,9 +612,26 @@ for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
     assert counts.get(BinaryExpression, 0) == _want_be, (_length, counts)
     assert counts.get(RandomExpression, 0) == 0, (_length, counts)
 
-# Four of the 100-slot conditionals are the blit chunks; the rest is the setup
-# spilling past the enclosing list's 25 var-change budget.
-assert _FAST_WRITE_COUNTS[100][0] >= math.ceil(100 / 25)
+# The 100-slot gather packs its four chunks into two if/else pairs; the
+# scatter if/else and the wrapped setup overflow account for the rest.
+assert _FAST_WRITE_COUNTS[100][0] >= math.ceil(100 / 50)
+
+# The goal metric: even when the enclosing action list is already full (so
+# every setup action has to be bought with wrapper conditionals), a 100-slot
+# write costs five conditionals total: wrapped setup, the scatter if/else,
+# the top gather pair, the wrapped midway gate, and the bottom gather pair.
+with Container() as container:
+    for _ in range(25):
+        PlayerStat('ignoreme1').value += PlayerStat('ignoreme2')
+    cheap_write(
+        items=[PlayerStat(f'item{i}').as_long() for i in range(100)],
+        index=PlayerStat('index').as_long(),
+        input=PlayerStat('input').as_long(),
+    )
+counts = container.expression_counts()
+assert counts.get(ConditionalExpression, 0) == 5, counts
+counts = container.expression_counts(nested=True)
+assert counts.get(RandomExpression, 0) == 0, counts
 
 
 # Neither a conditional nor a Random can be nested inside a conditional, so a
@@ -809,3 +825,101 @@ with Container() as container:
     )
 counts = container.expression_counts(nested=True)
 assert counts.get(ConditionalExpression, 0) > 10, counts
+
+
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _slots = [PlayerStat(f'vf{i}').as_long() for i in range(100)]
+    for _i, _s in enumerate(_slots):
+        ctx.put(_s, value_at(_i, 0))
+    _idx = PlayerStat('idx').as_long()
+    _written = {}
+    for _step, _target in enumerate(
+        (20, 3, 70, 12, 13, 99, 0, 50, 74, 75, 25, 24, 49, 62, 62),
+    ):
+        _written[_target] = -9_000 - _step
+        _idx.value = _target
+        cheap_write(items=_slots, index=_idx, input=_written[_target])
+
+        def check_v5_successive(
+            _s: list[PlayerStat] = _slots,
+            _w: tuple[tuple[int, int], ...] = tuple(_written.items()),
+            _t: int = _target,
+        ) -> None:
+            _w = dict(_w)  # type: ignore[assignment]
+            for i, stat in enumerate(_s):
+                got = int(ctx.get(stat))
+                want = _w.get(i, value_at(i, 0))
+                assert got == want, (
+                    f'v5 successive (after target={_t}): slot[{i}]={got}, want {want}'
+                )
+
+        ctx.assert_all(check_v5_successive)
+
+
+# v5 exhaustive index sweep at the smallest two-chunk size: every target of a
+# 26-slot array in one block, so each call also sees every staleness pattern
+# the previous ones left behind.
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _slots = [PlayerStat(f'vg{i}').as_long() for i in range(26)]
+    for _i, _s in enumerate(_slots):
+        ctx.put(_s, value_at(_i, 0))
+    _idx = PlayerStat('idx').as_long()
+    _final = {}
+    for _target in range(26):
+        _final[_target] = 70_000 + _target
+        _idx.value = _target
+        cheap_write(items=_slots, index=_idx, input=_final[_target])
+
+    def check_v5_exhaustive(_s: list[PlayerStat] = _slots) -> None:
+        for i, stat in enumerate(_s):
+            got = int(ctx.get(stat))
+            assert got == 70_000 + i, f'v5 exhaustive: slot[{i}]={got}'
+
+    ctx.assert_all(check_v5_exhaustive)
+
+
+# v5 with a lone chunk (n=75 -> three chunks: one exact-condition lone plus an
+# if/else pair) and with a non-zero name offset (names start at 'vh5').
+for _n, _first, _targets in ((75, 0, (60, 10, 74, 40)), (30, 5, (0, 29, 13, 12))):
+    with ExecutionContext(ignore_action_limits=True) as ctx:
+        _slots = [PlayerStat(f'vh{_first + i}').as_long() for i in range(_n)]
+        for _i, _s in enumerate(_slots):
+            ctx.put(_s, value_at(_i, 0))
+        _idx = PlayerStat('idx').as_long()
+        _written = {}
+        for _step, _target in enumerate(_targets):
+            _written[_target] = -3_500 - _step
+            _idx.value = _target
+            cheap_write(items=_slots, index=_idx, input=_written[_target])
+
+        def check_v5_shapes(
+            _s: list[PlayerStat] = _slots,
+            _w: tuple[tuple[int, int], ...] = tuple(_written.items()),
+            _n_: int = _n,
+        ) -> None:
+            _w = dict(_w)  # type: ignore[assignment]
+            for i, stat in enumerate(_s):
+                got = int(ctx.get(stat))
+                want = _w.get(i, value_at(i, 0))
+                assert got == want, f'v5 n={_n_}: slot[{i}]={got}, want {want}'
+
+        ctx.assert_all(check_v5_shapes)
+
+
+# v5 GlobalStat array: the machinery stays player-side, only the item scope
+# head changes.
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _gslots = [GlobalStat(f'vk{i}').as_long() for i in range(40)]
+    for _i, _s in enumerate(_gslots):
+        ctx.put(_s, value_at(_i, 0))
+    _idx = PlayerStat('idx').as_long()
+    _idx.value = 33
+    cheap_write(items=_gslots, index=_idx, input=-123_456)
+
+    def check_v5_global(_s: list[GlobalStat] = _gslots) -> None:
+        for i, stat in enumerate(_s):
+            got = int(ctx.get(stat))
+            want = -123_456 if i == 33 else value_at(i, 0)
+            assert got == want, f'v5 global: slot[{i}]={got}, want {want}'
+
+    ctx.assert_all(check_v5_global)

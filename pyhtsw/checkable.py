@@ -237,7 +237,11 @@ class Checkable(BaseObject):
         return clone
 
     def get_formatted_fallback_value(self) -> str | None:
-        value = self.fallback_value or self.internal_type.default_housing_type()
+        # `is None`, not `or`: an explicit falsy fallback (0 on an ANY stat)
+        # must still render, or the placeholder resolves to the empty string.
+        value = self.fallback_value
+        if value is None:
+            value = self.internal_type.default_housing_type()
         return housing_type_as_rhs(value) if value is not None else None
 
     def __add__[T: 'Checkable | NumericHousingType'](

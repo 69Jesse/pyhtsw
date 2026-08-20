@@ -594,11 +594,13 @@ _FAST_WRITE_COUNTS = {
     # length: (conditionals, var changes)
     10: (1, 32),  # small table, full rebake, one wrapped blit chunk
     # Larger arrays split-scatter: half the baked table is rebaked per call
-    # inside one if/else, and chunk pairs share if/else conditionals behind
-    # arithmetic payload gates. The payload and slot writes live in a
-    # `preserved()` region instead of paying keep-alive actions.
-    100: (4, 179),
-    1000: (39, 1284),
+    # inside one if/else, then one exact-range conditional per gather chunk.
+    # The overhead is a constant ~67 actions - packing chunks into else arms
+    # was abandoned because every extra else needs a payload liveness
+    # transition (a wrapper conditional plus gate arithmetic) and executes a
+    # spurious blit list per call, buying back only ~1 conditional each.
+    100: (5, 167),
+    1000: (41, 1067),
 }
 for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
     with Container() as container:
@@ -612,14 +614,15 @@ for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
     assert counts.get(BinaryExpression, 0) == _want_be, (_length, counts)
     assert counts.get(RandomExpression, 0) == 0, (_length, counts)
 
-# The 100-slot gather packs its four chunks into two if/else pairs; the
-# scatter if/else and the wrapped setup overflow account for the rest.
-assert _FAST_WRITE_COUNTS[100][0] >= math.ceil(100 / 50)
+# Four of the 100-slot conditionals are the exact-range gather chunks; the
+# scatter if/else accounts for the fifth.
+assert _FAST_WRITE_COUNTS[100][0] >= math.ceil(100 / 25)
 
-# The goal metric: even when the enclosing action list is already full (so
-# every setup action has to be bought with wrapper conditionals), a 100-slot
-# write costs five conditionals total: wrapped setup, the scatter if/else,
-# the top gather pair, the wrapped midway gate, and the bottom gather pair.
+# With the enclosing action list already full, the ~18-action setup costs one
+# wrapper conditional on top: wrapped setup, the scatter if/else, and one
+# exact-range conditional per chunk. (A 5-conditional shape exists - pair the
+# chunks into two if/elses with a gated midway - but it trades ~18 emitted
+# and ~65 *executed* actions for that one conditional, so it was dropped.)
 with Container() as container:
     for _ in range(25):
         PlayerStat('ignoreme1').value += PlayerStat('ignoreme2')
@@ -629,7 +632,7 @@ with Container() as container:
         input=PlayerStat('input').as_long(),
     )
 counts = container.expression_counts()
-assert counts.get(ConditionalExpression, 0) == 5, counts
+assert counts.get(ConditionalExpression, 0) == 6, counts
 counts = container.expression_counts(nested=True)
 assert counts.get(RandomExpression, 0) == 0, counts
 

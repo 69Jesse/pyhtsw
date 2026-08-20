@@ -240,9 +240,6 @@ def into_sequence[T](item: MaybeSequence[T]) -> Sequence[T]:
 _BE_LIMIT = 25
 
 _HI_KEY = 500
-# Band gates compute `1 - min(1, (h - a)^2)` via `//`; the divisor bounds the
-# square, so |h - a| up to 2^26 stays exact and overflow-free.
-_BAND_DIV = 1 << 53
 
 
 def _in_nested_container() -> bool:
@@ -259,35 +256,21 @@ class _FastWriteShape(NamedTuple):
     table: int
     split: bool
     mid: int
-    pairs: int
-    lone: int
-    flip_ok: bool
-    payloads_per_column: int
 
 
 def _fast_write_shape(n: int, width: int, chunk: int) -> _FastWriteShape:
-    chunks = math.ceil(n / chunk)
     table = min(chunk, n)
-    split = table * width + (table - 1) > _BE_LIMIT
-    mid = (table + 1) // 2
-    pairs = chunks // 2 if chunks >= 3 else 0
-    lone = chunks % 2 if chunks >= 3 else 0
     return _FastWriteShape(
         chunk=chunk,
-        chunks=chunks,
+        chunks=math.ceil(n / chunk),
         table=table,
-        split=split,
-        mid=mid,
-        pairs=pairs,
-        lone=lone,
-        flip_ok=chunks <= 4,
-        payloads_per_column=2 if split else 1,
+        split=table * width + (table - 1) > _BE_LIMIT,
+        mid=(table + 1) // 2,
     )
 
 
 def _fast_write_costs(n: int, width: int, chunk: int) -> tuple[int, int]:
     s = _fast_write_shape(n, width, chunk)
-    npay = s.payloads_per_column * width
     scatter = s.table * width + (s.table - 1)
 
     setup = 5 * width + 2 * width + width + 1  # read, diff, prefixes, counter
@@ -295,29 +278,14 @@ def _fast_write_costs(n: int, width: int, chunk: int) -> tuple[int, int]:
         setup += 4  # counter -> index mod chunk
     if s.split:
         setup += 3 * width + 2  # payload split
-    if s.chunks >= 3:
-        setup += 2  # h = index // (2 * chunk)
-        if s.pairs >= 2:
-            setup += npay  # stashes
-        if not s.lone:
-            setup += npay + (3 if s.pairs > 2 else 0)  # first pair's kill
     if not s.split:
         setup += scatter
     if s.chunks == 1 and not s.split:
         setup += n * width  # inline blits
 
-    def gate(a: int) -> int:
-        if s.flip_ok:
-            return 2
-        return 6 if a == 0 else 7
-
     runs = [setup]
     if s.chunks == 1 and s.split:
         runs.append(n * width)  # blits after the scatter conditional
-    if s.lone:
-        runs.append(gate(s.pairs - 1) + npay)
-    for a in range(s.pairs - 1, 0, -1):
-        runs.append(npay + gate(a - 1) + npay)
 
     budget = _BE_LIMIT
     wrappers = 0
@@ -331,7 +299,7 @@ def _fast_write_costs(n: int, width: int, chunk: int) -> tuple[int, int]:
     if s.chunks == 2:
         conditionals += 1
     elif s.chunks >= 3:
-        conditionals += s.lone + s.pairs
+        conditionals += s.chunks
 
     expressions = sum(runs)
     if s.split:
@@ -365,7 +333,6 @@ def _emit_fast_write(
     d = PlayerStat(pool[4 * width]).as_long().without_auto_unset()
     lo = [PlayerStat(f'hw{k}_0').as_long() for k in range(width)]
     hi = [PlayerStat(f'hw{k}_{_HI_KEY}').as_long() for k in range(width)]
-    payloads = lo + hi if s.split else lo
     # The un-rebaked part of the table may be unset (first call), so a blit
     # needs the explicit 0 fallback: an empty-string resolve is fatal in-game.
     slots = [
@@ -373,9 +340,6 @@ def _emit_fast_write(
         for j in range(s.table)
     ]
     t = TemporaryStat().as_long()
-    h = TemporaryStat().as_long()
-    band = TemporaryStat().as_long()
-    stashes = [TemporaryStat().as_long() for _ in payloads]
 
     def bake(j: int) -> None:
         for k in range(width):
@@ -400,28 +364,6 @@ def _emit_fast_write(
                 # side to ANY suppresses that coercion.
                 item[k].as_type(InternalType.ANY).value += slots[j][k]
 
-    def gate_flag(a: int) -> Stat:
-        """1 if h == a else 0. The flip shortcut needs h in {0, 1}, which
-        holds for in-range indices whenever there are at most two bands."""
-        if s.flip_ok:
-            assert a == 0
-            h.value *= -1
-            h.value += 1
-            return h
-        band.value = h
-        if a != 0:
-            band.value -= a
-        band.value *= band
-        band.value += _BAND_DIV - 1
-        band.value //= _BAND_DIV
-        band.value *= -1
-        band.value += 1
-        return band
-
-    def kill(flag: Stat) -> None:
-        for payload in payloads:
-            payload.value *= flag
-
     with strict_order(), preserved():
         # lo_k = diff_k = input[k] - items[index][k], via one composed read.
         _emit_fast_read(pattern=pattern, index=index, output=lo)
@@ -445,21 +387,6 @@ def _emit_fast_write(
                 lo[k].value -= hi[k]
         for k in range(width):
             q_stats[k].value = f'%var.player/hw{k}_'
-        if s.chunks >= 3:
-            h.value = index
-            h.value //= 2 * chunk
-            if s.pairs >= 2:
-                for stash, payload in zip(stashes, payloads, strict=True):
-                    stash.value = payload
-            if not s.lone:
-                # The first gather pair is the top band: kill unless it.
-                if s.pairs == 2:
-                    kill(h)
-                else:
-                    band.value = h
-                    band.value += 1
-                    band.value //= s.pairs
-                    kill(band)
 
         if s.split:
             # Rebake only the half of the table containing p.
@@ -482,31 +409,18 @@ def _emit_fast_write(
 
         if s.chunks == 1:
             blit(0)
-            return
-        if s.chunks == 2:
+        elif s.chunks == 2:
+            # The else is the exact second range for in-range indices, so this
+            # single conditional covers both chunks for free.
             with IfAll(index <= chunk - 1):
                 blit(0)
             with Else:
                 blit(1)
-            return
-
-        if s.lone:
-            # The lone chunk's condition is exact, so it needs no gating and
-            # runs first, while the payloads are still fully alive.
-            with IfAll(index >= (s.chunks - 1) * chunk):
-                blit(s.chunks - 1)
-            kill(gate_flag(s.pairs - 1))
-        for a in range(s.pairs - 1, -1, -1):
-            low_chunk = 2 * a
-            start = low_chunk * chunk
-            with IfAll(index >= start, index <= start + chunk - 1):
-                blit(low_chunk)
-            with Else:
-                blit(low_chunk + 1)
-            if a > 0:
-                for payload, stash in zip(payloads, stashes, strict=True):
-                    payload.value = stash
-                kill(gate_flag(a - 1))
+        else:
+            for c in range(s.chunks):
+                start = c * chunk
+                with IfAll(index >= start, index <= start + chunk - 1):
+                    blit(c)
 
 
 def _slow_write_costs(n: int, width: int) -> tuple[int, int]:

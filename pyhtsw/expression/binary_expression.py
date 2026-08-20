@@ -7,6 +7,7 @@ import numpy as np
 
 from ..actions.no_optimization import optimization_enabled
 from ..actions.no_type_casting import no_type_casting
+from ..actions.preserved import is_preserved
 from ..checkable import Checkable
 from ..editable import Editable
 from ..execute import java_long
@@ -412,6 +413,8 @@ class BinaryExpression[
 
             if not isinstance(_expression, BinaryExpression):
                 continue
+            if is_preserved(_expression):
+                continue
             expression = _expression.into_assignment_expression()
 
             if (
@@ -501,6 +504,7 @@ class BinaryExpression[
                 and isinstance(expr_i.left, Stat)
                 and expr_i.operator is BinaryOperator.Set
                 and not expr_i.is_intentional_self_assignment
+                and not is_preserved(expr_i)
             ):
                 i += 1
                 continue
@@ -549,7 +553,7 @@ class BinaryExpression[
                         break
                     j += 1
 
-            if merge_target is None:
+            if merge_target is None or is_preserved(merge_target):
                 i += 1
                 continue
 
@@ -683,6 +687,8 @@ class BinaryExpression[
                 and expr_a.left.is_same_stat(expr_b.left)
                 and isinstance(expr_a.right, int | float)
                 and isinstance(expr_b.right, int | float)
+                and not is_preserved(expr_a)
+                and not is_preserved(expr_b)
             ):
                 i += 1
                 continue
@@ -720,6 +726,7 @@ class BinaryExpression[
                 isinstance(expr_i, BinaryExpression)
                 and isinstance(expr_i.left, Stat)
                 and not expr_i.is_intentional_self_assignment
+                and not is_preserved(expr_i)
             ):
                 i += 1
                 continue
@@ -764,6 +771,7 @@ class BinaryExpression[
                 isinstance(expr_i, BinaryExpression)
                 and isinstance(expr_i.left, Stat)
                 and not expr_i.is_intentional_self_assignment
+                and not is_preserved(expr_i)
             ):
                 continue
 
@@ -844,6 +852,8 @@ class BinaryExpression[
 
             for i, _expression in enumerate(expressions):
                 if not isinstance(_expression, BinaryExpression):
+                    continue
+                if is_preserved(_expression):
                     continue
                 expression = _expression.into_assignment_expression()
 

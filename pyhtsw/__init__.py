@@ -277,6 +277,8 @@ from .actions.player_version import (
     PlayerVersionPlaceholder as PlayerVersionPlaceholder,
 )
 from .actions.portal_type import PortalType as PortalType
+from .actions.preserved import Preserved as Preserved
+from .actions.preserved import preserved as preserved
 from .actions.random import Random as Random
 from .actions.random import RandomContextManager as RandomContextManager
 from .actions.random import RandomExpression as RandomExpression

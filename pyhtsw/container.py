@@ -172,6 +172,7 @@ class Container:
         return self.contexts[-1 - go_back].expressions_ref
 
     def write_expression(self, expression: 'Expression') -> None:
+        from .actions.preserved import currently_preserved, tag_preserved
         from .actions.strict_order import (
             current_strict_order_region,
             tag_strict_order_region,
@@ -185,6 +186,7 @@ class Container:
             return
 
         tag_strict_order_region(expression, current_strict_order_region())
+        tag_preserved(expression, currently_preserved())
         self.get_expressions_ref_in_context().append(expression)
 
     def add_block(self, block: 'Block', *, index: int | None = None) -> None:

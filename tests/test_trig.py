@@ -138,7 +138,8 @@ for b, e in ((2.0, 0.5), (10.0, 1.5), (2.7, 3.3), (100.0, -0.5)):
 
 for x, y in ((3.0, 4.0), (100.0, 0.5), (0.7, 0.7)):
     got = run_one(
-        lambda s, o: approximate_hypot(s['x'], s['y'], assign_to=o), {'x': x, 'y': y}
+        lambda s, o: approximate_hypot(s['x'], s['y'], assign_to=o),
+        {'x': x, 'y': y},
     )
     want = math.hypot(x, y)
     assert abs(got - want) < 0.01 * max(1.0, want), (x, y, got, want)

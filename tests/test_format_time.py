@@ -1,5 +1,7 @@
 from pyhtsw import ExecutionContext, PlayerStat
-from pyhtsw.ext import format_time_string, set_ordinal_inline
+from pyhtsw.ext import format_time_string, set_ordinal_inline, set_ordinal_suffix
+
+assert set_ordinal_inline is set_ordinal_suffix  # deprecated alias
 
 
 def check_time(seconds: int, separator: str, expected: str) -> None:
@@ -66,7 +68,7 @@ def check_ordinal(n: int, expected: str) -> None:
         value = PlayerStat('n').as_long()
         ctx.put(value, n, ignore_warning=True)
         out = PlayerStat('suffix').as_string()
-        set_ordinal_inline(value, out)
+        set_ordinal_suffix(value, out)
 
         def verify(_o=out, _e=expected, _n=n) -> None:
             got = ctx.get_raw(_o)

@@ -3,10 +3,10 @@ from ..checkable import Checkable
 from ..editable import Editable
 from ..stats.temporary_stat import TemporaryStat
 
-__all__ = ('set_ordinal_inline',)
+__all__ = ('set_ordinal_suffix',)
 
 
-def set_ordinal_inline(
+def set_ordinal_suffix(
     checking_stat: Checkable,
     output_stat: Editable,
 ) -> None:
@@ -36,3 +36,7 @@ def set_ordinal_inline(
     with IfAll(~(last_two_digits == 13), last_digit == 3):
         output_stat.value = 'rd'
     # else: 'th' (already set)
+
+
+# Deprecated alias: the suffix is what gets written; 'inline' said nothing.
+set_ordinal_inline = set_ordinal_suffix

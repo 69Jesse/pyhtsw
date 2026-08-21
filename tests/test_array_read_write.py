@@ -995,3 +995,39 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
             assert got == want, (i, got, want)
 
     ctx.assert_all(check_staged_mixed)
+
+
+from pyhtsw.ext import Queue, StatArray  # noqa: E402
+
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _arr = StatArray([PlayerStat(f'sa{i}').as_long() for i in range(30)])
+    assert len(_arr) == 30 and _arr.width == 1
+    assert _arr[7].name == 'sa7'
+    for _i in range(30):
+        ctx.put(_arr[_i], 500 + _i)
+    _idx = PlayerStat('idx').as_long()
+    _idx.value = 21
+    _arr.write(_idx, input=9999)
+    _idx.value = 21
+    _out = PlayerStat('out').as_long()
+    _arr.read(_idx, output=_out)
+
+    def check_stat_array(_a: StatArray = _arr) -> None:
+        assert int(ctx.get(_out)) == 9999, ctx.get(_out)
+        for i in range(30):
+            want = 9999 if i == 21 else 500 + i
+            assert int(ctx.get(_a[i])) == want, (i, ctx.get(_a[i]))
+
+    ctx.assert_all(check_stat_array)
+
+with ExecutionContext(ignore_action_limits=True) as ctx:
+    _qarr = StatArray([PlayerStat(f'qa{i}').as_long() for i in range(10)])
+    _q = Queue(holders=_qarr, counter=PlayerStat('qac').as_long())
+    for _v in (11, 22, 33):
+        _q.add(_v)
+
+    def check_queue_from_array(_a: StatArray = _qarr) -> None:
+        got = [int(ctx.get(_a[i])) for i in range(3)]
+        assert got == [11, 22, 33], got
+
+    ctx.assert_all(check_queue_from_array)

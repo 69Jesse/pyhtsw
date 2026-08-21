@@ -64,6 +64,7 @@ from .approximate import (
 from .approximate import (
     approximate_tan as approximate_tan,
 )
+from .array_read_write import StatArray as StatArray
 from .array_read_write import array_read as array_read
 from .array_read_write import array_write as array_write
 from .compute_layout import (
@@ -97,7 +98,7 @@ from .music import (
     note_events_into_expressions as note_events_into_expressions,
 )
 from .ordinal import (
-    set_ordinal_inline as set_ordinal_inline,
+    set_ordinal_suffix as set_ordinal_suffix,
 )
 from .position_raycast import (
     Block as Block,
@@ -153,3 +154,4 @@ from .stack_queue import (
 # array_read / array_write.
 cheap_read = array_read
 cheap_write = array_write
+from .ordinal import set_ordinal_inline as set_ordinal_inline  # noqa: E402

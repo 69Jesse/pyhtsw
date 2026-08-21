@@ -905,3 +905,45 @@ def array_write(
         with IfAll(chunk_idx_stat == chunk_idx):
             for j, item in enumerate(items[chunk_start:chunk_end]):
                 assign(item, temp_stats[j])
+
+
+class StatArray(Sequence[MaybeSequence[Editable]]):
+    """A fixed array of stats addressed by a runtime index.
+
+    The object form of `array_read` / `array_write`: build it once from the
+    slot stats (width-1 entries or same-width tuples) and use it like the
+    array it is - `arr[3]` is compile-time access to the stat itself,
+    `arr.read(index, output=...)` and `arr.write(index, input=...)` are the
+    runtime-indexed operations, and iteration/len work, so it drops straight
+    into anything that takes a holder list (e.g. `Queue(holders=arr, ...)`).
+    """
+
+    def __init__(self, items: Sequence[MaybeSequence[Editable]]) -> None:
+        self.items = list(items)
+        if not self.items:
+            raise ValueError('StatArray needs at least one item')
+        self.width = assert_same_widths(
+            [into_sequence(item) for item in self.items],
+        )
+
+    def __len__(self) -> int:
+        return len(self.items)
+
+    def __getitem__(self, index):  # type: ignore[override]
+        return self.items[index]
+
+    def read(
+        self,
+        index: Editable,
+        *,
+        output: MaybeSequence[Editable],
+    ) -> None:
+        array_read(items=self.items, index=index, output=output)
+
+    def write(
+        self,
+        index: Editable,
+        *,
+        input: MaybeSequence[Checkable | HousingType],
+    ) -> None:
+        array_write(items=self.items, index=index, input=input)

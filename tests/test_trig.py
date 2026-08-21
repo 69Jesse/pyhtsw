@@ -17,6 +17,7 @@ from pyhtsw.ext import (
     approximate_log10,
     approximate_pow,
     approximate_sin,
+    approximate_sqrt,
     approximate_tan,
 )
 
@@ -152,29 +153,31 @@ assert abs(got - 3.0) < 0.01, got
 
 def counts_of(build) -> tuple[int, int]:
     with Container() as container:
+        for _ in range(25):
+            PlayerStat('fill1').value += PlayerStat('fill2')
         stats = {
             name: PlayerStat(name).as_double()
             for name in ('a', 'y', 'x', 'z', 'b', 'e')
         }
         build(stats, PlayerStat('out').as_double())
-    counts = container.expression_counts(nested=True)
-    return (
-        counts.get(ConditionalExpression, 0),
-        counts.get(BinaryExpression, 0),
-    )
+    conditionals = container.expression_counts().get(ConditionalExpression, 0)
+    actions = container.expression_counts(nested=True).get(BinaryExpression, 0)
+    return (conditionals, actions - 25)
 
 
-assert counts_of(lambda s, o: approximate_sin(s['a'], assign_to=o)) == (0, 24)
-assert counts_of(lambda s, o: approximate_cos(s['a'], assign_to=o)) == (0, 24)
+assert counts_of(lambda s, o: approximate_sin(s['a'], assign_to=o)) == (1, 24)
+assert counts_of(lambda s, o: approximate_cos(s['a'], assign_to=o)) == (1, 24)
 assert counts_of(
     lambda s, o: approximate_sin(s['a'], assign_to=o, certain_x_in_range=90),
-) == (0, 8)
-assert counts_of(lambda s, o: approximate_tan(s['a'], assign_to=o)) == (0, 21)
-assert counts_of(lambda s, o: approximate_exp(s['x'], assign_to=o)) == (0, 20)
-assert counts_of(lambda s, o: approximate_atan2(s['y'], s['x'], assign_to=o)) == (2, 55)
-assert counts_of(lambda s, o: approximate_atan(s['z'], assign_to=o)) == (1, 41)
-assert counts_of(lambda s, o: approximate_ln(s['x'], assign_to=o)) == (3, 76)
-assert counts_of(lambda s, o: approximate_pow(s['b'], 10, assign_to=o)) == (0, 6)
+) == (1, 8)
+assert counts_of(lambda s, o: approximate_tan(s['a'], assign_to=o)) == (1, 21)
+assert counts_of(lambda s, o: approximate_exp(s['x'], assign_to=o)) == (1, 20)
+assert counts_of(lambda s, o: approximate_atan2(s['y'], s['x'], assign_to=o)) == (3, 55)
+assert counts_of(lambda s, o: approximate_atan(s['z'], assign_to=o)) == (2, 41)
+assert counts_of(lambda s, o: approximate_ln(s['x'], assign_to=o)) == (4, 76)
+assert counts_of(lambda s, o: approximate_sqrt(s['x'], assign_to=o)) == (2, 31)
+assert counts_of(lambda s, o: approximate_asin(s['z'], assign_to=o)) == (4, 77)
+assert counts_of(lambda s, o: approximate_pow(s['b'], 10, assign_to=o)) == (1, 6)
 
 
 with Container() as container:

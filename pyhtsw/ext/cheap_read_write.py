@@ -392,13 +392,9 @@ def _fast_write_costs(n: int, width: int, chunk: int) -> tuple[int, int]:
     if s.chunks == 1 and s.split:
         runs.append(n * width)  # blits after the scatter conditional
 
-    budget = _BE_LIMIT
-    wrappers = 0
-    for run in runs:
-        if run <= budget:
-            budget -= run
-        else:
-            wrappers += math.ceil(run / _BE_LIMIT)
+    # Worst-case convention: the enclosing action list is already full, so
+    # every top-level run costs its own ceil(run / 25) wrapper conditionals.
+    wrappers = sum(math.ceil(run / _BE_LIMIT) for run in runs)
 
     conditionals = wrappers + (1 if s.split else 0)
     if s.chunks == 2:
@@ -588,12 +584,14 @@ def _fast_write_plan(
     cost, chunk = best
     if cost >= _slow_write_costs(n, width):
         return None
-    if _in_nested_container() and (cost[0] > 0 or cost[1] > _BE_LIMIT):
+    if _in_nested_container():
         # Inside a conditional there is no room to grow: another conditional
-        # cannot be nested, and neither can the Random that would otherwise buy
-        # room. Defer to the cascade so the caller gets its clear "cannot nest"
-        # error rather than a limit failure from deep inside the fixer.
-        return None
+        # cannot be nested, and neither can a wrapper. The emission must have
+        # no REAL conditionals (worst-case cost counts wrappers, which do not
+        # apply inside a branch) and fit the branch's single action list.
+        shape = _fast_write_shape(n, width, chunk)
+        if shape.split or shape.chunks > 1 or cost[1] > _BE_LIMIT:
+            return None
     return pattern, chunk
 
 
@@ -602,10 +600,8 @@ def _staged_write_costs(n: int, width: int, cs: int) -> tuple[int, int]:
     setup = 6 + width  # c*, p, and per-column counter bases
     loads = 3 * cs * width - width  # bake + consume per slot, walk between
     top_level = setup + loads
-    budget = _BE_LIMIT
-    wrappers = 0
-    if top_level > budget:
-        wrappers = math.ceil((top_level - budget) / _BE_LIMIT)
+    # Worst-case convention: the whole top-level run is wrapped.
+    wrappers = math.ceil(top_level / _BE_LIMIT)
     conditionals = wrappers + cs + chunks
     expressions = top_level + cs * width + n * width
     return conditionals, expressions

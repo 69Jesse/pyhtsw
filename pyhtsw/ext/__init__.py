@@ -23,10 +23,31 @@ from ..utils.scoreboard import (
     simulate_hypixel_split as simulate_hypixel_split,
 )
 from .approximate import (
+    approximate_acos as approximate_acos,
+)
+from .approximate import (
+    approximate_asin as approximate_asin,
+)
+from .approximate import (
+    approximate_atan as approximate_atan,
+)
+from .approximate import (
+    approximate_atan2 as approximate_atan2,
+)
+from .approximate import (
+    approximate_cos as approximate_cos,
+)
+from .approximate import (
+    approximate_sin as approximate_sin,
+)
+from .approximate import (
     approximate_sin_cos as approximate_sin_cos,
 )
 from .approximate import (
     approximate_sqrt as approximate_sqrt,
+)
+from .approximate import (
+    approximate_tan as approximate_tan,
 )
 from .cheap_read_write import cheap_read as cheap_read
 from .cheap_read_write import cheap_write as cheap_write

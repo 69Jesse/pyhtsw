@@ -38,6 +38,21 @@ from .approximate import (
     approximate_cos as approximate_cos,
 )
 from .approximate import (
+    approximate_exp as approximate_exp,
+)
+from .approximate import (
+    approximate_hypot as approximate_hypot,
+)
+from .approximate import (
+    approximate_ln as approximate_ln,
+)
+from .approximate import (
+    approximate_log10 as approximate_log10,
+)
+from .approximate import (
+    approximate_pow as approximate_pow,
+)
+from .approximate import (
     approximate_sin as approximate_sin,
 )
 from .approximate import (

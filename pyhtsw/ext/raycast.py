@@ -12,7 +12,7 @@ from ..actions.player_position_z import PlayerPositionZ
 from ..actions.trigger_function import trigger_function
 from ..expression.condition.condition import Condition
 from ..stats.global_stat import GlobalStat
-from ..stats.player_stat import PlayerStat
+from ..stats.temporary_stat import TemporaryStat
 from ..utils.callback import call_with_optional_arg
 from .look_vector import approximate_look_vector
 
@@ -144,12 +144,6 @@ def create_raycast(
     length = make_global('length', double=True)
     headshot = make_global('headshot', double=False)
 
-    def player_double(suffix: str) -> PlayerStat:
-        return PlayerStat(f'{stat_prefix}{suffix}').as_double().without_auto_unset()
-
-    def player_long(suffix: str) -> PlayerStat:
-        return PlayerStat(f'{stat_prefix}{suffix}').as_long().without_auto_unset()
-
     @create_function(name)
     def raycast_function() -> None:
         with IfAll(active == 0):
@@ -158,14 +152,14 @@ def create_raycast(
             active.value = 0
             exit_function()
 
-        offset_x = player_double('offset/x')
-        offset_y = player_double('offset/y')
-        offset_z = player_double('offset/z')
-        ray_dist = player_double('raydist')
-        perp2 = player_double('perp2')
-        t1 = player_double('t1')
-        my_hit = player_long('myhit')
-        my_headshot = player_long('myheadshot')
+        offset_x = TemporaryStat().as_double()
+        offset_y = TemporaryStat().as_double()
+        offset_z = TemporaryStat().as_double()
+        ray_dist = TemporaryStat().as_double()
+        perp2 = TemporaryStat().as_double()
+        t1 = TemporaryStat().as_double()
+        my_hit = TemporaryStat().as_long()
+        my_headshot = TemporaryStat().as_long()
 
         # offset = (target torso) - (ray origin)
         offset_x.value = PlayerPositionX
@@ -219,7 +213,7 @@ def create_raycast(
 
             # headshots_only needs the head band too, so it implies detection.
             if detect_headshots or headshots_only:
-                hit_y = player_double('hity')
+                hit_y = TemporaryStat().as_double()
 
                 # The band is relative to the target's feet, so compare the
                 # hit height against the literal offsets instead of baking

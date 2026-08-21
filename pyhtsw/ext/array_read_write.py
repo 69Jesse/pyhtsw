@@ -11,8 +11,8 @@ from ..stats.stat import Stat
 from .set_string import set_string
 
 __all__ = (
-    'cheap_read',
-    'cheap_write',
+    'array_read',
+    'array_write',
 )
 
 
@@ -281,7 +281,7 @@ def _emit_fast_read(
     width = len(pattern)
     names = _fast_names_pool(pattern)
     if 2 * width > len(names):
-        raise ValueError(f'cheap_read fast path: width {width} too large')
+        raise ValueError(f'array_read fast path: width {width} too large')
     tmp_str_stats = [PlayerStat(names[k]) for k in range(width)]
     n_stats = [
         PlayerStat(names[width + k]).as_long().without_auto_unset()
@@ -428,7 +428,7 @@ def _emit_fast_write(
 
     pool = _fast_names_pool(pattern)
     if 4 * width + 1 > len(pool):
-        raise ValueError(f'cheap_write fast path: width {width} too large')
+        raise ValueError(f'array_write fast path: width {width} too large')
     # `_emit_fast_read` claims pool[:3 * width] for itself.
     q_stats = [PlayerStat(pool[3 * width + k]) for k in range(width)]
     d = PlayerStat(pool[4 * width]).as_long().without_auto_unset()
@@ -659,7 +659,7 @@ def _emit_staged_write(
 
     pool = _fast_names_pool(pattern)
     if 2 * width > len(pool):
-        raise ValueError(f'cheap_write staged path: width {width} too large')
+        raise ValueError(f'array_write staged path: width {width} too large')
     counters = [
         PlayerStat(pool[k]).as_long().without_auto_unset() for k in range(width)
     ]
@@ -727,7 +727,7 @@ def _emit_staged_write(
                             item.as_type(InternalType.ANY).value = staged[j][k]
 
 
-def cheap_read(
+def array_read(
     *,
     items: Sequence[MaybeSequence[Checkable | HousingType]],
     index: Editable,
@@ -801,7 +801,7 @@ def cheap_read(
             assign(output, temp_stat)
 
 
-def cheap_write(
+def array_write(
     *,
     items: Sequence[MaybeSequence[Editable]],
     index: Editable,

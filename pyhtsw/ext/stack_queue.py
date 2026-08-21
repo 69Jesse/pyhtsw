@@ -10,7 +10,7 @@ from ..actions.conditional.statements import Else, IfAll
 from ..checkable import Checkable
 from ..editable import Editable, HousingType
 from ..helpers import chunked
-from .cheap_read_write import MaybeSequence, assert_same_widths, into_sequence
+from .array_read_write import MaybeSequence, assert_same_widths, into_sequence
 
 type Factory[T] = Callable[[int], T]
 type MaybeFactory[T] = T | Factory[T]
@@ -523,10 +523,10 @@ class Queue(_SlotContainerBase):
                 self.counter.value -= 1
 
         # An add is a write at slot `counter`, so when the holders take
-        # cheap_write's fast path (long stats named in an arithmetic run) the
+        # array_write's fast path (long stats named in an arithmetic run) the
         # per-slot conditional cascade collapses into the composed write plus
         # one counter guard.
-        from .cheap_read_write import _fast_write_plan, cheap_write
+        from .array_read_write import _fast_write_plan, array_write
 
         if (
             _fast_write_plan(
@@ -552,7 +552,7 @@ class Queue(_SlotContainerBase):
                 index_stat.value = self.counter
                 index_stat.value -= clamp
                 index = index_stat
-            cheap_write(items=self.holders, index=index, input=values)
+            array_write(items=self.holders, index=index, input=values)
             if self.on_overflow == 'override_oldest':
                 self.counter.value += 1
             else:

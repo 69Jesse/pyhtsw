@@ -64,8 +64,8 @@ from .approximate import (
 from .approximate import (
     approximate_tan as approximate_tan,
 )
-from .cheap_read_write import cheap_read as cheap_read
-from .cheap_read_write import cheap_write as cheap_write
+from .array_read_write import array_read as array_read
+from .array_read_write import array_write as array_write
 from .compute_layout import (
     compute_best_layout as compute_best_layout,
 )
@@ -147,3 +147,9 @@ from .stack_queue import (
 from .stack_queue import (
     Stack as Stack,
 )
+
+# Deprecated aliases: the original names described the implementation's cost,
+# not the operation. Existing consumers keep working; new code should use
+# array_read / array_write.
+cheap_read = array_read
+cheap_write = array_write

@@ -4,17 +4,17 @@ import random
 from helpers import expect_exception
 from pyhtsw.actions.conditional.statements import IfAll
 from pyhtsw.actions.random import RandomExpression
-from pyhtsw.ext.cheap_read_write import cheap_read, cheap_write
 
 from pyhtsw import Container, ExecutionContext, GlobalStat, PlayerStat
 from pyhtsw.expression.binary_expression import BinaryExpression
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
+from pyhtsw.ext.array_read_write import array_read, array_write
 
 
 def letter_name(i: int) -> str:
     """0 -> 'a', 1 -> 'b', ..., 25 -> 'z', 26 -> 'aa', 27 -> 'ab', ..., 51 -> 'az', 52 -> 'ba'.
 
-    Spreadsheet-column-style encoding. Used to defeat cheap_read's fast path,
+    Spreadsheet-column-style encoding. Used to defeat array_read's fast path,
     which only triggers when names form `prefix + format(start + i, ',') + suffix`.
     """
     parts = []
@@ -57,7 +57,7 @@ for length in (1, 10, 100):
 
             for target in sample_targets(length):
                 index.value = target
-                cheap_read(items=items_arg, index=index, output=output_arg)
+                array_read(items=items_arg, index=index, output=output_arg)
 
                 def check_read(
                     _w: int = width,
@@ -105,7 +105,7 @@ for length in (1, 10, 100):
                 )
                 input_arg = new_inputs[0] if width == 1 else new_inputs
 
-                cheap_write(items=items_arg, index=index, input=input_arg)
+                array_write(items=items_arg, index=index, input=input_arg)
 
                 def check_write(
                     _w: int = width,
@@ -133,7 +133,7 @@ with Container() as container:
     sources = [PlayerStat(f'src{i}').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -148,7 +148,7 @@ with Container() as container:
     sources = [PlayerStat(f'{i}').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -164,7 +164,7 @@ with Container() as container:
     ]
     idx = PlayerStat('idx').as_long()
     o = tuple(PlayerStat(f'o{k}').as_long() for k in range(3))
-    cheap_read(items=items, index=idx, output=o)
+    array_read(items=items, index=idx, output=o)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -183,7 +183,7 @@ with Container() as container:
     ]
     idx = PlayerStat('idx').as_long()
     o = tuple(PlayerStat(f'o{k}').as_long() for k in range(3))
-    cheap_read(items=items, index=idx, output=o)
+    array_read(items=items, index=idx, output=o)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -195,7 +195,7 @@ with Container() as container:
     sources = [GlobalStat(f'gsrc{i}').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -207,7 +207,7 @@ with Container() as container:
     sources = [PlayerStat(f'a1{i}1a').as_long() for i in range(10)]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -219,7 +219,7 @@ with Container() as container:
     sources = [PlayerStat(f'a{i:,}').as_long() for i in range(999, 1010)]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 1, counts
@@ -237,7 +237,7 @@ for _target in (0, 1, 4, 10):  # 0 -> a999, 1 -> a1,000, 10 -> a1,009
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
-        cheap_read(items=_sources, index=_idx, output=_out)
+        array_read(items=_sources, index=_idx, output=_out)
 
         def check_comma(
             _t: int = _target,
@@ -255,7 +255,7 @@ with Container() as container:
     sources = [PlayerStat(f'a{i}').as_long() for i in range(999, 1010)]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 2, counts
@@ -272,7 +272,7 @@ with Container() as container:
     ]
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=sources, index=idx, output=out)
+    array_read(items=sources, index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 2, counts
@@ -283,7 +283,7 @@ assert ConditionalExpression in counts, counts
 with Container() as container:
     idx = PlayerStat('idx').as_long()
     out = PlayerStat('out').as_long()
-    cheap_read(items=[10, 20, 30, 40, 50], index=idx, output=out)
+    array_read(items=[10, 20, 30, 40, 50], index=idx, output=out)
 
 counts = container.expression_counts(nested=True)
 assert len(counts) == 2, counts
@@ -299,7 +299,7 @@ for _target in (0, 3, 7, 9):
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
-        cheap_read(items=_sources, index=_idx, output=_out)
+        array_read(items=_sources, index=_idx, output=_out)
 
         def check_w1_player(
             _t: int = _target,
@@ -320,7 +320,7 @@ for _target in (0, 4, 9):
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
-        cheap_read(items=_sources, index=_idx, output=_out)
+        array_read(items=_sources, index=_idx, output=_out)
 
         def check_w1_global(
             _t: int = _target,
@@ -349,7 +349,7 @@ for _target in (0, 2, 5, 7):
         _idx = PlayerStat('idx').as_long()
         _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(3))
         _idx.value = _target
-        cheap_read(items=_items, index=_idx, output=_outputs)
+        array_read(items=_items, index=_idx, output=_outputs)
 
         def check_w3_modeB(
             _t: int = _target,
@@ -375,7 +375,7 @@ for _target in (0, 3, 7):
         _idx = PlayerStat('idx').as_long()
         _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(3))
         _idx.value = _target
-        cheap_read(items=_items, index=_idx, output=_outputs)
+        array_read(items=_items, index=_idx, output=_outputs)
 
         def check_w3_modeA(
             _t: int = _target,
@@ -397,7 +397,7 @@ for _target in (0, 3, 6, 9):
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
-        cheap_read(items=_sources, index=_idx, output=_out)
+        array_read(items=_sources, index=_idx, output=_out)
 
         def check_middle(
             _t: int = _target,
@@ -418,7 +418,7 @@ for _target in (0, 3, 9):
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
-        cheap_read(items=_sources, index=_idx, output=_out)
+        array_read(items=_sources, index=_idx, output=_out)
 
         def check_offset(
             _t: int = _target,
@@ -432,7 +432,7 @@ for _target in (0, 3, 9):
 
 # Empty items list
 with expect_exception(ValueError):
-    cheap_read(
+    array_read(
         items=[],
         index=PlayerStat('idx').as_long(),
         output=PlayerStat('out').as_long(),
@@ -440,7 +440,7 @@ with expect_exception(ValueError):
 
 # Mismatched widths within items
 with expect_exception(ValueError):
-    cheap_read(
+    array_read(
         items=[(1, 2), (3, 4, 5)],
         index=PlayerStat('idx').as_long(),
         output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()),
@@ -448,7 +448,7 @@ with expect_exception(ValueError):
 
 # Output width doesn't match items width
 with expect_exception(ValueError):
-    cheap_read(
+    array_read(
         items=[(1, 2), (3, 4)],
         index=PlayerStat('idx').as_long(),
         output=PlayerStat('a').as_long(),
@@ -457,7 +457,7 @@ with expect_exception(ValueError):
 # Width exceeds the supported maximum (12)
 big = tuple(range(13))
 with expect_exception(ValueError):
-    cheap_read(
+    array_read(
         items=[big, big],
         index=PlayerStat('idx').as_long(),
         output=tuple(PlayerStat(f'o{k}').as_long() for k in range(13)),
@@ -476,7 +476,7 @@ for _width in (1, 2, 3):
         _idx = PlayerStat('idx').as_long()
         _idx.value = 0
         _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(_width))
-        cheap_read(
+        array_read(
             items=_items if _width > 1 else [row[0] for row in _items],
             index=_idx,
             output=_outputs if _width > 1 else _outputs[0],
@@ -511,7 +511,7 @@ for _length, _width in ((2, 1), (5, 1), (13, 1), (30, 1), (60, 1), (6, 2), (10, 
             _idx.value = _target
             _new = tuple(-7_000_000 - k for k in range(_width))
 
-            cheap_write(
+            array_write(
                 items=[s[0] for s in _slots] if _width == 1 else list(_slots),
                 index=_idx,
                 input=_new[0] if _width == 1 else _new,
@@ -545,7 +545,7 @@ for _target in (0, 3, 7):
             ctx.put(_s, 42)
         _idx = PlayerStat('idx').as_long()
         _idx.value = _target
-        cheap_write(items=_slots, index=_idx, input=42)
+        array_write(items=_slots, index=_idx, input=42)
 
         def check_no_op(_s: list[PlayerStat] = _slots, _t: int = _target) -> None:
             for i, stat in enumerate(_s):
@@ -568,7 +568,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     for _step, _target in enumerate((1, 5, 12, 0)):
         _written[_target] = -5_000 - _step
         _idx.value = _target
-        cheap_write(items=_slots, index=_idx, input=_written[_target])
+        array_write(items=_slots, index=_idx, input=_written[_target])
 
         def check_successive(
             _s: list[PlayerStat] = _slots,
@@ -605,7 +605,7 @@ _FAST_WRITE_COUNTS = {
 }
 for _length, (_want_cond, _want_be) in _FAST_WRITE_COUNTS.items():
     with Container() as container:
-        cheap_write(
+        array_write(
             items=[PlayerStat(f'w{i:,}').as_long() for i in range(_length)],
             index=PlayerStat('idx').as_long(),
             input=PlayerStat('inp').as_long(),
@@ -627,7 +627,7 @@ assert _FAST_WRITE_COUNTS[100][0] >= math.ceil(100 / 25)
 with Container() as container:
     for _ in range(25):
         PlayerStat('ignoreme1').value += PlayerStat('ignoreme2')
-    cheap_write(
+    array_write(
         items=[PlayerStat(f'item{i}').as_long() for i in range(100)],
         index=PlayerStat('index').as_long(),
         input=PlayerStat('input').as_long(),
@@ -639,13 +639,13 @@ assert counts.get(RandomExpression, 0) == 0, counts
 
 
 # Neither a conditional nor a Random can be nested inside a conditional, so a
-# cheap_write that needs either cannot be emitted from inside one. That has
+# array_write that needs either cannot be emitted from inside one. That has
 # always been true of the cascade; the fast path defers to it rather than
 # failing later inside the limit fixer.
 with expect_exception(SyntaxError):
     with Container():
         with IfAll(PlayerStat('gate').as_long() == 1):
-            cheap_write(
+            array_write(
                 items=[PlayerStat(f'q{i}').as_long() for i in range(100)],
                 index=PlayerStat('idx').as_long(),
                 input=PlayerStat('inp').as_long(),
@@ -654,7 +654,7 @@ with expect_exception(SyntaxError):
 # A write small enough to fit one action list needs neither, so it still works.
 with Container() as container:
     with IfAll(PlayerStat('gate').as_long() == 1):
-        cheap_write(
+        array_write(
             items=[PlayerStat(f'r{i}').as_long() for i in range(3)],
             index=PlayerStat('idx').as_long(),
             input=PlayerStat('inp').as_long(),
@@ -671,7 +671,7 @@ for _stats in (
     [PlayerStat(f's{i}').as_string() for i in range(30)],
 ):
     with Container() as container:
-        cheap_write(
+        array_write(
             items=_stats,
             index=PlayerStat('idx').as_long(),
             input=_stats[0],
@@ -682,7 +682,7 @@ for _stats in (
 
 # Names that don't form an arithmetic run have no dynamic read, so likewise.
 with Container() as container:
-    cheap_write(
+    array_write(
         items=[PlayerStat(letter_name(i)).as_long() for i in range(30)],
         index=PlayerStat('idx').as_long(),
         input=PlayerStat('inp').as_long(),
@@ -702,7 +702,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         _idx.value = _target
         _new = -3_000_000 - _target
         _expected[_target] = _new
-        cheap_write(items=_slots, index=_idx, input=_new)
+        array_write(items=_slots, index=_idx, input=_new)
 
     def check_fw_exhaustive(
         _s: list[PlayerStat] = _slots,
@@ -734,7 +734,7 @@ for _old, _new in (
                 ctx.put(_s, _old)
             _idx = PlayerStat('idx').as_long()
             _idx.value = _target
-            cheap_write(items=_slots, index=_idx, input=_new)
+            array_write(items=_slots, index=_idx, input=_new)
 
             def check_fw_extreme(
                 _s: list[PlayerStat] = _slots,
@@ -762,7 +762,7 @@ for _start, _len in ((100, 30), (990, 20)):
                 ctx.put(_s, value_at(_i, 0))
             _idx = PlayerStat('idx').as_long()
             _idx.value = _target
-            cheap_write(items=_slots, index=_idx, input=-42_424)
+            array_write(items=_slots, index=_idx, input=-42_424)
 
             def check_fw_start(
                 _s: list[PlayerStat] = _slots,
@@ -788,7 +788,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     _idx = PlayerStat('idx').as_long()
     for _target in (0, 24, 25, 39):
         _idx.value = _target
-        cheap_write(items=_gslots, index=_idx, input=7_777_000 + _target)
+        array_write(items=_gslots, index=_idx, input=7_777_000 + _target)
 
     def check_fw_global(_s: list[GlobalStat] = _gslots) -> None:
         for i, stat in enumerate(_s):
@@ -810,7 +810,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         ctx.put(_s, 3_000 + _i)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 42
-    cheap_write(items=_aslots, index=_idx, input=424_242)
+    array_write(items=_aslots, index=_idx, input=424_242)
 
     def check_fw_prefix_collision(_s: list[PlayerStat] = _aslots) -> None:
         for i, stat in enumerate(_s):
@@ -824,7 +824,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 # Items living inside the helper's own one-hot namespaces cannot use the fast
 # paths at all — the composed keys would read the items themselves.
 with Container() as container:
-    cheap_write(
+    array_write(
         items=[PlayerStat(f'hw{i}').as_long() for i in range(30)],
         index=PlayerStat('idx').as_long(),
         input=PlayerStat('inp').as_long(),
@@ -844,7 +844,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ):
         _written[_target] = -9_000 - _step
         _idx.value = _target
-        cheap_write(items=_slots, index=_idx, input=_written[_target])
+        array_write(items=_slots, index=_idx, input=_written[_target])
 
         def check_v5_successive(
             _s: list[PlayerStat] = _slots,
@@ -874,7 +874,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     for _target in range(26):
         _final[_target] = 70_000 + _target
         _idx.value = _target
-        cheap_write(items=_slots, index=_idx, input=_final[_target])
+        array_write(items=_slots, index=_idx, input=_final[_target])
 
     def check_v5_exhaustive(_s: list[PlayerStat] = _slots) -> None:
         for i, stat in enumerate(_s):
@@ -896,7 +896,7 @@ for _n, _first, _targets in ((75, 0, (60, 10, 74, 40)), (30, 5, (0, 29, 13, 12))
         for _step, _target in enumerate(_targets):
             _written[_target] = -3_500 - _step
             _idx.value = _target
-            cheap_write(items=_slots, index=_idx, input=_written[_target])
+            array_write(items=_slots, index=_idx, input=_written[_target])
 
         def check_v5_shapes(
             _s: list[PlayerStat] = _slots,
@@ -920,7 +920,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         ctx.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     _idx.value = 33
-    cheap_write(items=_gslots, index=_idx, input=-123_456)
+    array_write(items=_gslots, index=_idx, input=-123_456)
 
     def check_v5_global(_s: list[GlobalStat] = _gslots) -> None:
         for i, stat in enumerate(_s):
@@ -941,10 +941,10 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     for _step, _t in enumerate((0, 12, 25, 29, 7, 12)):
         _swritten[_t] = f'new{_step}'
         _idx.value = _t
-        cheap_write(items=_sitems, index=_idx, input=_swritten[_t])
+        array_write(items=_sitems, index=_idx, input=_swritten[_t])
     for _bad in (-1, 30, 55):
         _idx.value = _bad
-        cheap_write(items=_sitems, index=_idx, input='nope')
+        array_write(items=_sitems, index=_idx, input='nope')
 
     def check_staged_strings(
         _items: list[PlayerStat] = _sitems,
@@ -965,7 +965,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         ctx.put(_s, _i + 0.5, ignore_warning=True)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 17
-    cheap_write(items=_ditems, index=_idx, input=-2.25)
+    array_write(items=_ditems, index=_idx, input=-2.25)
 
     def check_staged_doubles(_items: list[PlayerStat] = _ditems) -> None:
         for i, s in enumerate(_items):
@@ -986,7 +986,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         ctx.put(_b, f's{_i}', ignore_warning=True)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 9
-    cheap_write(items=_mitems, index=_idx, input=(4242, 'hit'))
+    array_write(items=_mitems, index=_idx, input=(4242, 'hit'))
 
     def check_staged_mixed(_items: list = _mitems) -> None:
         for i, (a, b) in enumerate(_items):

@@ -12,8 +12,13 @@ if TYPE_CHECKING:
 
 __all__ = (
     'PlaySoundExpression',
+    'custom_sound',
     'play_sound',
 )
+
+
+def custom_sound(name: str) -> ALL_SOUNDS:
+    return cast(ALL_SOUNDS, name)
 
 
 @final

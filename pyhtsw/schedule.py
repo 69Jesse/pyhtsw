@@ -706,10 +706,16 @@ def _packing_cost(
     expressions: list['Expression'],
     importable: 'ImportableKind',
     memo: dict,
+    allow_functions: bool = True,
 ) -> tuple[int, int]:
     from .limits import packing_cost
 
-    return packing_cost(expressions, importable=importable, memo=memo)
+    return packing_cost(
+        expressions,
+        importable=importable,
+        memo=memo,
+        allow_functions=allow_functions,
+    )
 
 
 def _greedy_pack_order(preds: list[set[int]], nestable: list[bool]) -> list[int]:
@@ -731,12 +737,13 @@ def _exact_pack_order(
     incumbent: list[int],
     incumbent_cost: tuple[int, int],
     memo: dict,
+    allow_functions: bool,
+    budget: int,
 ) -> tuple[list[int], tuple[int, int]]:
     total = len(expressions)
     best_order = incumbent
     best_cost = incumbent_cost
     seen: set[frozenset[int]] = set()
-    budget = EXACT_NODE_BUDGET
 
     def search(order: list[int], emitted: frozenset[int]) -> None:
         nonlocal best_order, best_cost, budget
@@ -748,6 +755,7 @@ def _exact_pack_order(
                 [expressions[index] for index in order],
                 importable,
                 memo,
+                allow_functions,
             )
             if cost < best_cost:
                 best_cost = cost
@@ -778,6 +786,13 @@ EXACT_NODE_BUDGET = 20_000
 # only recovers the cases where a wrapper's capacity, not the order, was binding.
 LOCAL_SEARCH_LIMIT = 64
 LOCAL_SEARCH_BUDGET = 400
+# A block that cannot carve out an overflow function either fits or raises, so
+# the extra seconds buy a working build rather than one fewer importable. Only
+# blocks that would otherwise fail ever reach these.
+NO_FUNCTION_EXACT_SEARCH_LIMIT = 16
+NO_FUNCTION_EXACT_NODE_BUDGET = 200_000
+NO_FUNCTION_LOCAL_SEARCH_LIMIT = 256
+NO_FUNCTION_LOCAL_SEARCH_BUDGET = 4_000
 
 
 def _local_improve(
@@ -787,8 +802,9 @@ def _local_improve(
     cost: tuple[int, int],
     importable: 'ImportableKind',
     memo: dict,
+    allow_functions: bool,
+    budget: int,
 ) -> tuple[list[int], tuple[int, int]]:
-    budget = LOCAL_SEARCH_BUDGET
     improved = True
     while improved and budget > 0:
         improved = False
@@ -806,6 +822,7 @@ def _local_improve(
                     [expressions[index] for index in candidate],
                     importable,
                     memo,
+                    allow_functions,
                 )
                 if candidate_cost < cost:
                     order = candidate
@@ -821,30 +838,49 @@ def reorder_for_packing(
     expressions: list['Expression'],
     *,
     importable: 'ImportableKind' = 'functions',
+    allow_functions: bool = True,
 ) -> list['Expression'] | None:
     """Reorder a block so the limit fixer needs as few wrapper conditionals and
     overflow functions as possible. Returns `None` when the source order is
-    already as good as anything reachable."""
+    already as good as anything reachable.
+
+    With `allow_functions=False` the first cost term is leftover expressions
+    instead, and the search runs on the wider budgets: fitting is the difference
+    between a build and an `ActionLimitError`."""
     if len(expressions) < 2:
         return None
 
     # One memo for every candidate order: the action counts are keyed by
     # expression identity, so the flatten behind them survives reordering.
     memo: dict = {}
-    base_cost = _packing_cost(expressions, importable, memo)
+    base_cost = _packing_cost(expressions, importable, memo, allow_functions)
     if base_cost == (0, 0):
         return None
+
+    if allow_functions:
+        local_limit, local_budget = LOCAL_SEARCH_LIMIT, LOCAL_SEARCH_BUDGET
+        exact_limit, exact_budget = EXACT_SEARCH_LIMIT, EXACT_NODE_BUDGET
+    else:
+        local_limit = NO_FUNCTION_LOCAL_SEARCH_LIMIT
+        local_budget = NO_FUNCTION_LOCAL_SEARCH_BUDGET
+        exact_limit = NO_FUNCTION_EXACT_SEARCH_LIMIT
+        exact_budget = NO_FUNCTION_EXACT_NODE_BUDGET
 
     preds = build_dependencies(expressions)
     nestable = [_is_nestable(expression) for expression in expressions]
     identity = list(range(len(expressions)))
 
     order = _greedy_pack_order(preds, nestable)
-    cost = _packing_cost([expressions[index] for index in order], importable, memo)
+    cost = _packing_cost(
+        [expressions[index] for index in order],
+        importable,
+        memo,
+        allow_functions,
+    )
     if cost > base_cost:
         order, cost = identity, base_cost
 
-    if len(expressions) <= LOCAL_SEARCH_LIMIT:
+    if len(expressions) <= local_limit:
         order, cost = _local_improve(
             expressions,
             preds,
@@ -852,9 +888,11 @@ def reorder_for_packing(
             cost,
             importable,
             memo,
+            allow_functions,
+            local_budget,
         )
 
-    if len(expressions) <= EXACT_SEARCH_LIMIT:
+    if len(expressions) <= exact_limit:
         order, cost = _exact_pack_order(
             expressions,
             preds,
@@ -862,6 +900,8 @@ def reorder_for_packing(
             order,
             cost,
             memo,
+            allow_functions,
+            exact_budget,
         )
 
     if cost >= base_cost or order == identity:

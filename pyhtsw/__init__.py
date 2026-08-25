@@ -402,6 +402,7 @@ from .expression.housing_type import HousingType as HousingType
 from .helpers import chunk_expressions as chunk_expressions
 from .helpers import chunked as chunked
 from .internal_type import InternalType as InternalType
+from .limits import ActionLimitError as ActionLimitError
 from .location import CurrentLocation as CurrentLocation
 from .location import CustomLocation as CustomLocation
 from .location import HouseSpawnLocation as HouseSpawnLocation

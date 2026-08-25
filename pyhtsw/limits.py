@@ -19,6 +19,19 @@ ImportableKind = Literal[
 ]
 Nesting = Literal['conditional', 'random']
 
+# Only a function may absorb the tail an action list could not hold. Triggering
+# a function costs 4 ticks, and a click handler can fire faster than that, so
+# carving one out of an item/menu/npc/region/event/command block would silently
+# drop or reorder the tail. Those raise `ActionLimitError` instead.
+FUNCTION_OVERFLOW_KINDS: frozenset[ImportableKind] = frozenset({'functions'})
+
+
+class ActionLimitError(RuntimeError):
+    """An action list is over a Housing limit and cannot be fixed automatically.
+
+    Subclasses `RuntimeError` so existing handlers keep catching it."""
+
+
 # A conditional in an *unnested* event container gets this instead of 25.
 EVENT_CONDITIONAL_LIMIT = 25 + 15
 # Measured in-game by htsw (2026-07): inside a Random action the server raises
@@ -481,10 +494,16 @@ def packing_cost(
     *,
     importable: ImportableKind = 'functions',
     memo: dict[int, ActionCounts] | None = None,
+    allow_functions: bool = True,
 ) -> tuple[int, int]:
     """`(overflow functions, wrapper conditionals)` this order would cost, over
     the whole overflow chain. This is the objective the scheduler minimises:
     functions first (each one is a whole extra importable), then wrappers.
+
+    With `allow_functions=False` there is no function to carve into, so the
+    first term becomes `leftover expressions` instead: an order that fits is
+    the difference between a working build and an `ActionLimitError`, and
+    wrappers are free, so the scheduler spends them to drive leftover to zero.
 
     Pass `memo` when costing many orders of the same expressions: the counts are
     keyed by expression identity, which reordering does not change, so the
@@ -510,7 +529,7 @@ def packing_cost(
         original = {id(expression) for expression in remaining}
         result, rest = fix_action_limits(
             remaining,
-            function_if_exceeds=Function('overflow'),
+            function_if_exceeds=Function('overflow') if allow_functions else None,
             importable=current,
             memo=memo,
             check_conditions=False,
@@ -523,6 +542,8 @@ def packing_cost(
         )
         if not rest:
             break
+        if not allow_functions:
+            return len(rest), wrappers
         functions += 1
         remaining = rest
         # Overflow always lands in a function block, whatever the original was.

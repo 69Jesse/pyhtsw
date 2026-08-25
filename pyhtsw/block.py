@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING, Self, final
 from .actions.function import Function
 from .base_object import BaseObject
 from .container import ContainerContextManager, ExpressionContext
-from .limits import ImportableKind, fix_action_limits
+from .limits import (
+    FUNCTION_OVERFLOW_KINDS,
+    ImportableKind,
+    fix_action_limits,
+)
 from .utils.log import log
 
 if TYPE_CHECKING:
@@ -116,6 +120,12 @@ class Block(BaseObject):
 
         simplify_expressions(self.expressions, importable=self.importable_kind)
 
+    def can_overflow_into_function(self) -> bool:
+        """Whether a tail this block cannot hold may be carved into a follow-up
+        function. Only true for blocks that already *are* a function: triggering
+        one costs 4 ticks, which a click handler can outrun."""
+        return self.importable_kind in FUNCTION_OVERFLOW_KINDS
+
     def reorder_for_limits(self) -> None:
         """Resequence so the fixer needs as few wrapper conditionals and overflow
         functions as possible. Pure reshuffling - it only runs when the block
@@ -128,6 +138,7 @@ class Block(BaseObject):
         reordered = reorder_for_packing(
             self.expressions,
             importable=self.importable_kind,
+            allow_functions=self.can_overflow_into_function(),
         )
         if reordered is not None:
             self.expressions = reordered
@@ -146,13 +157,15 @@ class Block(BaseObject):
 
     def fix_action_limits(self, container: 'Container', index: int) -> None:
         root = self._overflow_root_ref or self
-        base_name = root.get_name()
+        function: Function | None = None
         counter = self._overflow_counter + 1
-        # A consumer may already own "Foo 2"; keep walking until free, and
-        # let the icon's stack follow the number that actually got used.
-        while container.has_importable('functions', f'{base_name} {counter}'):
-            counter += 1
-        function = Function(name=f'{base_name} {counter}')
+        if self.can_overflow_into_function():
+            base_name = root.get_name()
+            # A consumer may already own "Foo 2"; keep walking until free, and
+            # let the icon's stack follow the number that actually got used.
+            while container.has_importable('functions', f'{base_name} {counter}'):
+                counter += 1
+            function = Function(name=f'{base_name} {counter}')
         fixed, rest = fix_action_limits(
             self.expressions,
             nesting_possible=True,
@@ -162,6 +175,9 @@ class Block(BaseObject):
         )
         self.expressions = fixed
         if not rest:
+            return
+        if function is None:
+            container.report_action_limit_violation(self, len(rest))
             return
         from .importable import FunctionImportable
 

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from .expression.expression import Expression
     from .importable import Importable, Project
     from .item_plan import ItemPlan
+    from .limits import ImportableKind
 
 
 __all__ = (
@@ -76,6 +77,12 @@ class ExpressionContext(NamedTuple):
     add_expression_to_container: bool = True
 
 
+class ActionLimitViolation(NamedTuple):
+    name: str
+    kind: 'ImportableKind'
+    leftover: int
+
+
 class Container:
     exported_names: ClassVar[set[str]] = set()
 
@@ -87,6 +94,7 @@ class Container:
     project: 'Project | None'
     item_plan: 'ItemPlan | None'
     _consumer_reserved: set[int]
+    _action_limit_violations: list['ActionLimitViolation']
 
     is_finalized: bool
     ignore_action_limits: bool
@@ -109,6 +117,7 @@ class Container:
         self.project = None
         self.item_plan = None
         self._consumer_reserved = set()
+        self._action_limit_violations = []
 
         self.is_finalized = False
         self.allow_nested_expressions = allow_nested_expressions
@@ -116,6 +125,43 @@ class Container:
 
     def has_importable(self, kind: str, name: str) -> bool:
         return (kind, name) in self.importable_keys
+
+    def report_action_limit_violation(self, block: 'Block', leftover: int) -> None:
+        """Record a block that ran out of room and cannot carve out a follow-up
+        function. Collected rather than raised on the spot: a house that hits
+        this usually hits it in several blocks at once."""
+        self._action_limit_violations.append(
+            ActionLimitViolation(
+                name=block.get_name(),
+                kind=block.importable_kind,
+                leftover=leftover,
+            ),
+        )
+
+    def _raise_action_limit_violations(self) -> None:
+        from .limits import ActionLimitError
+
+        if not self._action_limit_violations:
+            return
+        # Kept, not cleared: the blocks were already rewritten in place, so a
+        # second finalize has to fail the same way instead of fixing them twice.
+        lines = [
+            f'  - {violation.kind[:-1]} "{violation.name}": '
+            f'{violation.leftover} expression(s) did not fit'
+            for violation in self._action_limit_violations
+        ]
+        raise ActionLimitError(
+            'These action lists are over the Housing limit and cannot be split '
+            'automatically:\n'
+            + '\n'.join(lines)
+            + '\n\nOnly a function may spill into a follow-up function, because '
+            'triggering one costs 4 ticks and a click handler can fire faster '
+            'than that - splitting these behind your back would silently drop or '
+            'reorder the tail. Move the overflowing actions into their own '
+            '@create_function and call it (the same 4 ticks, but now visible), '
+            'or shorten the list. Pass ignore_action_limits=True to the Container '
+            'to skip this check.',
+        )
 
     def register_importable(self, importable: 'Importable') -> None:
         key = (importable.kind, importable.identifier())
@@ -484,9 +530,11 @@ class Container:
 
         if self.is_finalized:
             raise RuntimeError('Container is already finalized')
+        self._raise_action_limit_violations()
         self._consumer_reserved = self.compute_reserved_temp_numbers()
         for index, block in enumerate(self.blocks):
             block.finalize(self, index)
+        self._raise_action_limit_violations()
         # Last: overflow functions carved out above own expressions too, and
         # every item has to be named before anything renders one.
         self.item_plan = plan_items(self.blocks, self.importables)

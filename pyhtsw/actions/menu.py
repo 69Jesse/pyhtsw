@@ -87,8 +87,10 @@ class Menu:
         xy_check: XYCheck | None,
         func: Callable[..., Any],
     ) -> None:
+        # The handler's own name, so an over-limit error points at the code
+        # rather than at a coordinate that is only resolved much later.
         block = NamedBlock(
-            f'{cls.__htsw_name__} slot',
+            f'{cls.__htsw_name__} slot {getattr(func, "__name__", "?")}',
             callback=func,
             importable_kind='menus',
         )

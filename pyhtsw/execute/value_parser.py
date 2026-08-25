@@ -99,7 +99,9 @@ def _run_placeholder(
         if raw is not None:
             return raw
         return parse_value(
-            context, fallback_raw if fallback_raw is not None else '""', player=player
+            context,
+            fallback_raw if fallback_raw is not None else '""',
+            player=player,
         )
 
     def resolve_stat(stat: object) -> BackendType:
@@ -110,11 +112,13 @@ def _run_placeholder(
 
     if kind == 'var.player':
         return resolve_var(
-            PlayerStat(args[0] if args else ''), args[1] if len(args) > 1 else None
+            PlayerStat(args[0] if args else ''),
+            args[1] if len(args) > 1 else None,
         )
     if kind == 'var.global':
         return resolve_var(
-            GlobalStat(args[0] if args else ''), args[1] if len(args) > 1 else None
+            GlobalStat(args[0] if args else ''),
+            args[1] if len(args) > 1 else None,
         )
     if kind == 'var.team':
         key = args[0] if args else ''

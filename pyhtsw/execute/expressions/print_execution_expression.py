@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 from ...utils.callback import call_with_optional_arg
 from ...utils.log import log
@@ -30,9 +30,6 @@ class PrintExecutionExpression(ExecutionExpression):
     ) -> None:
         self.values = values
         self.cast = cast
-
-    def cloned(self) -> Self:
-        return self.__class__(values=self.values, cast=self.cast)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PrintExecutionExpression):

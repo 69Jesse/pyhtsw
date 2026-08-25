@@ -52,8 +52,5 @@ class PlayerStat(
     def is_execution_player_scoped(self) -> bool:
         return True
 
-    def cloned_raw(self) -> 'PlayerStat':
-        return PlayerStat(self.name)
-
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<{self.name} {self.internal_type.name}>'

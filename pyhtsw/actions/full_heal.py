@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 
@@ -12,9 +12,6 @@ __all__ = (
 class FullHealExpression(Expression):
     def into_htsl(self) -> str:
         return 'fullHeal'
-
-    def cloned(self) -> Self:
-        return self.__class__()
 
     def equals(self, other: object) -> bool:
         return isinstance(other, FullHealExpression)

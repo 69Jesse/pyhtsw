@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import ClassVar, final
 
 from ..expression.condition.condition import Condition
 from .region import Region
@@ -17,15 +17,13 @@ def _region_name(region: 'type[Region] | str') -> str:
 @final
 class WithinRegion(Condition):
     name: str
+    __clone_map__: ClassVar[dict[str, str]] = {'region': 'name'}
 
     def __init__(self, region: 'type[Region] | str') -> None:
         self.name = _region_name(region)
 
     def into_htsl_raw(self) -> str:
         return f'inRegion {self.inline_quoted(self.name)}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(region=self.name)
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, WithinRegion):

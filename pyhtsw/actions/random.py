@@ -1,6 +1,6 @@
 import random
 from collections.abc import Generator
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from ..config import INDENT
 from ..container import Container, ContainerContextManager, ExpressionContext
@@ -33,11 +33,6 @@ class RandomExpression(Expression):
             result += ('\n' + expr.into_htsl()).replace('\n', '\n' + INDENT)
         result += '\n}'
         return result
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            expressions=[expr.cloned() for expr in self.expressions],
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, RandomExpression):

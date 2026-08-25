@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import ClassVar, final
 
 from ..expression.expression import Expression
 from .menu import Menu
@@ -20,6 +20,7 @@ def _menu_name(menu: 'type[Menu] | str') -> str:
 @final
 class DisplayMenuExpression(Expression):
     name: str
+    __clone_map__: ClassVar[dict[str, str]] = {'menu': 'name'}
 
     def __init__(self, menu: 'type[Menu] | str') -> None:
         self.name = _menu_name(menu)
@@ -29,9 +30,6 @@ class DisplayMenuExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return [('menus', self.name)]
-
-    def cloned(self) -> Self:
-        return self.__class__(menu=self.name)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, DisplayMenuExpression):

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from ..expression.condition.comparison_condition import ComparisonOperator
 from ..expression.condition.condition import Condition
@@ -39,9 +39,6 @@ class DamageAmountCondition(Condition):
         else:
             rhs = housing_type_as_rhs(self.amount)
         return f'damageAmount {self.operator.value} {rhs}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(operator=self.operator, amount=self.amount)
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, DamageAmountCondition):

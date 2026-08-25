@@ -1,6 +1,6 @@
 from collections.abc import Callable, Generator
 from enum import Enum
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from ...config import INDENT
 from ...container import Container
@@ -56,14 +56,6 @@ class ConditionalExpression(Expression):
         result += '\n}'
 
         return result
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            conditions=[cond.cloned() for cond in self.conditions],
-            mode=self.mode,
-            if_expressions=[expr.cloned() for expr in self.if_expressions],
-            else_expressions=[expr.cloned() for expr in self.else_expressions],
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ConditionalExpression):

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
@@ -42,15 +42,6 @@ class DisplayTitleExpression(Expression):
         return (
             f'title {self.inline_quoted(self.title)} {self.inline_quoted(self.subtitle)}'
             f' {self.inline(self.fadein)} {self.inline(self.stay)} {self.inline(self.fadeout)}'
-        )
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            title=self.cloned_or_same(self.title),
-            subtitle=self.cloned_or_same(self.subtitle),
-            fadein=self.fadein,
-            stay=self.stay,
-            fadeout=self.fadeout,
         )
 
     def equals(self, other: object) -> bool:

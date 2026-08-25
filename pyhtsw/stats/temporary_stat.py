@@ -54,6 +54,9 @@ class TemporaryStat(Stat):
     name_prefix: ClassVar[str] = 'tmp'
 
     _number: Number
+    # A clone must share the Number object, not a fresh one: rename groups
+    # temps by Number identity (see CLAUDE.md §3).
+    __clone_extra__: ClassVar[tuple[str, ...]] = ('_number',)
 
     def __init__(self) -> None:
         super().__init__('', auto_unset=False)
@@ -130,11 +133,6 @@ class TemporaryStat(Stat):
         if not isinstance(other, TemporaryStat):
             return False
         return self.number == other.number
-
-    def cloned_raw(self) -> 'TemporaryStat':
-        stat = TemporaryStat()
-        stat._number = self._number
-        return stat
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<{self.number} {self.internal_type.name}>'

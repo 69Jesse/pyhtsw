@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from .item import Item, item_action_reference, item_referenced_importables
@@ -22,9 +22,6 @@ class RemoveItemExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
-
-    def cloned(self) -> Self:
-        return self.__class__(item=self.item)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, RemoveItemExpression):

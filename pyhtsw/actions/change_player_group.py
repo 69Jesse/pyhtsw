@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from .group import Group
@@ -20,12 +20,6 @@ class ChangePlayerGroupExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'changePlayerGroup {self.inline_quoted(self.group.name)} {self.inline(self.demotion_protection)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            group=self.group,
-            demotion_protection=self.demotion_protection,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ChangePlayerGroupExpression):

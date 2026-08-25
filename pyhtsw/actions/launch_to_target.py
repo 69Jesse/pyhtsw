@@ -1,4 +1,4 @@
-from typing import Self, cast, final
+from typing import cast, final
 
 from ..checkable import Checkable
 from ..expression.expression import Expression
@@ -35,13 +35,6 @@ class LaunchToTargetExpression(Expression):
             line += f' {self.inline_quoted("~ ~ ~")}'
         line += f' {self.inline(self.strength)}'
         return line
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            coordinates=self.coordinates,
-            location=self.location,
-            strength=self.strength,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, LaunchToTargetExpression):

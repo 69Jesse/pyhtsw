@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_PERMISSIONS
@@ -18,9 +18,6 @@ class HasPermission(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'hasPermission {self.inline_quoted(self.permission)}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(permission=self.permission)
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, HasPermission):

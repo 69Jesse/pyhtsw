@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from ..types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
@@ -37,14 +37,6 @@ class IsItem(Condition):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            item=self.cloned_or_same(self.item),
-            what_to_check=self.what_to_check,
-            where_to_check=self.where_to_check,
-            required_amount=self.required_amount,
-        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, IsItem):

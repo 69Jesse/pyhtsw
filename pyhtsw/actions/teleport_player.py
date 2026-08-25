@@ -1,4 +1,4 @@
-from typing import Self, cast, final
+from typing import cast, final
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -34,13 +34,6 @@ class TeleportPlayerExpression(Expression):
             line += f' {self.inline_quoted("~ ~ ~")}'
         line += f' {self.inline(self.prevent_teleport_inside_block)}'
         return line
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            coordinates=self.coordinates,
-            location=self.location,
-            prevent_teleport_inside_block=self.prevent_teleport_inside_block,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, TeleportPlayerExpression):

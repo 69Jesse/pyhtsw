@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from ..types import ALL_POTION_EFFECTS
@@ -35,15 +35,6 @@ class ApplyPotionEffectExpression(Expression):
         return (
             f'applyPotion {self.inline_quoted(self.potion)} {self.inline(self.duration)} {self.inline(self.level)}'
             f' {self.inline(self.override_existing_effects)} {self.inline(self.show_potion_icon)}'
-        )
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            potion=self.potion,
-            duration=self.duration,
-            level=self.level,
-            override_existing_effects=self.override_existing_effects,
-            show_potion_icon=self.show_potion_icon,
         )
 
     def equals(self, other: object) -> bool:

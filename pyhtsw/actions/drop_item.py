@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -50,17 +50,6 @@ class DropItemExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            item=self.item,
-            location=self.location,
-            coordinates=self.coordinates,
-            drop_naturally=self.drop_naturally,
-            disable_item_merging=self.disable_item_merging,
-            prioritize_player=self.prioritize_player,
-            fallback_to_inventory=self.fallback_to_inventory,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, DropItemExpression):

@@ -86,8 +86,5 @@ class TeamStat(
             return False
         return self.team == other.team
 
-    def cloned_raw(self) -> 'TeamStat':
-        return TeamStat(self.name, self.team)
-
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<{self.name}, {repr(self.team)} {self.internal_type.name}>'

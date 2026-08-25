@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from .group import Group
@@ -21,12 +21,6 @@ class RequiredGroup(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'hasGroup {self.inline_quoted(self.group.name)} {self.inline(self.include_higher_groups)}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            group=self.cloned_or_same(self.group),
-            include_higher_groups=self.include_higher_groups,
-        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, RequiredGroup):

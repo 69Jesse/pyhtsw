@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..checkable import Checkable
 from ..expression.expression import Expression
@@ -28,13 +28,6 @@ class ChangeVelocityExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'changeVelocity {self.inline(self.x)} {self.inline(self.y)} {self.inline(self.z)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            x=self.cloned_or_same(self.x),
-            y=self.cloned_or_same(self.y),
-            z=self.cloned_or_same(self.z),
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ChangeVelocityExpression):

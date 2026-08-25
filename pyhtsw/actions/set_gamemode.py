@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from ..types import ALL_GAMEMODES
@@ -18,9 +18,6 @@ class SetGamemodeExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'gamemode {self.inline(self.gamemode)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(gamemode=self.gamemode)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetGamemodeExpression):

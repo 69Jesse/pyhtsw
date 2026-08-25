@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from ..types import PLAYER_WEATHERS
@@ -18,9 +18,6 @@ class SetPlayerWeatherExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'playerWeather {self.inline_quoted(self.weather)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(weather=self.weather)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetPlayerWeatherExpression):

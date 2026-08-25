@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_DAMAGE_CAUSES
@@ -18,9 +18,6 @@ class DamageCause(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'damageCause {self.inline_quoted(self.damage_cause)}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(damage_cause=self.damage_cause)
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, DamageCause):

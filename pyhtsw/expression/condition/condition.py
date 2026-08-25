@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Callable, Generator
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, ClassVar, Self, final
 
 from ...base_object import BaseObject
 from ...container import Container
@@ -18,6 +18,7 @@ __all__ = ('Condition',)
 
 class Condition(BaseObject):
     inverted: bool = False
+    __clone_extra__: ClassVar[tuple[str, ...]] = ('inverted',)
 
     @abstractmethod
     def into_htsl_raw(self) -> str:
@@ -26,16 +27,6 @@ class Condition(BaseObject):
     @final
     def into_htsl(self) -> str:
         return ('!' * self.inverted) + self.into_htsl_raw()
-
-    @abstractmethod
-    def cloned_raw(self) -> Self:
-        raise NotImplementedError
-
-    @final
-    def cloned(self) -> Self:
-        clone = self.cloned_raw()
-        clone.inverted = self.inverted
-        return clone
 
     @abstractmethod
     def equals_raw(self, other: object) -> bool:
@@ -48,9 +39,7 @@ class Condition(BaseObject):
         return self.inverted == other.inverted and self.equals_raw(other)
 
     def __invert__(self) -> Self:
-        clone = self.cloned()
-        clone.inverted = not clone.inverted
-        return clone
+        return self.cloned(inverted=not self.inverted)
 
     def raw_evaluate(self, context: 'ExecutionContext') -> bool:
         log(

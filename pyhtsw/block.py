@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, ClassVar, final
 
 from .actions.function import Function
 from .base_object import BaseObject
@@ -24,6 +24,7 @@ class Block(BaseObject):
     expressions: list['Expression']
     callback: Callable[[], None] | None
     callback_ran: bool
+    __clone_extra__: ClassVar[tuple[str, ...]] = ('callback_ran',)
     # Which htsw action container this block becomes; a few limits depend on it
     # (a conditional in an event gets 40 instead of 25).
     importable_kind: ImportableKind = 'functions'
@@ -76,18 +77,6 @@ class Block(BaseObject):
             if not expr1.equals(expr2):
                 return False
         return self.equals_raw(other)
-
-    @abstractmethod
-    def cloned_raw(self) -> Self:
-        raise NotImplementedError
-
-    @final
-    def cloned(self) -> Self:
-        clone = self.cloned_raw()
-        clone.expressions = [expr.cloned() for expr in self.expressions]
-        clone.callback = self.callback
-        clone.callback_ran = self.callback_ran
-        return clone
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(expressions={len(self.expressions)})'
@@ -248,9 +237,6 @@ class GlobalBlock(Block):
     def equals_raw(self, other: object) -> bool:
         return isinstance(other, GlobalBlock)
 
-    def cloned_raw(self) -> Self:
-        return self.__class__()
-
     def get_name(self) -> str:
         return 'Rename Me !!!'
 
@@ -282,15 +268,13 @@ class FunctionBlock(Block):
             return False
         return self.function == other.function
 
-    def cloned_raw(self) -> Self:
-        return self.__class__(function=self.function)
-
     def get_name(self) -> str:
         return self.function.name
 
 
 @final
 class NamedBlock(Block):
+    __clone_map__: ClassVar[dict[str, str]] = {'name': '_name'}
     """An action list owned by a non-function importable (item/region/menu/npc)."""
 
     _name: str
@@ -309,9 +293,6 @@ class NamedBlock(Block):
 
     def equals_raw(self, other: object) -> bool:
         return isinstance(other, NamedBlock) and other._name == self._name
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(self._name, importable_kind=self.importable_kind)
 
     def get_name(self) -> str:
         return self._name

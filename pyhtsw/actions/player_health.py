@@ -1,5 +1,5 @@
 import re
-from typing import Self, final
+from typing import final
 
 import numpy as np
 
@@ -29,9 +29,6 @@ class PlayerHealthPlaceholder(
 
     def get_backend_value(self) -> BackendType:
         return np.float64(0)
-
-    def cloned_raw(self) -> Self:
-        return self.__class__()
 
 
 PlayerHealth = PlayerHealthPlaceholder()

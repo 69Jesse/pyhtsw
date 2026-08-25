@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from ..expression.expression import Expression
 
@@ -21,9 +21,6 @@ class PauseExecutionExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'pause {self.inline(self.ticks)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(ticks=self.ticks)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PauseExecutionExpression):

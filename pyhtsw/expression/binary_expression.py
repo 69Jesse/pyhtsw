@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from enum import Enum
 from functools import cached_property
-from typing import Any, NoReturn, Self, final
+from typing import Any, NoReturn, final
 
 import numpy as np
 
@@ -1006,14 +1006,6 @@ class BinaryExpression[
             return line
 
         return '\n'.join(map(into_line, self.into_executable_expressions()))
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            left=self.cloned_or_same(self.left),
-            right=self.cloned_or_same(self.right),
-            operator=self.operator,
-            is_intentional_self_assignment=self.is_intentional_self_assignment,
-        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, BinaryExpression):

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, cast, final
+from typing import TYPE_CHECKING, cast, final
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -49,16 +49,6 @@ class PlaySoundExpression(Expression):
         if self.location == 'custom_coordinates' and self.coordinates is not None:
             line += f' {self.inline_quoted(self.coordinates)}'
         return line
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            sound=self.sound,
-            volume=self.volume,
-            pitch=self.pitch,
-            coordinates=self.coordinates,
-            location=self.location,
-            check_valid=self.check_valid,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PlaySoundExpression):

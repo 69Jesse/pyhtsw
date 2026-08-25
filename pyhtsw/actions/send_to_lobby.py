@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 
@@ -17,9 +17,6 @@ class SendToLobbyExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'lobby {self.inline_quoted(self.lobby)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(lobby=self.lobby)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SendToLobbyExpression):

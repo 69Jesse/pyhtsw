@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
 
 from ...utils.callback import call_with_optional_arg
 from .execution_expression import ExecutionExpression
@@ -22,9 +22,6 @@ class RunExecutionExpression(ExecutionExpression):
 
     def __init__(self, callback: CallbackType) -> None:
         self.callback = callback
-
-    def cloned(self) -> Self:
-        return self.__class__(callback=self.callback)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, RunExecutionExpression):

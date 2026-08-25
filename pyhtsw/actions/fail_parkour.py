@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 
@@ -17,9 +17,6 @@ class FailParkourExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'failParkour {self.inline_quoted(self.reason)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(reason=self.reason)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, FailParkourExpression):

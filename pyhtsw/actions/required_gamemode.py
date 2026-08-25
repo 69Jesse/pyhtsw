@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_GAMEMODES
@@ -18,9 +18,6 @@ class RequiredGamemode(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'gamemode {self.inline(self.gamemode)}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(gamemode=self.gamemode)
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, RequiredGamemode):

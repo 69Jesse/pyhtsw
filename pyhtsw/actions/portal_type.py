@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from ..types import PORTAL_TYPES
@@ -20,9 +20,6 @@ class PortalType(Condition):
         # htsw's identifier form for this condition is unquoted and
         # underscore-joined: `portal Nether_Portal`.
         return f'portal {self.portal.replace(" ", "_")}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(portal=self.portal)
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, PortalType):

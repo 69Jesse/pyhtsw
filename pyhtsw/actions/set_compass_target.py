@@ -1,4 +1,4 @@
-from typing import Self, cast, final
+from typing import cast, final
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -28,9 +28,6 @@ class SetCompassTargetExpression(Expression):
         if self.location == 'custom_coordinates' and self.coordinates is not None:
             line += f' {self.inline_quoted(self.coordinates)}'
         return line
-
-    def cloned(self) -> Self:
-        return self.__class__(coordinates=self.coordinates, location=self.location)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetCompassTargetExpression):

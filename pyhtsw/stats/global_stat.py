@@ -32,8 +32,5 @@ class GlobalStat(
     def right_side_keyword() -> str:
         return 'global'
 
-    def cloned_raw(self) -> 'GlobalStat':
-        return GlobalStat(self.name)
-
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<{self.name} {self.internal_type.name}>'

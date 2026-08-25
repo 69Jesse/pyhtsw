@@ -1,5 +1,5 @@
 import re
-from typing import Self, final
+from typing import final
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -23,12 +23,15 @@ class TeamPlayersPlaceholder(
     pattern=re.compile(r'%player\.team\.players(?:/([^%]*))?%'),
     pattern_factory=_team_players_factory,
 ):
+    team: Team | None
+
     def __init__(self, team: Team | str | None = None) -> None:
         if team is None:
             key = '%player.team.players%'
         else:
             team = team if isinstance(team, Team) else Team(team)
             key = f'%player.team.players/{team.name}%'
+        self.team = team
         super().__init__(
             as_string=key,
             constant_internal_type=InternalType.LONG,
@@ -36,9 +39,6 @@ class TeamPlayersPlaceholder(
 
     def get_backend_value(self) -> BackendType:
         return JavaLong(0)
-
-    def cloned_raw(self) -> Self:
-        return self.__class__()
 
 
 def TeamPlayers(

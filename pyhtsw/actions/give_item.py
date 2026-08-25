@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from ..types import _INVENTORY_SLOTS_PRETTY_NAME_MAPPING, INVENTORY_SLOTS
@@ -45,14 +45,6 @@ class GiveItemExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            item=self.item,
-            allow_multiple=self.allow_multiple,
-            inventory_slot=self.inventory_slot,
-            replace_existing_item=self.replace_existing_item,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, GiveItemExpression):

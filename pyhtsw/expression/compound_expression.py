@@ -1,5 +1,5 @@
 from collections.abc import Generator
-from typing import Self, final
+from typing import final
 
 from ..editable import Editable
 from .expression import Expression
@@ -15,12 +15,6 @@ class CompoundExpression(Expression, Editable):
         self.expressions = expressions
         self.result = result
         self.internal_type = result.internal_type
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            [expr.cloned() for expr in self.expressions],
-            self.result.cloned(),
-        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, CompoundExpression):

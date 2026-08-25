@@ -122,10 +122,5 @@ class Stat(Editable):
         clone.auto_unset = False
         return clone
 
-    def cloned(self) -> Self:
-        clone = super().cloned()
-        clone.auto_unset = self.auto_unset
-        return clone
-
     def unset(self) -> None:
         UnsetExpression(self).write()

@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 
@@ -17,9 +17,6 @@ class ToggleNametagDisplayExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'displayNametag {self.inline(self.display)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(display=self.display)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ToggleNametagDisplayExpression):

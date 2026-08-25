@@ -1,5 +1,5 @@
 import re
-from typing import Self, final
+from typing import final
 
 from ..execute.backend_type import BackendType
 from ..internal_type import InternalType
@@ -25,9 +25,6 @@ class PlayerNamePlaceholder(
 
     def get_backend_value(self) -> BackendType:
         return 'Rfind'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__()
 
 
 PlayerName = PlayerNamePlaceholder()

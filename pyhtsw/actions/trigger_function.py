@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from ..expression.expression import Expression
 from .function import Function
@@ -31,12 +31,6 @@ class TriggerFunctionExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return [('functions', self.function.name)]
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            function=self.function,
-            trigger_for_all_players=self.trigger_for_all_players,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, TriggerFunctionExpression):

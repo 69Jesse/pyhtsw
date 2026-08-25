@@ -68,6 +68,7 @@ class Checkable(BaseObject):
 
     internal_type: InternalType = InternalType.ANY
     fallback_value: HousingType | None
+    __clone_extra__: ClassVar[tuple[str, ...]] = ('internal_type', 'fallback_value')
 
     def __init__(
         self,
@@ -176,17 +177,6 @@ class Checkable(BaseObject):
 
     def __str__(self) -> str:
         return self.into_inside_string()
-
-    @abstractmethod
-    def cloned_raw(self) -> Self:
-        raise NotImplementedError
-
-    @final
-    def cloned(self) -> Self:
-        clone = self.cloned_raw()
-        clone.internal_type = self.internal_type
-        clone.fallback_value = self.fallback_value
-        return clone
 
     def as_type(self, internal_type: InternalType, /) -> Self:
         """

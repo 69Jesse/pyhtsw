@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.expression import Expression
 from .layout import Layout
@@ -18,9 +18,6 @@ class ApplyInventoryLayoutExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'applyLayout {self.inline_quoted(self.layout.name)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(layout=self.layout)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ApplyInventoryLayoutExpression):

@@ -1,8 +1,7 @@
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
-from ...base_object import BaseObject
 from ...expression.housing_type import HousingType
 from ...internal_type import InternalType
 from ..housing_type import housing_type_as_rhs
@@ -98,13 +97,6 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         self.right = resolve(self.right)  # type: ignore
         BinaryExpression.fix_type_compatibility(self)
         super().finalize(container)
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            left=self.left.cloned(),
-            right=BaseObject.cloned_or_same(self.right),
-            operator=self.operator,
-        )
 
     def equals_raw(self, other: object) -> bool:
         from ...checkable import Checkable

@@ -1,4 +1,4 @@
-from typing import ClassVar, Self, final
+from typing import ClassVar, final
 
 from ..expression.expression import Expression
 
@@ -28,9 +28,6 @@ class SetPlayerTimeExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'playerTime {self.inline(self.time)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(time=self.time)
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetPlayerTimeExpression):

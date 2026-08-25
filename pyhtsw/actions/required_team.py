@@ -1,4 +1,4 @@
-from typing import Self, final
+from typing import final
 
 from ..expression.condition.condition import Condition
 from .team import Team
@@ -19,11 +19,6 @@ class RequiredTeam(Condition):
     def into_htsl_raw(self) -> str:
         name = self.team.name if self.team is not None else 'None'
         return f'hasTeam {self.inline_quoted(name)}'
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            team=self.cloned_or_same(self.team),
-        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, RequiredTeam):

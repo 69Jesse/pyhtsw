@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, NoReturn, Self
+from typing import TYPE_CHECKING, NoReturn
 
 from ...expression.condition.condition import Condition
 from ...expression.condition.conditional_expression import ConditionalMode
@@ -39,16 +39,6 @@ class AssertExecutionExpression(ExecutionExpression):
         self.conditions = conditions
         self.mode = mode
         self.message = message
-
-    def cloned(self) -> Self:
-        return self.__class__(
-            conditions=tuple(
-                cond.cloned() if not callable(cond) else cond
-                for cond in self.conditions
-            ),
-            mode=self.mode,
-            message=self.message,
-        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, AssertExecutionExpression):

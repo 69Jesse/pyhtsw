@@ -1,6 +1,6 @@
 import re
 import time
-from typing import Self, final
+from typing import final
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -29,9 +29,6 @@ class DateUnixPlaceholder(
     def get_backend_value(self) -> BackendType:
         return JavaLong(int(time.time()))
 
-    def cloned_raw(self) -> Self:
-        return self.__class__()
-
 
 DateUnix = DateUnixPlaceholder()
 
@@ -50,9 +47,6 @@ class DateUnixMSPlaceholder(
 
     def get_backend_value(self) -> BackendType:
         return JavaLong(int(time.time() * 1000))
-
-    def cloned_raw(self) -> Self:
-        return self.__class__()
 
 
 DateUnixMS = DateUnixMSPlaceholder()

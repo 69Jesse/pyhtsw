@@ -1,6 +1,6 @@
 import random
 import re
-from typing import Self, final
+from typing import final
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -39,12 +39,6 @@ class RandomWholePlaceholder(
     def get_backend_value(self) -> BackendType:
         return JavaLong(
             random.randint(self.lower_bound, self.exclusive_upper_bound - 1),
-        )
-
-    def cloned_raw(self) -> Self:
-        return self.__class__(
-            lower_bound=self.lower_bound,
-            exclusive_upper_bound=self.exclusive_upper_bound,
         )
 
 

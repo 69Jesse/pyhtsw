@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from .expression import Expression
 
@@ -13,9 +13,6 @@ class UnsetExpression(Expression):
 
     def __init__(self, target: 'Stat') -> None:
         self.target = target
-
-    def cloned(self) -> Self:
-        return self.__class__(self.target.cloned())
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, UnsetExpression):

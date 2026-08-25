@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, final
 
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
@@ -25,9 +25,6 @@ class DisplayActionBarExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'actionBar {self.inline_quoted(self.text)}'
-
-    def cloned(self) -> Self:
-        return self.__class__(text=self.cloned_or_same(self.text))
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, DisplayActionBarExpression):

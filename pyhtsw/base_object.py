@@ -22,8 +22,12 @@ class BaseObject(ABC):
         super().__init_subclass__(**kwargs)
         build_clone_spec(cls)
 
-    def cloned(self, **overrides: Any) -> Self:
+    def cloned(self, *args: Any, **overrides: Any) -> Self:
         """Returns a copy, overriding only the given fields."""
+        if args:
+            raise TypeError(
+                f'{type(self).__name__}.cloned() takes no positional arguments',
+            )
         if overrides:
             unknown = set(overrides).difference(
                 self.__clone_fields__,

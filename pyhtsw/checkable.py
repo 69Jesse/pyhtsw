@@ -375,7 +375,7 @@ class Checkable(BaseObject):
         )
 
     @overload
-    def __pow__(
+    def __pow__(  # type: ignore[overload-overlap]
         self,
         other: Literal[0],
     ) -> Literal[1]: ...
@@ -390,7 +390,7 @@ class Checkable(BaseObject):
     def __pow__(
         self,
         other: int,
-    ) -> 'CompoundExpression | Self | Literal[1]': ...
+    ) -> 'CompoundExpression': ...
 
     def __pow__(
         self,
@@ -716,7 +716,7 @@ class Checkable(BaseObject):
     def __abs__(self) -> 'CompoundExpression':
         return self.abs()
 
-    def __eq__[T: 'Checkable | HousingType'](
+    def __eq__[T: 'Checkable | HousingType'](  # type: ignore[override]
         self,
         other: T,
     ) -> ComparisonCondition[Self, T]:
@@ -730,7 +730,7 @@ class Checkable(BaseObject):
             ComparisonOperator.Equal,
         )
 
-    def __ne__[T: 'Checkable | HousingType'](
+    def __ne__[T: 'Checkable | HousingType'](  # type: ignore[override]
         self,
         other: T,
     ) -> ComparisonCondition[Self, T]:

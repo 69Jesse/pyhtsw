@@ -150,7 +150,7 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
             return False
         if self.operator is ComparisonOperator.Equal:
             return left_value == right_value
-        if isinstance(left_value, str):
+        if isinstance(left_value, str) or isinstance(right_value, str):
             return False
         if self.operator is ComparisonOperator.GreaterThan:
             return bool(left_value > right_value)

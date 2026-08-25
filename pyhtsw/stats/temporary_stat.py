@@ -106,7 +106,7 @@ class TemporaryStat(Stat):
         return f'{self.name_prefix}{self.number}'
 
     @name.setter
-    def name(self, value: str) -> None:
+    def name(self, value: str) -> None:  # type: ignore[assignment]
         pass  # ignore on purpose
 
     @staticmethod

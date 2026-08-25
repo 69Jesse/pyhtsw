@@ -764,6 +764,7 @@ def _check_tag(name: str, tag: str | None) -> None:
 
 class TeamImportable(Importable):
     kind = 'teams'
+    color: ALL_HOUSING_COLORS | None
 
     def __init__(
         self,
@@ -807,6 +808,9 @@ class TeamImportable(Importable):
 
 class GroupImportable(Importable):
     kind = 'groups'
+    color: ALL_HOUSING_COLORS | None
+    chat_speed: ALL_CHAT_SPEEDS | None
+    default_gamemode: ALL_DEFAULT_GAMEMODES | None
 
     def __init__(
         self,
@@ -872,6 +876,7 @@ class GroupImportable(Importable):
 
 class CommandImportable(Importable):
     kind = 'commands'
+    mode: ALL_COMMAND_MODES | None
 
     def __init__(
         self,

@@ -7,8 +7,10 @@ from ..container import Container, get_current_container
 from ..utils.log import log
 
 if TYPE_CHECKING:
+    from ..checkable import Checkable
     from ..execute.context import ExecutionContext
     from ..stats.stat import Stat
+    from ..stats.temporary_stat import TemporaryStat
 
 
 __all__ = ('Expression',)
@@ -22,7 +24,7 @@ _Checkable: type | None = None
 _TemporaryStat: type | None = None
 
 
-def _stat_refs() -> tuple[type, type, type]:
+def _stat_refs() -> tuple[type['Stat'], type['Checkable'], type['TemporaryStat']]:
     global _Stat, _Checkable, _TemporaryStat
     if _Stat is None:
         from ..checkable import Checkable

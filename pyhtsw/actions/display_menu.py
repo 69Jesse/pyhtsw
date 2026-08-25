@@ -11,12 +11,14 @@ __all__ = (
 )
 
 
-def _menu_name(menu: 'type[Menu] | str') -> str:
+def _menu_name(menu: 'type[Menu] | Menu | str') -> str:
     if isinstance(menu, str):
         return menu
     if isinstance(menu, type) and issubclass(menu, Menu):
         return menu.__htsw_name__ or menu.__name__
-    raise TypeError(f'Expected a Menu subclass or str, got {menu!r}')
+    if isinstance(menu, Menu):
+        return menu.__htsw_name__ or type(menu).__name__
+    raise TypeError(f'Expected a Menu, a Menu subclass or str, got {menu!r}')
 
 
 @final
@@ -24,7 +26,7 @@ class DisplayMenuExpression(Expression):
     name: str
     __clone_map__: ClassVar[dict[str, str]] = {'menu': 'name'}
 
-    def __init__(self, menu: 'type[Menu] | str') -> None:
+    def __init__(self, menu: 'type[Menu] | Menu | str') -> None:
         self.name = _menu_name(menu)
 
     def into_htsl(self) -> str:
@@ -36,7 +38,7 @@ class DisplayMenuExpression(Expression):
     def cloned(
         self,
         *,
-        menu: 'type[Menu] | str | Missing' = MISSING,
+        menu: 'type[Menu] | Menu | str | Missing' = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -54,5 +56,5 @@ class DisplayMenuExpression(Expression):
         return f'{self.__class__.__name__}<{self.name}>'
 
 
-def display_menu(menu: 'type[Menu] | str') -> None:
+def display_menu(menu: 'type[Menu] | Menu | str') -> None:
     DisplayMenuExpression(menu=menu).write()

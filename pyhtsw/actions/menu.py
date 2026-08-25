@@ -1,16 +1,25 @@
 from collections.abc import Callable, Sequence
+from types import MethodType
 from typing import Any, ClassVar, Literal
 
 from ..block import NamedBlock
 from ..container import get_current_container
-from ..importable import MenuImportable, MenuSlot, XYCheck
+from ..importable import MenuImportable, MenuSlot, XYCheck, call_with_args
 from ..utils.caller import caller_module
 from .item import Item
 
-__all__ = ('Menu',)
+__all__ = ('Menu', 'create_menu')
 
 MenuSize = Literal[1, 2, 3, 4, 5, 6]
 MenuAxis = int | Sequence[int] | None
+MenuSlotSpec = int | Sequence[int] | None
+
+_COLS = 9
+
+
+class _PendingSlots:
+    def __init__(self, slots: Sequence[int]) -> None:
+        self.slots = tuple(slots)
 
 
 class _Element:
@@ -18,7 +27,7 @@ class _Element:
         self,
         func: Callable[..., Any],
         item: 'Item | type[Item]',
-        x: MenuAxis,
+        x: 'MenuAxis | _PendingSlots',
         y: MenuAxis,
         xy_check: XYCheck | None,
     ) -> None:
@@ -29,91 +38,213 @@ class _Element:
         self.xy_check = xy_check
 
 
-class Menu:
-    COLS: ClassVar[int] = 9
-    __htsw_name__: ClassVar[str | None] = None
-    __htsw_size__: ClassVar[int]
+class _MenuMethod:
+    def __init__(self, func: Callable[..., Any]) -> None:
+        self.func = func
+        self.__doc__ = func.__doc__
 
-    @classmethod
-    def distance_from_edge(cls, x: int, y: int) -> int:
+    def __get__(self, obj: Any, cls: type | None = None) -> Any:
+        return MethodType(self.func, cls if obj is None else obj)
+
+
+def _check_size(name: str, size: int) -> None:
+    if not 1 <= size <= 6:
+        raise ValueError(f'Menu "{name}" size must be between 1 and 6.')
+
+
+def _slot_membership(
+    name: str,
+    slots: Sequence[int],
+    rows: int,
+    xy_check: XYCheck | None,
+) -> XYCheck:
+    resolved: set[int] = set()
+    total = rows * _COLS
+    for index in slots:
+        normalised = index + total if index < 0 else index
+        if not 0 <= normalised < total:
+            raise ValueError(
+                f'Menu "{name}": slot {index} is out of range for size {rows}.',
+            )
+        resolved.add(normalised)
+
+    def check(row: int, column: int, menu: Any) -> bool:
+        if row * _COLS + column not in resolved:
+            return False
+        return xy_check is None or bool(call_with_args(xy_check, row, column, menu))
+
+    return check
+
+
+class Menu:
+    COLS: ClassVar[int] = _COLS
+    __htsw_name__: 'str | None' = None
+    __htsw_size__: int
+    __htsw_importable__: 'MenuImportable'
+
+    def __init__(self, name: str, size: MenuSize) -> None:
+        """Declare a menu as a value rather than a subclass. Prefer
+        `create_menu(...)`, which is the same thing under a name matching
+        `create_function` and friends."""
+        _check_size(name, size)
+        self.__htsw_name__ = name
+        self.__htsw_size__ = size
+
+        importable = MenuImportable(name=name, size=size, slots=[], menu_cls=self)
+        importable.module = caller_module()
+        self.__htsw_importable__ = importable
+        get_current_container().register_importable(importable)
+
+    def __repr__(self) -> str:
+        return f'{type(self).__name__}<{self.__htsw_name__}>'
+
+    @_MenuMethod
+    def distance_from_edge(self, x: int, y: int) -> int:
         """How many cells in from the nearest border (x/y are row/column).
         Cells on the outer edge return 0; the centre is the maximum."""
-        return min(x, y, cls.__htsw_size__ - 1 - x, cls.COLS - 1 - y)
+        return min(x, y, self.__htsw_size__ - 1 - x, _COLS - 1 - y)
 
     @staticmethod
     def element(
         *,
         item: 'Item | type[Item]',
+        slot: MenuSlotSpec = None,
         x: MenuAxis = None,
         y: MenuAxis = None,
         xy_check: XYCheck | None = None,
     ) -> Callable[[Callable[..., Any]], _Element]:
         def decorator(func: Callable[..., Any]) -> _Element:
-            return _Element(func, item, x, y, xy_check)
+            if slot is None:
+                return _Element(func, item, x, y, xy_check)
+            if x is not None or y is not None:
+                raise ValueError('Menu element: pass either slot= or x=/y=, not both.')
+            if isinstance(slot, int):
+                return _Element(func, item, slot // _COLS, slot % _COLS, xy_check)
+            # A sequence of slots needs the menu's size to normalise negatives,
+            # which a class body does not know yet, so hold it until it does.
+            return _Element(func, item, _PendingSlots(slot), None, xy_check)
 
         return decorator
 
-    __htsw_importable__: ClassVar['MenuImportable']
-
     def __init_subclass__(cls, name: str, size: MenuSize) -> None:
         super().__init_subclass__()
-        if not 1 <= size <= 6:
-            raise ValueError(f'Menu "{name}" size must be between 1 and 6.')
+        _check_size(name, size)
         cls.__htsw_name__ = name
         cls.__htsw_size__ = size
 
-        importable = MenuImportable(
-            name=name,
-            size=size,
-            slots=[],
-            menu_cls=cls,
-        )
+        importable = MenuImportable(name=name, size=size, slots=[], menu_cls=cls)
         importable.module = caller_module()
         cls.__htsw_importable__ = importable
 
         for value in vars(cls).values():
             if not isinstance(value, _Element):
                 continue
-            cls._add_slot(value.item, value.x, value.y, value.xy_check, value.func)
+            x, xy_check = value.x, value.xy_check
+            if isinstance(x, _PendingSlots):
+                x, xy_check = None, _slot_membership(name, x.slots, size, xy_check)
+            cls._add_slot(value.item, x, value.y, xy_check, value.func)
 
         get_current_container().register_importable(importable)
 
-    @classmethod
+    @_MenuMethod
     def _add_slot(
-        cls,
+        self,
         item: 'Item | type[Item]',
         x: MenuAxis,
         y: MenuAxis,
         xy_check: XYCheck | None,
-        func: Callable[..., Any],
+        func: 'Callable[..., Any] | None',
     ) -> None:
-        # The handler's own name, so an over-limit error points at the code
-        # rather than at a coordinate that is only resolved much later.
-        block = NamedBlock(
-            f'{cls.__htsw_name__} slot {getattr(func, "__name__", "?")}',
-            callback=func,
-            importable_kind='menus',
-        )
-        get_current_container().add_block(block)
-        cls.__htsw_importable__.slots.append(
+        block: NamedBlock | None = None
+        if func is not None:
+            # The handler's own name, so an over-limit error points at the code
+            # rather than at a coordinate that is only resolved much later.
+            block = NamedBlock(
+                f'{self.__htsw_name__} slot {getattr(func, "__name__", "?")}',
+                callback=func,
+                importable_kind='menus',
+            )
+            get_current_container().add_block(block)
+        self.__htsw_importable__.slots.append(
             MenuSlot(item=item, x=x, y=y, xy_check=xy_check, block=block),
         )
 
-    @classmethod
+    @_MenuMethod
+    def _placement(
+        self,
+        slot: MenuSlotSpec,
+        x: MenuAxis,
+        y: MenuAxis,
+        xy_check: XYCheck | None,
+    ) -> tuple[MenuAxis, MenuAxis, XYCheck | None]:
+        name = self.__htsw_name__ or '?'
+        if slot is None:
+            return x, y, xy_check
+        if x is not None or y is not None:
+            raise ValueError(f'Menu "{name}": pass either slot= or x=/y=, not both.')
+        if isinstance(slot, int):
+            return slot // _COLS, slot % _COLS, xy_check
+        slots = tuple(slot)
+        if not slots:
+            raise ValueError(f'Menu "{name}": slot= was given an empty sequence.')
+        return None, None, _slot_membership(name, slots, self.__htsw_size__, xy_check)
+
+    @_MenuMethod
     def add_element(
-        cls,
+        self,
         *,
         item: 'Item | type[Item]',
+        slot: MenuSlotSpec = None,
         x: MenuAxis = None,
         y: MenuAxis = None,
         xy_check: XYCheck | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        """Add a slot to an already-defined menu (e.g. inside a loop). Mirrors
-        `@Menu.element`, but registers immediately on the class instead of being
-        collected from the class body."""
+        """Add a slot to an already-declared menu (e.g. inside a loop). Mirrors
+        `@Menu.element`, but registers immediately instead of being collected
+        from a class body."""
+        x, y, xy_check = self._placement(slot, x, y, xy_check)
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-            cls._add_slot(item, x, y, xy_check, func)
+            self._add_slot(item, x, y, xy_check, func)
             return func
 
         return decorator
+
+    # The same thing under the name that reads best on a `create_menu` object:
+    # `@menu.on(slot=28, item=...)`.
+    on = add_element
+
+    @_MenuMethod
+    def place(
+        self,
+        item: 'Item | type[Item]',
+        *,
+        slot: MenuSlotSpec = None,
+        x: MenuAxis = None,
+        y: MenuAxis = None,
+        xy_check: XYCheck | None = None,
+    ) -> None:
+        """Put an item in a slot with nothing behind it — decoration, or a
+        label. Saves writing a handler whose whole body is `pass`."""
+        x, y, xy_check = self._placement(slot, x, y, xy_check)
+        self._add_slot(item, x, y, xy_check, None)
+
+    @_MenuMethod
+    def fill(
+        self,
+        item: 'Item | type[Item]',
+        *,
+        xy_check: XYCheck | None = None,
+    ) -> None:
+        """Place `item` in every cell `xy_check` accepts (every cell when it is
+        omitted). Later placements win, so fill first and place on top after."""
+        self._add_slot(item, None, None, xy_check, None)
+
+
+def create_menu(name: str, size: MenuSize) -> Menu:
+    """Declare a menu and return it, so menus can be built by a function called
+    in a loop instead of by a class statement. The result goes anywhere a `Menu`
+    subclass does, `display_menu` included."""
+    menu = Menu(name, size)
+    menu.__htsw_importable__.module = caller_module()
+    return menu

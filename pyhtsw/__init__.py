@@ -190,6 +190,7 @@ from .actions.launch_to_target import (
 )
 from .actions.layout import Layout as Layout
 from .actions.menu import Menu as Menu
+from .actions.menu import create_menu as create_menu
 from .actions.no_fallback_values import NoFallbackValues as NoFallbackValues
 from .actions.no_optimization import NoOptimization as NoOptimization
 from .actions.no_type_casting import NoTypeCasting as NoTypeCasting

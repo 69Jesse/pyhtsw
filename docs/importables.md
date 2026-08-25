@@ -162,7 +162,10 @@ class Shop(Menu, name='Magic Shop', size=6):
   **not** supported here; they render literally.
 - `size` is **required** and typed `Literal[1, 2, 3, 4, 5, 6]` (rows). Menus are
   9 columns wide.
-- `@Menu.element(item=, x=, y=, xy_check=)`:
+- `@Menu.element(item=, slot=, x=, y=, xy_check=)`:
+  - `slot` is the **flat** index Housing itself uses, `0`–`53`, shorthand for
+    `x=slot // 9, y=slot % 9`. It also takes a sequence of indices. Pass either
+    `slot=` or `x=`/`y=`, never both.
   - `x` is the **row**, `y` is the **column**. Each is `int | Sequence[int] |
     None`; `None` means every index on that axis.
   - Negative indices are allowed and resolved against the size at render time.
@@ -170,6 +173,55 @@ class Shop(Menu, name='Magic Shop', size=6):
   - An element body of just `pass` is decoration (no actions).
 - Later elements override earlier ones per cell. Overriding a cell that a
   fully-explicit element (both `x` and `y` given) already set logs a warning.
+
+#### Menus as values
+
+A class statement cannot be written in a loop, so a menu built from data — one
+page per shop category, one per reward tier — is declared with `create_menu`
+instead. It returns a `Menu` that goes anywhere a `Menu` subclass does,
+`display_menu` included, and because the whole menu is built inside an ordinary
+function, its handlers close over the loop variable normally rather than having
+to capture it in a default argument.
+
+```python
+from pyhtsw import Menu, create_menu, give_item
+
+
+def build_page(category) -> Menu:
+    menu = create_menu(f'Shop > {category.name}', 6)
+    menu.fill(Black, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 0)
+    menu.fill(Gray, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 1)
+    menu.place(INFO_ITEM, slot=4)
+
+    for slot, entry in zip(SLOTS, category.items, strict=True):
+
+        @menu.on(item=entry.item, slot=slot)
+        def _buy(entry=entry) -> None:
+            give_item(entry.item)
+
+    return menu
+
+
+PAGES = [build_page(category) for category in CATEGORIES]
+```
+
+- `menu.place(item, slot=/x=/y=/xy_check=)` puts an item down with **no actions
+  behind it** — decoration, or a label. It saves writing a handler whose whole
+  body is `pass`.
+- `menu.fill(item, xy_check=)` places `item` in every cell the check accepts
+  (every cell when it is omitted). Later placements win, so fill first.
+- `menu.on(item=, slot=, ...)` is the decorator form; `menu.add_element(...)` is
+  the same method under its original name.
+- `menu.distance_from_edge(x, y)` is how many cells in from the nearest border a
+  cell is — `0` on the outer ring, `1` on the next — which is what makes the
+  two-tone glass border above one line each.
+
+Note the loop above still binds `entry` through a default argument, because the
+`for` body is not its own scope; lifting the loop into a helper that returns the
+handler, or building one menu per function call, removes even that.
+
+All of these are available on a `Menu` subclass too, where `place`, `fill`, `on`
+and `distance_from_edge` bind to the class.
 
 ## Teams and Groups
 

@@ -519,7 +519,7 @@ class RegionImportable(Importable):
 
 MenuAxis = int | Sequence[int] | None
 # Receives (x, y), optionally also the Menu subclass; returns whether to fill.
-XYCheck = Callable[[int, int], bool] | Callable[[int, int, 'type[Menu]'], bool]
+XYCheck = Callable[[int, int], bool] | Callable[[int, int, 'type[Menu] | Menu'], bool]
 
 
 class MenuSlot:
@@ -574,7 +574,7 @@ class MenuImportable(Importable):
         name: str,
         size: int,
         slots: list[MenuSlot],
-        menu_cls: 'type[Menu] | None' = None,
+        menu_cls: 'type[Menu] | Menu | None' = None,
     ) -> None:
         self.name = name
         self.size = size

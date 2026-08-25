@@ -55,6 +55,7 @@ with Container() as sum_container:
             (z - PlayerPositionZ.as_double()) ** 2,
         ),
     )
+    assert not isinstance(distance_squared, int)
     with IfAll(distance_squared > 1000):
         chat('hi')
 

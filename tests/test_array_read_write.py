@@ -575,10 +575,10 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
             _w: tuple[tuple[int, int], ...] = tuple(_written.items()),
             _t: int = _target,
         ) -> None:
-            _w = dict(_w)  # type: ignore[assignment]
+            written = dict(_w)
             for i, stat in enumerate(_s):
                 got = int(ctx.get(stat))
-                want = _w.get(i, value_at(i, 0))
+                want = written.get(i, value_at(i, 0))
                 assert got == want, (
                     f'successive write (after target={_t}): '
                     f'slot[{i}]={got}, want {want}'
@@ -851,10 +851,10 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
             _w: tuple[tuple[int, int], ...] = tuple(_written.items()),
             _t: int = _target,
         ) -> None:
-            _w = dict(_w)  # type: ignore[assignment]
+            written = dict(_w)
             for i, stat in enumerate(_s):
                 got = int(ctx.get(stat))
-                want = _w.get(i, value_at(i, 0))
+                want = written.get(i, value_at(i, 0))
                 assert got == want, (
                     f'v5 successive (after target={_t}): slot[{i}]={got}, want {want}'
                 )
@@ -903,10 +903,10 @@ for _n, _first, _targets in ((75, 0, (60, 10, 74, 40)), (30, 5, (0, 29, 13, 12))
             _w: tuple[tuple[int, int], ...] = tuple(_written.items()),
             _n_: int = _n,
         ) -> None:
-            _w = dict(_w)  # type: ignore[assignment]
+            written = dict(_w)
             for i, stat in enumerate(_s):
                 got = int(ctx.get(stat))
-                want = _w.get(i, value_at(i, 0))
+                want = written.get(i, value_at(i, 0))
                 assert got == want, f'v5 n={_n_}: slot[{i}]={got}, want {want}'
 
         ctx.assert_all(check_v5_shapes)

@@ -46,8 +46,11 @@ with Container() as container:
 
 htsl = container.into_htsl()
 blocks = htsl.split('\n\n\n')
-write_name = re.search(r'tmp\d+', next(b for b in blocks if 'a 0' in b)).group()
-read_name = re.search(r'tmp\d+', next(b for b in blocks if 'chat' in b)).group()
+write_match = re.search(r'tmp\d+', next(b for b in blocks if 'a 0' in b))
+read_match = re.search(r'tmp\d+', next(b for b in blocks if 'chat' in b))
+assert write_match is not None and read_match is not None, htsl
+write_name = write_match.group()
+read_name = read_match.group()
 assert write_name == read_name, (write_name, read_name, htsl)
 
 

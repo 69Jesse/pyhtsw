@@ -27,7 +27,7 @@ with Container() as container:
         # must not reuse the held temp's tmp<n>.
         x.value += y + z
         z.value += z + x
-        chat(held)
+        chat(f'{held}')
 
 
 container.export('Temp Export')
@@ -37,7 +37,9 @@ lines = htsl.splitlines()
 
 # The held temp is the one assigned the literal 123.
 held_line = next(ln for ln in lines if ln.endswith('= 123 false'))
-held_name = re.search(r'"(tmp\d+)"', held_line).group(1)
+held_match = re.search(r'"(tmp\d+)"', held_line)
+assert held_match is not None, held_line
+held_name = held_match.group(1)
 
 # The chat at the end must read that exact temp ...
 chat_line = next(ln for ln in lines if ln.startswith('chat '))

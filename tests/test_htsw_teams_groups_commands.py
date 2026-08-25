@@ -116,14 +116,13 @@ assert raised, 'expected a ValueError for a permission in both allow and deny'
 
 
 # Tags are restricted to letters, digits and spaces; priority to 0-20.
-for kwargs in ({'tag': 'no-dashes'},):
-    raised = False
-    with Container():
-        try:
-            create_team('Bad', **kwargs)
-        except ValueError:
-            raised = True
-    assert raised, f'expected a ValueError for {kwargs}'
+raised = False
+with Container():
+    try:
+        create_team('Bad', tag='no-dashes')
+    except ValueError:
+        raised = True
+assert raised, "expected a ValueError for tag='no-dashes'"
 
 raised = False
 with Container():

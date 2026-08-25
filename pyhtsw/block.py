@@ -9,6 +9,7 @@ from .limits import ImportableKind, fix_action_limits
 from .utils.log import log
 
 if TYPE_CHECKING:
+    from .actions.item import Item
     from .container import Container
     from .execute.context import ExecutionContext
     from .expression.expression import Expression
@@ -131,13 +132,27 @@ class Block(BaseObject):
         if reordered is not None:
             self.expressions = reordered
 
+    def _overflow_icon(self, root: 'Block', counter: int) -> 'Item | None':
+        from .actions.item import normalize_item
+
+        root_function = getattr(root, 'function', None)
+        if root_function is None:
+            return None
+        icon = getattr(root_function.__htsw_importable__, 'icon', None)
+        if icon is None:
+            return None
+        resolved = normalize_item(icon)
+        return resolved.cloned(count=min(64, resolved.count + counter - 1))
+
     def fix_action_limits(self, container: 'Container', index: int) -> None:
         root = self._overflow_root_ref or self
         base_name = root.get_name()
-        next_counter = self._overflow_counter + 1
-        function = Function(
-            name=f'{base_name} {next_counter}',
-        )
+        counter = self._overflow_counter + 1
+        # A consumer may already own "Foo 2"; keep walking until free, and
+        # let the icon's stack follow the number that actually got used.
+        while container.has_importable('functions', f'{base_name} {counter}'):
+            counter += 1
+        function = Function(name=f'{base_name} {counter}')
         fixed, rest = fix_action_limits(
             self.expressions,
             nesting_possible=True,
@@ -155,10 +170,14 @@ class Block(BaseObject):
             expressions=rest,
         )
         new_block._overflow_root_ref = root
-        new_block._overflow_counter = next_counter
+        new_block._overflow_counter = counter
         new_block._reserved_temp_numbers = root._reserved_temp_numbers
         container.add_block(new_block, index=index + 1)
-        overflow_importable = FunctionImportable(new_block, name=function.name)
+        overflow_importable = FunctionImportable(
+            new_block,
+            name=function.name,
+            icon=self._overflow_icon(root, counter),
+        )
         root_function = getattr(root, 'function', None)
         if root_function is not None:
             overflow_importable.module = getattr(

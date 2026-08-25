@@ -114,6 +114,9 @@ class Container:
         self.allow_nested_expressions = allow_nested_expressions
         self.ignore_action_limits = ignore_action_limits
 
+    def has_importable(self, kind: str, name: str) -> bool:
+        return (kind, name) in self.importable_keys
+
     def register_importable(self, importable: 'Importable') -> None:
         key = (importable.kind, importable.identifier())
         if key in self.importable_keys:

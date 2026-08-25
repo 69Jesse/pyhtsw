@@ -19,7 +19,7 @@ class PlayerLevelPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.level%',
+            placeholder='%player.level%',
             constant_internal_type=InternalType.LONG,
         )
 

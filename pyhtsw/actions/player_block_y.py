@@ -19,7 +19,7 @@ class PlayerBlockYPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.block.y%',
+            placeholder='%player.block.y%',
             constant_internal_type=InternalType.LONG,
         )
 

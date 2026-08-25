@@ -19,7 +19,7 @@ class TeamColorPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.team.color%',
+            placeholder='%player.team.color%',
             constant_internal_type=InternalType.STRING,
         )
 

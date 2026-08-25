@@ -19,7 +19,7 @@ class GroupNamePlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.group.name%',
+            placeholder='%player.group.name%',
             constant_internal_type=InternalType.STRING,
         )
 

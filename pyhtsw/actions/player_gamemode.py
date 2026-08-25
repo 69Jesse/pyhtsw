@@ -19,7 +19,7 @@ class PlayerGamemodePlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.gamemode%',
+            placeholder='%player.gamemode%',
             constant_internal_type=InternalType.STRING,
         )
 

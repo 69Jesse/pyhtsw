@@ -19,7 +19,7 @@ class HousePlayersPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%house.players%',
+            placeholder='%house.players%',
             constant_internal_type=InternalType.LONG,
         )
 

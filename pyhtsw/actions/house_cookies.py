@@ -19,7 +19,7 @@ class HouseCookiesPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%house.cookies%',
+            placeholder='%house.cookies%',
             constant_internal_type=InternalType.LONG,
         )
 

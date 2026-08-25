@@ -19,7 +19,7 @@ class PlayerVersionPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.version%',
+            placeholder='%player.version%',
             constant_internal_type=InternalType.STRING,
         )
 

@@ -19,7 +19,7 @@ class TeamTagPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.team.tag%',
+            placeholder='%player.team.tag%',
             constant_internal_type=InternalType.STRING,
         )
 

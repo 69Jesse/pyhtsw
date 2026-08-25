@@ -19,7 +19,7 @@ class ServerShortNamePlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%server.shortname%',
+            placeholder='%server.shortname%',
             constant_internal_type=InternalType.STRING,
         )
 

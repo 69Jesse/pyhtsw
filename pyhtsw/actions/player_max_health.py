@@ -22,7 +22,7 @@ class PlayerMaxHealthPlaceholder(
     def __init__(self) -> None:
         super().__init__(
             assignment_lhs='maxHealth',
-            as_string='%player.maxhealth%',
+            placeholder='%player.maxhealth%',
             constant_internal_type=InternalType.DOUBLE,
         )
 

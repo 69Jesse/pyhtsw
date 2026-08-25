@@ -19,7 +19,7 @@ class PlayerPingPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.ping%',
+            placeholder='%player.ping%',
             constant_internal_type=InternalType.LONG,
         )
 

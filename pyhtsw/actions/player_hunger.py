@@ -20,7 +20,7 @@ class PlayerHungerPlaceholder(
     def __init__(self) -> None:
         super().__init__(
             assignment_lhs='hunger',
-            as_string='%player.hunger%',
+            placeholder='%player.hunger%',
             constant_internal_type=InternalType.LONG,
         )
 

@@ -37,7 +37,7 @@ class RandomDecimalPlaceholder(
         if self.exclusive_upper_bound <= self.lower_bound:
             raise ValueError('exclusive_upper_bound must be greater than lower_bound')
         super().__init__(
-            as_string=key,
+            placeholder=key,
             constant_internal_type=InternalType.DOUBLE,
         )
 

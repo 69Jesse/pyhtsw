@@ -19,7 +19,7 @@ class HouseVisitingRulesPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%house.visitingrules%',
+            placeholder='%house.visitingrules%',
             constant_internal_type=InternalType.STRING,
         )
 

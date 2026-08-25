@@ -21,7 +21,7 @@ class PlayerPositionPitchPlaceholder(
 ):
     def __init__(self) -> None:
         super().__init__(
-            as_string='%player.pos.pitch%',
+            placeholder='%player.pos.pitch%',
             constant_internal_type=InternalType.DOUBLE,
         )
 

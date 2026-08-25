@@ -36,7 +36,7 @@ class TeamPlayersPlaceholder(
             key = f'%player.team.players/{team.name}%'
         self.team = team
         super().__init__(
-            as_string=key,
+            placeholder=key,
             constant_internal_type=InternalType.LONG,
         )
 

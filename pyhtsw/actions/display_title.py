@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
 
+from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
 
@@ -42,6 +43,26 @@ class DisplayTitleExpression(Expression):
         return (
             f'title {self.inline_quoted(self.title)} {self.inline_quoted(self.subtitle)}'
             f' {self.inline(self.fadein)} {self.inline(self.stay)} {self.inline(self.fadeout)}'
+        )
+
+    def cloned(
+        self,
+        *,
+        title: Checkable | str | Missing = MISSING,
+        subtitle: Checkable | str | Missing = MISSING,
+        fadein: int | Missing = MISSING,
+        stay: int | Missing = MISSING,
+        fadeout: int | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'title': title,
+                'subtitle': subtitle,
+                'fadein': fadein,
+                'stay': stay,
+                'fadeout': fadeout,
+            },
         )
 
     def equals(self, other: object) -> bool:

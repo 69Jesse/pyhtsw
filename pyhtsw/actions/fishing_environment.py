@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from ..types import FISHING_ENVIRONMENTS
@@ -18,6 +20,20 @@ class FishingEnvironment(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'fishingEnv {self.inline_quoted(self.environment)}'
+
+    def cloned(
+        self,
+        *,
+        environment: FISHING_ENVIRONMENTS | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'environment': environment,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, FishingEnvironment):

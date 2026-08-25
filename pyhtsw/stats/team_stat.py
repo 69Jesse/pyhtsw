@@ -1,5 +1,7 @@
 import re
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..actions.team import Team
 from ..expression.housing_type import HousingType, housing_type_from_string
@@ -78,6 +80,26 @@ class TeamStat(
                 name = f'"{name}"'
             return f' {name}{value}'
         return value
+
+    def cloned(
+        self,
+        *,
+        name: str | Missing = MISSING,
+        team: Team | str | None | Missing = MISSING,
+        internal_type: InternalType | Missing = MISSING,
+        fallback_value: HousingType | None | Missing = MISSING,
+        auto_unset: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'name': name,
+                'team': team,
+                'internal_type': internal_type,
+                'fallback_value': fallback_value,
+                'auto_unset': auto_unset,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not super().equals_raw(other):

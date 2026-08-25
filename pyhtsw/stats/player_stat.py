@@ -1,7 +1,9 @@
 import re
-from typing import final
+from typing import Self, final
 
-from pyhtsw.expression.housing_type import housing_type_from_string
+from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.housing_type import HousingType, housing_type_from_string
+from pyhtsw.internal_type import InternalType
 
 from .stat import Stat
 
@@ -51,6 +53,24 @@ class PlayerStat(
 
     def is_execution_player_scoped(self) -> bool:
         return True
+
+    def cloned(
+        self,
+        *,
+        name: str | Missing = MISSING,
+        internal_type: InternalType | Missing = MISSING,
+        fallback_value: HousingType | None | Missing = MISSING,
+        auto_unset: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'name': name,
+                'internal_type': internal_type,
+                'fallback_value': fallback_value,
+                'auto_unset': auto_unset,
+            },
+        )
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<{self.name} {self.internal_type.name}>'

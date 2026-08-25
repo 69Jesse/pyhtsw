@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from .item import Item, item_action_reference, item_referenced_importables
@@ -22,6 +24,18 @@ class RemoveItemExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
+
+    def cloned(
+        self,
+        *,
+        item: Item | type[Item] | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'item': item,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, RemoveItemExpression):

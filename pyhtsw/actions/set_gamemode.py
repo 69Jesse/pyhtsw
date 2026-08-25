@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..types import ALL_GAMEMODES
@@ -18,6 +20,18 @@ class SetGamemodeExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'gamemode {self.inline(self.gamemode)}'
+
+    def cloned(
+        self,
+        *,
+        gamemode: ALL_GAMEMODES | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'gamemode': gamemode,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetGamemodeExpression):

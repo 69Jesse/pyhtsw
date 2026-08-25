@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.comparison_condition import ComparisonOperator
 from ..expression.condition.condition import Condition
@@ -39,6 +41,22 @@ class DamageAmountCondition(Condition):
         else:
             rhs = housing_type_as_rhs(self.amount)
         return f'damageAmount {self.operator.value} {rhs}'
+
+    def cloned(
+        self,
+        *,
+        operator: ComparisonOperator | Missing = MISSING,
+        amount: 'Checkable | HousingType | Missing' = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'operator': operator,
+                'amount': amount,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, DamageAmountCondition):

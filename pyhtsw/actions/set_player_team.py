@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from .team import Team
@@ -18,6 +20,18 @@ class SetPlayerTeamExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'setTeam {self.inline_quoted(self.team.name)}'
+
+    def cloned(
+        self,
+        *,
+        team: Team | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'team': team,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetPlayerTeamExpression):

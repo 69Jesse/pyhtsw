@@ -1,5 +1,7 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, NoReturn, Self
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ...expression.condition.condition import Condition
 from ...expression.condition.conditional_expression import ConditionalMode
@@ -39,6 +41,28 @@ class AssertExecutionExpression(ExecutionExpression):
         self.conditions = conditions
         self.mode = mode
         self.message = message
+
+    def cloned(
+        self,
+        *,
+        conditions: tuple[
+            Condition
+            | Callable[[], Condition | None]
+            | Callable[['ExecutionContext'], Condition | None],
+            ...,
+        ]
+        | Missing = MISSING,
+        mode: ConditionalMode | Missing = MISSING,
+        message: str | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'conditions': conditions,
+                'mode': mode,
+                'message': message,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, AssertExecutionExpression):

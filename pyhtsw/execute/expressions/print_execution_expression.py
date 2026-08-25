@@ -1,5 +1,7 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ...utils.callback import call_with_optional_arg
 from ...utils.log import log
@@ -30,6 +32,24 @@ class PrintExecutionExpression(ExecutionExpression):
     ) -> None:
         self.values = values
         self.cast = cast
+
+    def cloned(
+        self,
+        *,
+        values: tuple[
+            object | Callable[[], object] | Callable[['ExecutionContext'], object],
+            ...,
+        ]
+        | Missing = MISSING,
+        cast: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'values': values,
+                'cast': cast,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PrintExecutionExpression):

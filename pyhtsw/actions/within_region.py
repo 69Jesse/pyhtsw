@@ -1,4 +1,6 @@
-from typing import ClassVar, final
+from typing import ClassVar, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from .region import Region
@@ -24,6 +26,20 @@ class WithinRegion(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'inRegion {self.inline_quoted(self.name)}'
+
+    def cloned(
+        self,
+        *,
+        region: 'type[Region] | str | Missing' = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'region': region,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, WithinRegion):

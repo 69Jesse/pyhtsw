@@ -1,5 +1,9 @@
 from collections.abc import Generator
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.internal_type import InternalType
 
 from ..editable import Editable
 from .expression import Expression
@@ -15,6 +19,24 @@ class CompoundExpression(Expression, Editable):
         self.expressions = expressions
         self.result = result
         self.internal_type = result.internal_type
+
+    def cloned(
+        self,
+        *,
+        expressions: list[Expression] | Missing = MISSING,
+        result: Editable | Missing = MISSING,
+        internal_type: InternalType | Missing = MISSING,
+        fallback_value: HousingType | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'expressions': expressions,
+                'result': result,
+                'internal_type': internal_type,
+                'fallback_value': fallback_value,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, CompoundExpression):

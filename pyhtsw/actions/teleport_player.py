@@ -1,4 +1,6 @@
-from typing import cast, final
+from typing import Self, cast, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -34,6 +36,22 @@ class TeleportPlayerExpression(Expression):
             line += f' {self.inline_quoted("~ ~ ~")}'
         line += f' {self.inline(self.prevent_teleport_inside_block)}'
         return line
+
+    def cloned(
+        self,
+        *,
+        coordinates: str | None | Missing = MISSING,
+        location: ALL_LOCATIONS | Missing = MISSING,
+        prevent_teleport_inside_block: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'coordinates': coordinates,
+                'location': location,
+                'prevent_teleport_inside_block': prevent_teleport_inside_block,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, TeleportPlayerExpression):

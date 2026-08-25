@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from .function import Function
@@ -31,6 +33,20 @@ class TriggerFunctionExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return [('functions', self.function.name)]
+
+    def cloned(
+        self,
+        *,
+        function: Function | Missing = MISSING,
+        trigger_for_all_players: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'function': function,
+                'trigger_for_all_players': trigger_for_all_players,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, TriggerFunctionExpression):

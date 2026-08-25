@@ -1,4 +1,6 @@
-from typing import ClassVar, final
+from typing import ClassVar, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from .menu import Menu
@@ -30,6 +32,18 @@ class DisplayMenuExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return [('menus', self.name)]
+
+    def cloned(
+        self,
+        *,
+        menu: 'type[Menu] | str | Missing' = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'menu': menu,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, DisplayMenuExpression):

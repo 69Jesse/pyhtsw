@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -50,6 +52,30 @@ class DropItemExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
+
+    def cloned(
+        self,
+        *,
+        item: Item | type[Item] | Missing = MISSING,
+        location: str | Missing = MISSING,
+        coordinates: str | None | Missing = MISSING,
+        drop_naturally: bool | Missing = MISSING,
+        disable_item_merging: bool | Missing = MISSING,
+        prioritize_player: bool | Missing = MISSING,
+        fallback_to_inventory: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'item': item,
+                'location': location,
+                'coordinates': coordinates,
+                'drop_naturally': drop_naturally,
+                'disable_item_merging': disable_item_merging,
+                'prioritize_player': prioritize_player,
+                'fallback_to_inventory': fallback_to_inventory,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, DropItemExpression):

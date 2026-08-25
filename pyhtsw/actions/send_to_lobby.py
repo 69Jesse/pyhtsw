@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 
@@ -17,6 +19,18 @@ class SendToLobbyExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'lobby {self.inline_quoted(self.lobby)}'
+
+    def cloned(
+        self,
+        *,
+        lobby: str | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'lobby': lobby,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SendToLobbyExpression):

@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..checkable import Checkable
 from ..expression.expression import Expression
@@ -28,6 +30,22 @@ class ChangeVelocityExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'changeVelocity {self.inline(self.x)} {self.inline(self.y)} {self.inline(self.z)}'
+
+    def cloned(
+        self,
+        *,
+        x: Checkable | NumericHousingType | Missing = MISSING,
+        y: Checkable | NumericHousingType | Missing = MISSING,
+        z: Checkable | NumericHousingType | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'x': x,
+                'y': y,
+                'z': z,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ChangeVelocityExpression):

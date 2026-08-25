@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..types import _INVENTORY_SLOTS_PRETTY_NAME_MAPPING, INVENTORY_SLOTS
@@ -45,6 +47,24 @@ class GiveItemExpression(Expression):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
+
+    def cloned(
+        self,
+        *,
+        item: Item | type[Item] | Missing = MISSING,
+        allow_multiple: bool | Missing = MISSING,
+        inventory_slot: str | int | Missing = MISSING,
+        replace_existing_item: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'item': item,
+                'allow_multiple': allow_multiple,
+                'inventory_slot': inventory_slot,
+                'replace_existing_item': replace_existing_item,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, GiveItemExpression):

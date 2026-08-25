@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 
@@ -17,6 +19,18 @@ class GiveExperienceLevelsExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'xpLevel {self.inline(self.levels)}'
+
+    def cloned(
+        self,
+        *,
+        levels: int | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'levels': levels,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, GiveExperienceLevelsExpression):

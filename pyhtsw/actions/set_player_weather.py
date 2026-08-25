@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..types import PLAYER_WEATHERS
@@ -18,6 +20,18 @@ class SetPlayerWeatherExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'playerWeather {self.inline_quoted(self.weather)}'
+
+    def cloned(
+        self,
+        *,
+        weather: PLAYER_WEATHERS | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'weather': weather,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetPlayerWeatherExpression):

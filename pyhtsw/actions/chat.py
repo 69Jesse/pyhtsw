@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
 
+from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
 
@@ -24,6 +25,18 @@ class ChatExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'chat {self.inline_quoted(self.line)}'
+
+    def cloned(
+        self,
+        *,
+        line: str | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'line': line,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ChatExpression):

@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_DAMAGE_CAUSES
@@ -18,6 +20,20 @@ class DamageCause(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'damageCause {self.inline_quoted(self.damage_cause)}'
+
+    def cloned(
+        self,
+        *,
+        damage_cause: ALL_DAMAGE_CAUSES | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'damage_cause': damage_cause,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, DamageCause):

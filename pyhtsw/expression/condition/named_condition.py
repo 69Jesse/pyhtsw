@@ -1,4 +1,6 @@
-from typing import ClassVar
+from typing import ClassVar, Self
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from .condition import Condition
 
@@ -19,6 +21,20 @@ class NamedCondition(Condition):
 
     def into_htsl_raw(self) -> str:
         return self.name
+
+    def cloned(
+        self,
+        *,
+        name: str | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'name': name,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, NamedCondition):

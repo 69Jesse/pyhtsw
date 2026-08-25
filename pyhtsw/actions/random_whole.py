@@ -1,6 +1,9 @@
 import random
 import re
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.housing_type import HousingType
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -39,6 +42,24 @@ class RandomWholePlaceholder(
     def get_backend_value(self) -> BackendType:
         return JavaLong(
             random.randint(self.lower_bound, self.exclusive_upper_bound - 1),
+        )
+
+    def cloned(
+        self,
+        *,
+        lower_bound: int | Missing = MISSING,
+        exclusive_upper_bound: int | Missing = MISSING,
+        internal_type: InternalType | Missing = MISSING,
+        fallback_value: HousingType | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'lower_bound': lower_bound,
+                'exclusive_upper_bound': exclusive_upper_bound,
+                'internal_type': internal_type,
+                'fallback_value': fallback_value,
+            },
         )
 
 

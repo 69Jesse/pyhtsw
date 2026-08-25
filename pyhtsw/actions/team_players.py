@@ -1,5 +1,8 @@
 import re
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.housing_type import HousingType
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -39,6 +42,22 @@ class TeamPlayersPlaceholder(
 
     def get_backend_value(self) -> BackendType:
         return JavaLong(0)
+
+    def cloned(
+        self,
+        *,
+        team: Team | str | None | Missing = MISSING,
+        internal_type: InternalType | Missing = MISSING,
+        fallback_value: HousingType | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'team': team,
+                'internal_type': internal_type,
+                'fallback_value': fallback_value,
+            },
+        )
 
 
 def TeamPlayers(

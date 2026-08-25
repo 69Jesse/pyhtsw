@@ -1,4 +1,6 @@
-from typing import ClassVar, final
+from typing import ClassVar, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 
@@ -28,6 +30,18 @@ class SetPlayerTimeExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'playerTime {self.inline(self.time)}'
+
+    def cloned(
+        self,
+        *,
+        time: int | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'time': time,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, SetPlayerTimeExpression):

@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..types import ALL_ENCHANTMENTS
@@ -21,6 +23,20 @@ class EnchantHeldItemExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'enchant {self.inline_quoted(self.enchantment_name)} {self.inline(self.level)}'
+
+    def cloned(
+        self,
+        *,
+        enchantment_name: str | Missing = MISSING,
+        level: int | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'enchantment_name': enchantment_name,
+                'level': level,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, EnchantHeldItemExpression):

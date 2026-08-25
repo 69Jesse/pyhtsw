@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from ..types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
@@ -37,6 +39,26 @@ class IsItem(Condition):
 
     def referenced_importables(self) -> list[tuple[str, str]]:
         return item_referenced_importables(self.item)
+
+    def cloned(
+        self,
+        *,
+        item: Item | type[Item] | Missing = MISSING,
+        what_to_check: ITEM_CHECK_WHAT | Missing = MISSING,
+        where_to_check: ITEM_CHECK_WHERE | Missing = MISSING,
+        required_amount: ITEM_REQUIRED_AMOUNT | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'item': item,
+                'what_to_check': what_to_check,
+                'where_to_check': where_to_check,
+                'required_amount': required_amount,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, IsItem):

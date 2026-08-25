@@ -1,6 +1,8 @@
 from enum import Enum
 from functools import cached_property
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ...expression.housing_type import HousingType
 from ...internal_type import InternalType
@@ -97,6 +99,24 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         self.right = resolve(self.right)  # type: ignore
         BinaryExpression.fix_type_compatibility(self)
         super().finalize(container)
+
+    def cloned(
+        self,
+        *,
+        left: LeftT | Missing = MISSING,
+        right: RightT | Missing = MISSING,
+        operator: ComparisonOperator | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'left': left,
+                'right': right,
+                'operator': operator,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         from ...checkable import Checkable

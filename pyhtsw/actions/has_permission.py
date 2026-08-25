@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_PERMISSIONS
@@ -18,6 +20,20 @@ class HasPermission(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'hasPermission {self.inline_quoted(self.permission)}'
+
+    def cloned(
+        self,
+        *,
+        permission: ALL_PERMISSIONS | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'permission': permission,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, HasPermission):

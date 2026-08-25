@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, cast, final
+from typing import TYPE_CHECKING, Self, cast, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -49,6 +51,28 @@ class PlaySoundExpression(Expression):
         if self.location == 'custom_coordinates' and self.coordinates is not None:
             line += f' {self.inline_quoted(self.coordinates)}'
         return line
+
+    def cloned(
+        self,
+        *,
+        sound: ALL_SOUNDS | Missing = MISSING,
+        volume: float | Missing = MISSING,
+        pitch: float | Missing = MISSING,
+        coordinates: str | None | Missing = MISSING,
+        location: ALL_LOCATIONS | Missing = MISSING,
+        check_valid: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'sound': sound,
+                'volume': volume,
+                'pitch': pitch,
+                'coordinates': coordinates,
+                'location': location,
+                'check_valid': check_valid,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PlaySoundExpression):

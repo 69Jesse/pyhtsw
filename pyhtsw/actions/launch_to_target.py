@@ -1,4 +1,6 @@
-from typing import cast, final
+from typing import Self, cast, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..checkable import Checkable
 from ..expression.expression import Expression
@@ -35,6 +37,22 @@ class LaunchToTargetExpression(Expression):
             line += f' {self.inline_quoted("~ ~ ~")}'
         line += f' {self.inline(self.strength)}'
         return line
+
+    def cloned(
+        self,
+        *,
+        coordinates: str | None | Missing = MISSING,
+        location: ALL_LOCATIONS | Missing = MISSING,
+        strength: Checkable | int | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'coordinates': coordinates,
+                'location': location,
+                'strength': strength,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, LaunchToTargetExpression):

@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from .group import Group
@@ -20,6 +22,20 @@ class ChangePlayerGroupExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'changePlayerGroup {self.inline_quoted(self.group.name)} {self.inline(self.demotion_protection)}'
+
+    def cloned(
+        self,
+        *,
+        group: Group | Missing = MISSING,
+        demotion_protection: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'group': group,
+                'demotion_protection': demotion_protection,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ChangePlayerGroupExpression):

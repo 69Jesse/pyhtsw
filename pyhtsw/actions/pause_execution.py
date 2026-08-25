@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 
@@ -21,6 +23,18 @@ class PauseExecutionExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'pause {self.inline(self.ticks)}'
+
+    def cloned(
+        self,
+        *,
+        ticks: int | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'ticks': ticks,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, PauseExecutionExpression):

@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_POTION_EFFECTS
@@ -18,6 +20,20 @@ class HasPotionEffect(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'hasPotion {self.inline_quoted(self.effect)}'
+
+    def cloned(
+        self,
+        *,
+        effect: ALL_POTION_EFFECTS | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'effect': effect,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, HasPotionEffect):

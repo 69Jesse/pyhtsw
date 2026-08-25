@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from .expression import Expression
 
@@ -13,6 +15,18 @@ class UnsetExpression(Expression):
 
     def __init__(self, target: 'Stat') -> None:
         self.target = target
+
+    def cloned(
+        self,
+        *,
+        target: 'Stat | Missing' = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'target': target,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, UnsetExpression):

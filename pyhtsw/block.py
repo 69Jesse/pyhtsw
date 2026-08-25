@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar, final
+from typing import TYPE_CHECKING, ClassVar, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from .actions.function import Function
 from .base_object import BaseObject
@@ -234,6 +236,22 @@ class Block(BaseObject):
 
 @final
 class GlobalBlock(Block):
+    def cloned(
+        self,
+        *,
+        expressions: list['Expression'] | None | Missing = MISSING,
+        callback: Callable[[], None] | None | Missing = MISSING,
+        callback_ran: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'expressions': expressions,
+                'callback': callback,
+                'callback_ran': callback_ran,
+            },
+        )
+
     def equals_raw(self, other: object) -> bool:
         return isinstance(other, GlobalBlock)
 
@@ -263,6 +281,24 @@ class FunctionBlock(Block):
         assert self.function.block is None
         self.function.block = self
 
+    def cloned(
+        self,
+        *,
+        function: Function | Missing = MISSING,
+        expressions: list['Expression'] | None | Missing = MISSING,
+        callback: Callable[[], None] | None | Missing = MISSING,
+        callback_ran: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'function': function,
+                'expressions': expressions,
+                'callback': callback,
+                'callback_ran': callback_ran,
+            },
+        )
+
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, FunctionBlock):
             return False
@@ -290,6 +326,26 @@ class NamedBlock(Block):
         super().__init__(expressions=expressions, callback=callback)
         self._name = name
         self.importable_kind = importable_kind
+
+    def cloned(
+        self,
+        *,
+        name: str | Missing = MISSING,
+        expressions: list['Expression'] | None | Missing = MISSING,
+        callback: Callable[[], None] | None | Missing = MISSING,
+        importable_kind: ImportableKind | Missing = MISSING,
+        callback_ran: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'name': name,
+                'expressions': expressions,
+                'callback': callback,
+                'importable_kind': importable_kind,
+                'callback_ran': callback_ran,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         return isinstance(other, NamedBlock) and other._name == self._name

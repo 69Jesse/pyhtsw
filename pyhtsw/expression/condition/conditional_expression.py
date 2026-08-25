@@ -1,6 +1,8 @@
 from collections.abc import Callable, Generator
 from enum import Enum
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ...config import INDENT
 from ...container import Container
@@ -56,6 +58,24 @@ class ConditionalExpression(Expression):
         result += '\n}'
 
         return result
+
+    def cloned(
+        self,
+        *,
+        conditions: list['Condition'] | Missing = MISSING,
+        mode: ConditionalMode | Missing = MISSING,
+        if_expressions: list[Expression] | None | Missing = MISSING,
+        else_expressions: list[Expression] | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'conditions': conditions,
+                'mode': mode,
+                'if_expressions': if_expressions,
+                'else_expressions': else_expressions,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ConditionalExpression):

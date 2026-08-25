@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.expression import Expression
 from .layout import Layout
@@ -18,6 +20,18 @@ class ApplyInventoryLayoutExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'applyLayout {self.inline_quoted(self.layout.name)}'
+
+    def cloned(
+        self,
+        *,
+        layout: Layout | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'layout': layout,
+            },
+        )
 
     def equals(self, other: object) -> bool:
         if not isinstance(other, ApplyInventoryLayoutExpression):

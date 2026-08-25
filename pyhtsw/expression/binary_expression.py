@@ -1,9 +1,11 @@
 from collections.abc import Generator
 from enum import Enum
 from functools import cached_property
-from typing import Any, NoReturn, final
+from typing import Any, NoReturn, Self, final
 
 import numpy as np
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..actions.no_optimization import optimization_enabled
 from ..actions.no_type_casting import no_type_casting
@@ -1006,6 +1008,28 @@ class BinaryExpression[
             return line
 
         return '\n'.join(map(into_line, self.into_executable_expressions()))
+
+    def cloned(
+        self,
+        *,
+        left: LeftT | Missing = MISSING,
+        right: RightT | Missing = MISSING,
+        operator: BinaryOperator | Missing = MISSING,
+        is_intentional_self_assignment: bool | Missing = MISSING,
+        internal_type: InternalType | Missing = MISSING,
+        fallback_value: HousingType | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'left': left,
+                'right': right,
+                'operator': operator,
+                'is_intentional_self_assignment': is_intentional_self_assignment,
+                'internal_type': internal_type,
+                'fallback_value': fallback_value,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, BinaryExpression):

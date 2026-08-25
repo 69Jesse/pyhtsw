@@ -1,4 +1,6 @@
-from typing import final
+from typing import Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.condition import Condition
 from .group import Group
@@ -21,6 +23,22 @@ class RequiredGroup(Condition):
 
     def into_htsl_raw(self) -> str:
         return f'hasGroup {self.inline_quoted(self.group.name)} {self.inline(self.include_higher_groups)}'
+
+    def cloned(
+        self,
+        *,
+        group: Group | str | Missing = MISSING,
+        include_higher_groups: bool | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'group': group,
+                'include_higher_groups': include_higher_groups,
+                'inverted': inverted,
+            },
+        )
 
     def equals_raw(self, other: object) -> bool:
         if not isinstance(other, RequiredGroup):

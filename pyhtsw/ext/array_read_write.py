@@ -3,7 +3,7 @@ from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
 from ..actions.conditional.statements import Else, IfAll, IfAny
-from ..editable import Checkable, Editable, HousingType
+from ..editable import Checkable, Editable, HousingType, NumericHousingType
 from ..internal_type import InternalType
 from ..stats.global_stat import GlobalStat
 from ..stats.player_stat import PlayerStat
@@ -415,7 +415,7 @@ def _emit_fast_write(
     pattern: list[ColumnInfo],
     items: Sequence[Sequence[Editable]],
     index: Editable,
-    input: Sequence[Checkable | HousingType],
+    input: Sequence[Checkable | NumericHousingType],
     chunk: int,
 ) -> None:
     from ..actions.preserved import preserved
@@ -823,13 +823,14 @@ def array_write(
         return
 
     fast = _fast_write_plan(items=items, n=n, width=width)
-    if fast is not None:
+    numeric_input = [value for value in input if not isinstance(value, str)]
+    if fast is not None and len(numeric_input) == len(input):
         pattern, chunk = fast
         _emit_fast_write(
             pattern=pattern,
             items=items,
             index=index,
-            input=input,
+            input=numeric_input,
             chunk=chunk,
         )
         return
@@ -907,7 +908,7 @@ def array_write(
                 assign(item, temp_stats[j])
 
 
-class StatArray(Sequence[MaybeSequence[Editable]]):
+class StatArray[T: Editable](Sequence[MaybeSequence[T]]):
     """A fixed array of stats addressed by a runtime index.
 
     The object form of `array_read` / `array_write`: build it once from the
@@ -918,8 +919,8 @@ class StatArray(Sequence[MaybeSequence[Editable]]):
     into anything that takes a holder list (e.g. `Queue(holders=arr, ...)`).
     """
 
-    def __init__(self, items: Sequence[MaybeSequence[Editable]]) -> None:
-        self.items = list(items)
+    def __init__(self, items: Sequence[MaybeSequence[T]]) -> None:
+        self.items: list[MaybeSequence[T]] = list(items)
         if not self.items:
             raise ValueError('StatArray needs at least one item')
         self.width = assert_same_widths(

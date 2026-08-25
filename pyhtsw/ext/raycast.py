@@ -6,6 +6,7 @@ from ..actions.conditional.statements import IfAll, IfAny
 from ..actions.create_function import create_function
 from ..actions.exit_function import exit_function
 from ..actions.function import Function
+from ..actions.item import Item
 from ..actions.player_position_x import PlayerPositionX
 from ..actions.player_position_y import PlayerPositionY
 from ..actions.player_position_z import PlayerPositionZ
@@ -73,6 +74,7 @@ def create_raycast(
     name: str,
     *,
     stat_prefix: str = 'rc/',
+    icon: Item | type[Item] | None = None,
     on_hit_target: HitCallback | None = None,
     on_hit_sender: HitCallback | None = None,
     conditions: ConditionsArg | None = None,
@@ -96,6 +98,8 @@ def create_raycast(
     ----------
     name:
         Name of the single `Function` that gets created.
+    icon:
+        Item shown next to that `Function` in Housing.
     on_hit_target:
         Inlined for every player the ray hits, in *that player's* context.
         Receives the `RaycastResult` (or takes no argument). May contain its
@@ -144,7 +148,7 @@ def create_raycast(
     length = make_global('length', double=True)
     headshot = make_global('headshot', double=False)
 
-    @create_function(name)
+    @create_function(name, icon=icon)
     def raycast_function() -> None:
         with IfAll(active == 0):
             active.value = 1

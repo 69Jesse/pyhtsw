@@ -9,6 +9,7 @@ from pyhtsw import (
     ExecutionPlayer,
     GlobalStat,
     IfAll,
+    Item,
     PlayerStat,
     disable_global_export,
 )
@@ -339,3 +340,12 @@ with ExecutionContext(players=['caster']) as ctx:
     after = len(ctx.blocks)
 
 assert after - before == 1, (before, after)
+
+
+# === icon reaches the Function it creates. ===
+with ExecutionContext(players=['caster']):
+    rc = create_raycast('IconRay', icon=Item('bow'))
+
+assert rc.function.__htsw_importable__.icon == Item('bow'), (
+    rc.function.__htsw_importable__.icon
+)

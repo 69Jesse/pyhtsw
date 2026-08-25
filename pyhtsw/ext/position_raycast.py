@@ -6,6 +6,7 @@ from ..actions.conditional.statements import IfAll
 from ..actions.create_function import create_function
 from ..actions.exit_function import exit_function
 from ..actions.function import Function
+from ..actions.item import Item
 from ..actions.player_position_x import PlayerPositionX
 from ..actions.player_position_y import PlayerPositionY
 from ..actions.player_position_z import PlayerPositionZ
@@ -197,6 +198,7 @@ def create_position_raycast(
     *,
     shape: Shape | None = None,
     stat_prefix: str = 'pr/',
+    icon: Item | type[Item] | None = None,
     origin: Sequence[Coord] | None = None,
     direction: Sequence[Coord] | None = None,
     eye_height: float = 1.62,
@@ -229,6 +231,8 @@ def create_position_raycast(
         Default hitbox for positions that do not carry one. `Block()` treats a
         position as the block at those coordinates; `Box(...)` centres a box on
         it; `Sphere(...)` uses a ball.
+    icon:
+        Item shown next to the created `Function` in Housing.
     origin / direction:
         `(x, y, z)` triples. Default to the caster's eyes (`eye_height` above
         their feet) and their look vector, which makes the helper serve a
@@ -319,7 +323,7 @@ def create_position_raycast(
         else None
     )
 
-    @create_function(name)
+    @create_function(name, icon=icon)
     def cast_function() -> None:
         if direction is None:
             approximate_look_vector(

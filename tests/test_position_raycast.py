@@ -8,6 +8,7 @@ from pyhtsw import (
     Container,
     ExecutionContext,
     IfAll,
+    Item,
     PlayerStat,
     chat,
     disable_global_export,
@@ -314,3 +315,12 @@ with Container() as container:
         on_hit=lambda result: chat(f'&aHit block {result.index} at {result.distance}'),
     )
 assert 'pr/index' in container.into_htsl()
+
+
+# === icon reaches the Function it creates. ===
+with Container():
+    ray = create_position_raycast('IconCast', [(0, 1, 5)], icon=Item('bow'))
+
+assert ray.function.__htsw_importable__.icon == Item('bow'), (
+    ray.function.__htsw_importable__.icon
+)

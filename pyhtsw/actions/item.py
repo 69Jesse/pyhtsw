@@ -5,6 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict, cast, get_args
 
+from ..clone import MISSING, Missing
 from ..config import HERE
 from ..nbt import NBT, NBTByte, NBTCompound, NBTInt, NBTList, NBTShort, NBTString
 from ..types import (
@@ -67,12 +68,6 @@ HIDE_FLAGS: dict[str, int] = {
 }
 HIDE_FLAGS['hide_all_flags'] = max(HIDE_FLAGS.values()) * 2 - 1
 
-
-class _MissingType:
-    __slots__ = ()
-
-
-MISSING = _MissingType()
 
 _FIELD_DEFAULTS: dict[str, Any] = {
     'name': None,
@@ -175,23 +170,23 @@ class Item:
 
     def __init__(
         self,
-        key: ALL_ITEM_KEYS | _MissingType = MISSING,
+        key: ALL_ITEM_KEYS | Missing = MISSING,
         *,
-        name: str | None | _MissingType = MISSING,
-        lore: str | None | _MissingType = MISSING,
-        count: int | _MissingType = MISSING,
-        enchantments: list[Enchantment] | None | _MissingType = MISSING,
-        unbreakable: bool | _MissingType = MISSING,
-        damage: int | _MissingType = MISSING,
-        color: ColorType | _MissingType = MISSING,
-        skull_data: NBTCompound | None | _MissingType = MISSING,
-        is_cookie_item: bool | _MissingType = MISSING,
-        hide_all_flags: bool | _MissingType = MISSING,
-        hide_enchantments_flag: bool | _MissingType = MISSING,
-        hide_modifiers_flag: bool | _MissingType = MISSING,
-        hide_unbreakable_flag: bool | _MissingType = MISSING,
-        hide_additional_flag: bool | _MissingType = MISSING,
-        hide_dye_flag: bool | _MissingType = MISSING,
+        name: str | None | Missing = MISSING,
+        lore: str | None | Missing = MISSING,
+        count: int | Missing = MISSING,
+        enchantments: list[Enchantment] | None | Missing = MISSING,
+        unbreakable: bool | Missing = MISSING,
+        damage: int | Missing = MISSING,
+        color: ColorType | Missing = MISSING,
+        skull_data: NBTCompound | None | Missing = MISSING,
+        is_cookie_item: bool | Missing = MISSING,
+        hide_all_flags: bool | Missing = MISSING,
+        hide_enchantments_flag: bool | Missing = MISSING,
+        hide_modifiers_flag: bool | Missing = MISSING,
+        hide_unbreakable_flag: bool | Missing = MISSING,
+        hide_additional_flag: bool | Missing = MISSING,
+        hide_dye_flag: bool | Missing = MISSING,
         on_click: 'ItemHandler | None' = None,
         on_left_click: 'ItemHandler | None' = None,
         on_right_click: 'ItemHandler | None' = None,
@@ -221,10 +216,8 @@ class Item:
             'hide_dye_flag': hide_dye_flag,
         }
 
-        resolved_key = (
-            key if not isinstance(key, _MissingType) else defaults.get('key', MISSING)
-        )
-        if isinstance(resolved_key, _MissingType):
+        resolved_key = key if key is not MISSING else defaults.get('key', MISSING)
+        if resolved_key is MISSING:
             raise TypeError('Item requires a "key".')
 
         faulty_tuple_key: str | None = None
@@ -245,7 +238,7 @@ class Item:
         self.key = cast(ALL_ITEM_KEY_STRINGS, resolved_key)
         for field, hard_default in _FIELD_DEFAULTS.items():
             value = explicit[field]
-            if isinstance(value, _MissingType):
+            if value is MISSING:
                 value = defaults.get(field, hard_default)
             setattr(self, field, value)
 
@@ -281,22 +274,22 @@ class Item:
 
     def __init_subclass__(
         cls,
-        key: ALL_ITEM_KEYS | _MissingType = MISSING,
-        name: str | None | _MissingType = MISSING,
-        lore: str | None | _MissingType = MISSING,
-        count: int | _MissingType = MISSING,
-        enchantments: list[Enchantment] | None | _MissingType = MISSING,
-        unbreakable: bool | _MissingType = MISSING,
-        damage: int | _MissingType = MISSING,
-        color: ColorType | _MissingType = MISSING,
-        skull_data: NBTCompound | None | _MissingType = MISSING,
-        is_cookie_item: bool | _MissingType = MISSING,
-        hide_all_flags: bool | _MissingType = MISSING,
-        hide_enchantments_flag: bool | _MissingType = MISSING,
-        hide_modifiers_flag: bool | _MissingType = MISSING,
-        hide_unbreakable_flag: bool | _MissingType = MISSING,
-        hide_additional_flag: bool | _MissingType = MISSING,
-        hide_dye_flag: bool | _MissingType = MISSING,
+        key: ALL_ITEM_KEYS | Missing = MISSING,
+        name: str | None | Missing = MISSING,
+        lore: str | None | Missing = MISSING,
+        count: int | Missing = MISSING,
+        enchantments: list[Enchantment] | None | Missing = MISSING,
+        unbreakable: bool | Missing = MISSING,
+        damage: int | Missing = MISSING,
+        color: ColorType | Missing = MISSING,
+        skull_data: NBTCompound | None | Missing = MISSING,
+        is_cookie_item: bool | Missing = MISSING,
+        hide_all_flags: bool | Missing = MISSING,
+        hide_enchantments_flag: bool | Missing = MISSING,
+        hide_modifiers_flag: bool | Missing = MISSING,
+        hide_unbreakable_flag: bool | Missing = MISSING,
+        hide_additional_flag: bool | Missing = MISSING,
+        hide_dye_flag: bool | Missing = MISSING,
         on_click: ItemHandler | None = None,
         on_left_click: ItemHandler | None = None,
         on_right_click: ItemHandler | None = None,
@@ -322,7 +315,7 @@ class Item:
         }
         defaults = dict(cls.__htsw_item_defaults__)
         defaults.update(
-            {k: v for k, v in passed.items() if not isinstance(v, _MissingType)},
+            {k: v for k, v in passed.items() if v is not MISSING},
         )
         cls.__htsw_item_defaults__ = defaults
         cls.__htsw_name__ = cls.__name__
@@ -576,23 +569,23 @@ class Item:
 
     def cloned(
         self,
-        key: ALL_ITEM_KEYS | _MissingType = MISSING,
+        key: ALL_ITEM_KEYS | Missing = MISSING,
         *,
-        name: str | None | _MissingType = MISSING,
-        lore: str | None | _MissingType = MISSING,
-        count: int | _MissingType = MISSING,
-        enchantments: list[Enchantment] | None | _MissingType = MISSING,
-        unbreakable: bool | _MissingType = MISSING,
-        damage: int | _MissingType = MISSING,
-        color: ColorType | _MissingType = MISSING,
-        skull_data: NBTCompound | None | _MissingType = MISSING,
-        is_cookie_item: bool | _MissingType = MISSING,
-        hide_all_flags: bool | _MissingType = MISSING,
-        hide_enchantments_flag: bool | _MissingType = MISSING,
-        hide_modifiers_flag: bool | _MissingType = MISSING,
-        hide_unbreakable_flag: bool | _MissingType = MISSING,
-        hide_additional_flag: bool | _MissingType = MISSING,
-        hide_dye_flag: bool | _MissingType = MISSING,
+        name: str | None | Missing = MISSING,
+        lore: str | None | Missing = MISSING,
+        count: int | Missing = MISSING,
+        enchantments: list[Enchantment] | None | Missing = MISSING,
+        unbreakable: bool | Missing = MISSING,
+        damage: int | Missing = MISSING,
+        color: ColorType | Missing = MISSING,
+        skull_data: NBTCompound | None | Missing = MISSING,
+        is_cookie_item: bool | Missing = MISSING,
+        hide_all_flags: bool | Missing = MISSING,
+        hide_enchantments_flag: bool | Missing = MISSING,
+        hide_modifiers_flag: bool | Missing = MISSING,
+        hide_unbreakable_flag: bool | Missing = MISSING,
+        hide_additional_flag: bool | Missing = MISSING,
+        hide_dye_flag: bool | Missing = MISSING,
     ) -> 'Item':
         """Returns a copy of the item, overriding only the given values."""
         overrides: dict[str, Any] = {
@@ -613,11 +606,11 @@ class Item:
             'hide_dye_flag': hide_dye_flag,
         }
         resolved = {
-            field: getattr(self, field) if isinstance(value, _MissingType) else value
+            field: getattr(self, field) if value is MISSING else value
             for field, value in overrides.items()
         }
         return Item(
-            self.key if isinstance(key, _MissingType) else key,
+            self.key if key is MISSING else key,
             importable=self._promotable,
             **resolved,
         )

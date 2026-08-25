@@ -374,6 +374,8 @@ from .actions.trigger_function import (
 )
 from .actions.within_region import WithinRegion as WithinRegion
 from .checkable import Checkable as Checkable
+from .clone import MISSING as MISSING
+from .clone import Missing as Missing
 from .config import cleanup_stale_files as cleanup_stale_files
 from .config import disable_global_export as disable_global_export
 from .config import display_output as display_output

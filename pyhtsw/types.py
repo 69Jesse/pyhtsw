@@ -514,6 +514,14 @@ ALL_DEFAULT_GAMEMODES = Literal[
     'CREATIVE',
 ]
 
+# The tiers of Hypixel's own Housing Menu item. Which one a player is handed
+# depends on what they are allowed to do in the house.
+ALL_HOUSING_MENU_TIERS = Literal[
+    'GUEST',
+    'TRUSTED_BUILDER',
+    'OWNER',
+]
+
 ALL_COMMAND_MODES = Literal[
     'Self',
     'Targeted',

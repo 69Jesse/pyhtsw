@@ -82,12 +82,52 @@ Menu slots and NPC equipment are unaffected: htsw's schema types those fields as
 the Project view, and they share the file with any action that uses the same
 item.
 
+## Copies
+
+`item.cloned(...)` overrides only what you name and keeps the rest, click
+handlers included — a stack of three of an ability item is still that ability
+item. Pass `on_click=None` to make a copy inert, which is what a menu icon of a
+purchasable item wants: clicking the icon buys one, it does not use one.
+
+```python
+WAND = Item('blaze_rod', name='&dWand', on_right_click=cast_spell)
+
+WAND.cloned(count=3)                 # three wands, still castable
+WAND.cloned(lore=price, on_click=None)  # the shop's picture of a wand
+```
+
+A copy that comes out byte-identical to an item already declared is not a
+second item: it shares the original's name. Otherwise the copy is named after
+its stack size, the same way `Item(key, count=n)` always has been.
+
+## The Housing Menu item
+
+Hypixel's own menu item comes in three tiers, and `Item.housing_menu()` builds
+whichever one you ask for — the owner's nether star by default, since that is
+almost always the one you want. Handing one out is how a player gets the menu
+without the permission that normally grants it.
+
+```python
+Item.housing_menu()                     # OWNER, a nether star
+Item.housing_menu('TRUSTED_BUILDER')    # a ghast tear
+Item.housing_menu('GUEST')              # a dark oak door
+```
+
+`housing_menu_tier='OWNER'` is also a plain `Item` keyword, if you want the
+`ExtraAttributes.HOUSING_MENU` tag on something of your own.
+
 ## SNBT
 
 ```python
 print(Item(key='apple').into_snbt())          # indent=4 (default)
 print(Item(key='apple').into_snbt(indent=None))  # compact
 ```
+
+`hide_flags=` sets the `HideFlags` mask directly, overriding the
+`hide_*_flag` booleans. It exists for items whose exact bytes are dictated by
+someone else — Hypixel writes `255` on the Housing Menu item, a bit beyond the
+seven flags `hide_all_flags` knows about — and reading such an item back with
+`Item.from_snbt` keeps the mask verbatim so it round-trips.
 
 `Item.into_snbt(indent=4)` produces indented SNBT; pass `indent=None` for a
 compact one-line form.

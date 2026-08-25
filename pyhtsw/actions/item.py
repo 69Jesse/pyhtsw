@@ -10,6 +10,7 @@ from ..config import HERE
 from ..nbt import NBT, NBTByte, NBTCompound, NBTInt, NBTList, NBTShort, NBTString
 from ..types import (
     ALL_ENCHANTMENTS,
+    ALL_HOUSING_MENU_TIERS,
     ALL_ITEM_KEY_STRINGS,
     ALL_ITEM_KEYS,
     ENCHANTMENT_TO_ID,
@@ -79,6 +80,8 @@ _FIELD_DEFAULTS: dict[str, Any] = {
     'color': None,
     'skull_data': None,
     'is_cookie_item': False,
+    'housing_menu_tier': None,
+    'hide_flags': None,
     'hide_all_flags': False,
     'hide_enchantments_flag': False,
     'hide_modifiers_flag': False,
@@ -161,6 +164,8 @@ class Item:
     color: ColorType
     skull_data: NBTCompound | None
     is_cookie_item: bool
+    housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None'
+    hide_flags: int | None
     hide_all_flags: bool
     hide_enchantments_flag: bool
     hide_modifiers_flag: bool
@@ -181,6 +186,8 @@ class Item:
         color: ColorType | Missing = MISSING,
         skull_data: NBTCompound | None | Missing = MISSING,
         is_cookie_item: bool | Missing = MISSING,
+        housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None | Missing' = MISSING,
+        hide_flags: int | None | Missing = MISSING,
         hide_all_flags: bool | Missing = MISSING,
         hide_enchantments_flag: bool | Missing = MISSING,
         hide_modifiers_flag: bool | Missing = MISSING,
@@ -208,6 +215,8 @@ class Item:
             'color': color,
             'skull_data': skull_data,
             'is_cookie_item': is_cookie_item,
+            'housing_menu_tier': housing_menu_tier,
+            'hide_flags': hide_flags,
             'hide_all_flags': hide_all_flags,
             'hide_enchantments_flag': hide_enchantments_flag,
             'hide_modifiers_flag': hide_modifiers_flag,
@@ -253,6 +262,8 @@ class Item:
             on_left_click,
             on_right_click,
         )
+        self._left_click_handler = left_fn
+        self._right_click_handler = right_fn
         self._importable_name: str | None = None
         if left_fn is not None or right_fn is not None or importable_name is not None:
             resolved_name = importable_name
@@ -262,7 +273,14 @@ class Item:
                         'An interactive Item (with on_click/on_left_click/'
                         'on_right_click) needs a "name" or "importable_name".',
                     )
-                resolved_name = remove_formatting(self.name).strip()
+                twin = _registered_twin(self, left_fn, right_fn)
+                if twin is not None:
+                    self._importable_name = twin.name
+                    return
+                resolved_name = _free_item_name(
+                    remove_formatting(self.name).strip(),
+                    self.count,
+                )
             self._importable_name = resolved_name
             _register_item_instance_importable(
                 resolved_name,
@@ -284,6 +302,8 @@ class Item:
         color: ColorType | Missing = MISSING,
         skull_data: NBTCompound | None | Missing = MISSING,
         is_cookie_item: bool | Missing = MISSING,
+        housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None | Missing' = MISSING,
+        hide_flags: int | None | Missing = MISSING,
         hide_all_flags: bool | Missing = MISSING,
         hide_enchantments_flag: bool | Missing = MISSING,
         hide_modifiers_flag: bool | Missing = MISSING,
@@ -306,6 +326,8 @@ class Item:
             'color': color,
             'skull_data': skull_data,
             'is_cookie_item': is_cookie_item,
+            'housing_menu_tier': housing_menu_tier,
+            'hide_flags': hide_flags,
             'hide_all_flags': hide_all_flags,
             'hide_enchantments_flag': hide_enchantments_flag,
             'hide_modifiers_flag': hide_modifiers_flag,
@@ -358,7 +380,14 @@ class Item:
     # which is part of the item. `_snbt_cache` is lazy, so comparing it would
     # make an item stop equalling its twin the moment one of them rendered.
     _EQ_IGNORE: ClassVar[frozenset[str]] = frozenset(
-        {'__htsw_module__', '_snbt_cache', '_reference_name', '_owner_module'},
+        {
+            '__htsw_module__',
+            '_snbt_cache',
+            '_reference_name',
+            '_owner_module',
+            '_left_click_handler',
+            '_right_click_handler',
+        },
     )
 
     def __eq__(self, other: object) -> bool:
@@ -368,6 +397,24 @@ class Item:
         return {k: v for k, v in vars(self).items() if k not in ignore} == {
             k: v for k, v in vars(other).items() if k not in ignore
         }
+
+    _HOUSING_MENU_ITEMS: ClassVar[dict[str, tuple[str, str]]] = {
+        'GUEST': ('dark_oak_door', '&aHousing Menu&7 (Right Click)'),
+        'TRUSTED_BUILDER': ('ghast_tear', '&aHousing Menu&7 (Right Click)'),
+        'OWNER': ('nether_star', '&dHousing Menu&7 (Right Click)'),
+    }
+
+    @classmethod
+    def housing_menu(cls, tier: ALL_HOUSING_MENU_TIERS = 'OWNER') -> 'Item':
+        """Hypixel's Housing Menu item. Handing one out is how a player gets
+        the menu without the permission that normally grants it."""
+        key, name = cls._HOUSING_MENU_ITEMS[tier]
+        return Item(
+            cast(ALL_ITEM_KEYS, key),
+            name=name,
+            housing_menu_tier=tier,
+            hide_flags=255,
+        )
 
     @classmethod
     def from_path(cls, path: Path | str) -> 'Item':
@@ -430,6 +477,8 @@ class Item:
             value = hide_flags.value
             if value == HIDE_FLAGS['hide_all_flags']:
                 options['hide_all_flags'] = True
+            elif value & ~HIDE_FLAGS['hide_all_flags']:
+                options['hide_flags'] = value
             else:
                 for flag, bit in HIDE_FLAGS.items():
                     if flag != 'hide_all_flags' and value & bit:
@@ -455,6 +504,9 @@ class Item:
         if isinstance(extra_attributes, NBTCompound):
             if extra_attributes.get('COOKIE_ITEM') is not None:
                 options['is_cookie_item'] = True
+            tier = extra_attributes.get('HOUSING_MENU')
+            if tier is not None:
+                options['housing_menu_tier'] = str(tier.value)
 
     def get_item_name(self) -> str:
         return self._get_item_data()['title']
@@ -507,12 +559,16 @@ class Item:
         if self.unbreakable:
             tags.put('Unbreakable', NBTByte(1))
 
-        hide_flags: int = min(
-            sum(value for flag, value in HIDE_FLAGS.items() if getattr(self, flag)),
-            HIDE_FLAGS['hide_all_flags'],
+        flags: int = (
+            self.hide_flags
+            if self.hide_flags is not None
+            else min(
+                sum(value for flag, value in HIDE_FLAGS.items() if getattr(self, flag)),
+                HIDE_FLAGS['hide_all_flags'],
+            )
         )
-        if hide_flags:
-            tags.put('HideFlags', NBTInt(hide_flags))
+        if flags:
+            tags.put('HideFlags', NBTInt(flags))
 
         display = NBTCompound()
 
@@ -544,6 +600,12 @@ class Item:
 
         if self.is_cookie_item:
             extra_attributes.put('COOKIE_ITEM', NBTByte(1))
+
+        if self.housing_menu_tier is not None:
+            extra_attributes.put(
+                'HOUSING_MENU',
+                NBTString(self.housing_menu_tier),
+            )
 
         if not extra_attributes.is_empty():
             tags.put('ExtraAttributes', extra_attributes)
@@ -580,14 +642,22 @@ class Item:
         color: ColorType | Missing = MISSING,
         skull_data: NBTCompound | None | Missing = MISSING,
         is_cookie_item: bool | Missing = MISSING,
+        housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None | Missing' = MISSING,
+        hide_flags: int | None | Missing = MISSING,
         hide_all_flags: bool | Missing = MISSING,
         hide_enchantments_flag: bool | Missing = MISSING,
         hide_modifiers_flag: bool | Missing = MISSING,
         hide_unbreakable_flag: bool | Missing = MISSING,
         hide_additional_flag: bool | Missing = MISSING,
         hide_dye_flag: bool | Missing = MISSING,
+        on_click: 'ItemHandler | None | Missing' = MISSING,
+        on_left_click: 'ItemHandler | None | Missing' = MISSING,
+        on_right_click: 'ItemHandler | None | Missing' = MISSING,
+        importable_name: str | None = None,
     ) -> 'Item':
-        """Returns a copy of the item, overriding only the given values."""
+        """Returns a copy of the item, overriding only the given values. The
+        click handlers come along unless you replace them; pass `None` to make
+        the copy inert."""
         overrides: dict[str, Any] = {
             'name': name,
             'lore': lore,
@@ -598,6 +668,8 @@ class Item:
             'color': color,
             'skull_data': skull_data,
             'is_cookie_item': is_cookie_item,
+            'housing_menu_tier': housing_menu_tier,
+            'hide_flags': hide_flags,
             'hide_all_flags': hide_all_flags,
             'hide_enchantments_flag': hide_enchantments_flag,
             'hide_modifiers_flag': hide_modifiers_flag,
@@ -609,9 +681,21 @@ class Item:
             field: getattr(self, field) if value is MISSING else value
             for field, value in overrides.items()
         }
+        if on_click is not MISSING:
+            left = right = on_click
+        else:
+            left = self._left_click_handler
+            right = self._right_click_handler
+        if on_left_click is not MISSING:
+            left = on_left_click
+        if on_right_click is not MISSING:
+            right = on_right_click
         return Item(
             self.key if key is MISSING else key,
             importable=self._promotable,
+            on_left_click=left,
+            on_right_click=right,
+            importable_name=importable_name,
             **resolved,
         )
 
@@ -640,6 +724,42 @@ class Item:
         snbt = self.into_snbt()
         suffix = hashlib.md5(snbt.encode()).hexdigest()[:8]
         return f'items/{into_kebab(self.key)}-{suffix}.snbt'
+
+
+def _registered_twin(
+    item: 'Item',
+    left_fn: 'ItemHandler | None',
+    right_fn: 'ItemHandler | None',
+) -> 'ItemImportable | None':
+    from ..container import get_current_container
+    from ..importable import ItemImportable
+
+    snbt = item.into_snbt()
+    for importable in get_current_container().importables:
+        if not isinstance(importable, ItemImportable):
+            continue
+        if (importable.left is not None) != (left_fn is not None):
+            continue
+        if (importable.right is not None) != (right_fn is not None):
+            continue
+        if importable.item.into_snbt() == snbt:
+            return importable
+    return None
+
+
+def _free_item_name(base: str, count: int) -> str:
+    from ..container import get_current_container
+
+    taken = get_current_container().importable_keys
+    if ('items', base) not in taken:
+        return base
+    sized = base if count <= 1 else f'{base} x{count}'
+    if ('items', sized) not in taken:
+        return sized
+    index = 2
+    while ('items', f'{sized} {index}') in taken:
+        index += 1
+    return f'{sized} {index}'
 
 
 def _register_item_instance_importable(

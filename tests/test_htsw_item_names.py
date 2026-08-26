@@ -73,11 +73,11 @@ with Container() as shared_c:
 
     purse = Menu('Purse', 1)
 
-    @purse.on(item=coin, x=0, y=0)
+    @purse.add_element(coin, x=0, y=0)
     def _take() -> None:
         chat('took')
 
-    @purse.on(item=badge, x=0, y=1)
+    @purse.add_element(badge, x=0, y=1)
     def _look() -> None:
         chat('looked')
 

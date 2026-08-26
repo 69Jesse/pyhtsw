@@ -119,11 +119,11 @@ try:
     with Container() as container:
         panel = Menu('Panel', 3)
 
-        @panel.on(item=Item('stone'), x=0, y=0)
+        @panel.add_element(Item('stone'), x=0, y=0)
         def buy_sword() -> None:
             _spill(700)
 
-        @panel.on(item=Item('dirt'), x=0, y=1)
+        @panel.add_element(Item('dirt'), x=0, y=1)
         def sell_all() -> None:
             _spill(700)
 
@@ -177,7 +177,7 @@ assert 'event "event player_join"' in message, message
 with Container(ignore_action_limits=True) as container:
     quiet = Menu('Quiet', 3)
 
-    @quiet.on(item=Item('stone'), x=0, y=0)
+    @quiet.add_element(Item('stone'), x=0, y=0)
     def open_it() -> None:
         _spill(700)
 
@@ -225,7 +225,7 @@ assert reordered_cost[0] == 0, (source_cost, reordered_cost)
 with Container() as container:
     shop = Menu('Shop', 3)
 
-    @shop.on(item=Item('stone'), x=0, y=0)
+    @shop.add_element(Item('stone'), x=0, y=0)
     def open_shop() -> None:
         for i in range(20):
             with IfAll(PlayerStat('x') > i):

@@ -129,17 +129,17 @@ class NPC(Declared):
         get_current_container().add_block(block)
         return block
 
-    def left_click(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        """`@npc.left_click` - run these actions on a left click."""
+    def on_left_click(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        """`@npc.on_left_click` - run these actions on a left click."""
         self.attach('left', func)
         return func
 
-    def right_click(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        """`@npc.right_click` - run these actions on a right click."""
+    def on_right_click(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        """`@npc.on_right_click` - run these actions on a right click."""
         self.attach('right', func)
         return func
 
-    def click(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        """`@npc.click` - run these actions on either button."""
+    def on_click(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        """`@npc.on_click` - run these actions on either button."""
         self.attach('both', func)
         return func

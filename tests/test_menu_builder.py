@@ -33,7 +33,7 @@ def build_page(title: str, greeting: str) -> Menu:
     menu.fill(Gray, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 1)
     menu.place(Wand, slot=4)
 
-    @menu.on(item=Wand, slot=22)
+    @menu.add_element(Wand, slot=22)
     def _greet() -> None:
         chat(greeting)
 
@@ -45,18 +45,18 @@ with Container() as container:
 
     nav_menu = Menu('Nav', 3)
 
-    @nav_menu.on(item=Wand, slot=[10, 12, 14])
+    @nav_menu.add_element(Wand, slot=[10, 12, 14])
     def _nav() -> None:
         display_menu(pages[0])
 
     legacy = Menu('Legacy', 3)
     legacy.place(Black, xy_check=lambda x, y: x == 0)
 
-    @legacy.on(item=Wand, slot=13)
+    @legacy.add_element(Wand, slot=13)
     def buy() -> None:
         chat('bought')
 
-    @legacy.on(item=Gray, slot=[18, 26])
+    @legacy.add_element(Gray, slot=[18, 26])
     def corners() -> None:
         chat('corner')
 

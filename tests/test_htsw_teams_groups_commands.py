@@ -46,7 +46,7 @@ with Container() as container:
         skin='alex',
     )
 
-    @greeter.right_click
+    @greeter.on_right_click
     def _hi() -> None:
         chat('&ahello')
 

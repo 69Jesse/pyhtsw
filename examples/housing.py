@@ -17,7 +17,7 @@ wand = Item(
 )
 
 
-@wand.right_click
+@wand.on_right_click
 def on_right() -> None:
     chat('&dPoof!')
 
@@ -30,7 +30,7 @@ shop.place(border, x=0)
 shop.place(border, xy_check=lambda x, y: (x + y) % 2 == 0)
 
 
-@shop.on(item=wand, x=2, y=4)
+@shop.add_element(wand, x=2, y=4)
 def buy_wand() -> None:
     give_item(wand)
     chat('&aYou bought the Magic Wand!')

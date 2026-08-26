@@ -43,11 +43,11 @@ assert guard['pos'] == (1, 2, 3)
 with Container() as container:
     smith = NPC('Smith', (0, 0, 0))
 
-    @smith.left_click
+    @smith.on_left_click
     def _smith_left() -> None:
         chat('clang')
 
-    @smith.right_click
+    @smith.on_right_click
     def _smith_right() -> None:
         chat('what do you want')
 
@@ -75,7 +75,7 @@ assert shop['redirect'] is True, shop
 with Container() as container:
     banker = NPC('Banker', (3, 3, 3))
 
-    @banker.click
+    @banker.on_click
     def _bank() -> None:
         chat('deposit')
 
@@ -110,7 +110,7 @@ with expect_exception(ValueError):
     with Container():
         broken = NPC('Broken', (0, 0, 0), left_click_redirect=False)
 
-        @broken.click
+        @broken.on_click
         def _both() -> None:
             chat('nope')
 

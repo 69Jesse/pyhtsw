@@ -331,18 +331,18 @@ class Item:
                 _item_handler_block(importable.name, side, self, func),
             )
 
-    def left_click(self, func: 'ItemHandler') -> 'ItemHandler':
-        """`@item.left_click` - run these actions on a left click."""
+    def on_left_click(self, func: 'ItemHandler') -> 'ItemHandler':
+        """`@item.on_left_click` - run these actions on a left click."""
         self._attach('left', func)
         return func
 
-    def right_click(self, func: 'ItemHandler') -> 'ItemHandler':
-        """`@item.right_click` - run these actions on a right click."""
+    def on_right_click(self, func: 'ItemHandler') -> 'ItemHandler':
+        """`@item.on_right_click` - run these actions on a right click."""
         self._attach('right', func)
         return func
 
-    def click(self, func: 'ItemHandler') -> 'ItemHandler':
-        """`@item.click` - run these actions on either button."""
+    def on_click(self, func: 'ItemHandler') -> 'ItemHandler':
+        """`@item.on_click` - run these actions on either button."""
         self._attach('both', func)
         return func
 

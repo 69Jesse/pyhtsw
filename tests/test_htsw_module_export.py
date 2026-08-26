@@ -26,7 +26,7 @@ set_projects_folder(tmp, save=False)
 with Container():
     wand = Item('blaze_rod', name='&aMagic Wand')
 
-    @wand.right_click
+    @wand.on_right_click
     def on_right() -> None:
         chat('used the wand')
 
@@ -35,7 +35,7 @@ with Container():
     shop = Menu('Shop', 6)
     shop.place(border, x=0)
 
-    @shop.on(item=wand, x=3, y=4)
+    @shop.add_element(wand, x=3, y=4)
     def buy() -> None:
         chat('bought')
 
@@ -52,7 +52,7 @@ with Container():
         look_at_players=True,
     )
 
-    @merchant.right_click
+    @merchant.on_right_click
     def right() -> None:
         chat('hello')
 

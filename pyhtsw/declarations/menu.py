@@ -115,14 +115,14 @@ class Menu(Declared):
 
     def add_element(
         self,
-        *,
         item: Item,
+        *,
         slot: MenuSlotSpec = None,
         x: MenuAxis = None,
         y: MenuAxis = None,
         xy_check: XYCheck | None = None,
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-        """Add a clickable slot: `@menu.on(slot=28, item=...)`."""
+        """Add a clickable slot: `@menu.add_element(item, slot=28)`."""
         x, y, xy_check = self._placement(slot, x, y, xy_check)
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -130,9 +130,6 @@ class Menu(Declared):
             return func
 
         return decorator
-
-    # The same thing under the name that reads best on a menu value.
-    on = add_element
 
     def place(
         self,

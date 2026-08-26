@@ -1,4 +1,4 @@
-from pyhtsw.actions.conditional.statements import IfAll
+from pyhtsw.actions.flow import IfAll
 from pyhtsw.checkable import Checkable
 from pyhtsw.editable import Editable
 from pyhtsw.stats.temporary_stat import TemporaryStat

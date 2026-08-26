@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Self
 
-from pyhtsw.actions.no_fallback_values import no_fallback_values
+from pyhtsw.directives.no_fallback_values import no_fallback_values
 from pyhtsw.editable import Editable
 from pyhtsw.expression.housing_type import HousingType
 from pyhtsw.expression.unset_expression import UnsetExpression

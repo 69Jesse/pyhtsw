@@ -80,7 +80,7 @@ class TemporaryStat(Stat):
     def into_inside_string(self, include_fallback_value: bool = True) -> str:
         if self._number.finalized:
             return self.resolved_inside_string(include_fallback_value)
-        from pyhtsw.deferred import register_deferred
+        from pyhtsw.compiler.deferred import register_deferred
 
         return register_deferred(self, include_fallback_value)
 

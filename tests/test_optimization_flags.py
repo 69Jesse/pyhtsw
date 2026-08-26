@@ -1,7 +1,5 @@
 from collections.abc import Callable
 
-from pyhtsw.actions.no_optimization import OPTIMIZATION_PASSES, optimization_enabled
-
 from pyhtsw import (
     Container,
     IfAll,
@@ -12,6 +10,7 @@ from pyhtsw import (
     exit_function,
     strict_order,
 )
+from pyhtsw.directives.no_optimization import OPTIMIZATION_PASSES, optimization_enabled
 
 a = PlayerStat('a').as_long()
 b = PlayerStat('b').as_long()

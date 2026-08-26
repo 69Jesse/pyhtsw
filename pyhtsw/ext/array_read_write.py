@@ -2,8 +2,7 @@ import math
 from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
-from pyhtsw.actions.conditional.statements import Else, IfAll, IfAny
-
+from pyhtsw.actions.flow import Else, IfAll, IfAny
 from pyhtsw.editable import Checkable, Editable, HousingType, NumericHousingType
 from pyhtsw.ext.set_string import set_string
 from pyhtsw.internal_type import InternalType
@@ -190,7 +189,7 @@ def _fast_names_pool(pattern: list[ColumnInfo]) -> str:
 
 
 def _get_or_bake_composed_prefix(value: str, pool: str) -> PlayerStat:
-    from pyhtsw.container import get_current_container
+    from pyhtsw.compiler.container import get_current_container
 
     container = get_current_container()
     top_ref = container.blocks[0].expressions
@@ -349,7 +348,7 @@ _HI_KEY = 500
 
 
 def _in_nested_container() -> bool:
-    from pyhtsw.container import get_current_container
+    from pyhtsw.compiler.container import get_current_container
 
     return any(
         ctx.parent_expression is not None for ctx in get_current_container().contexts
@@ -419,9 +418,8 @@ def _emit_fast_write(
     input: Sequence[Checkable | NumericHousingType],
     chunk: int,
 ) -> None:
-    from pyhtsw.actions.preserved import preserved
-    from pyhtsw.actions.strict_order import strict_order
-
+    from pyhtsw.directives.preserved import preserved
+    from pyhtsw.directives.strict_order import strict_order
     from pyhtsw.stats.temporary_stat import TemporaryStat
 
     n = len(items)
@@ -652,8 +650,7 @@ def _emit_staged_write(
     input: Sequence[Checkable | HousingType],
     cs: int,
 ) -> None:
-    from pyhtsw.actions.strict_order import strict_order
-
+    from pyhtsw.directives.strict_order import strict_order
     from pyhtsw.stats.temporary_stat import TemporaryStat
 
     n = len(items)

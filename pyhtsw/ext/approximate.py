@@ -28,7 +28,7 @@ _CARRY = 8
 
 
 def _scratch(index: int) -> TemporaryStat:
-    from pyhtsw.container import get_current_container
+    from pyhtsw.compiler.container import get_current_container
 
     container = get_current_container()
     pool: list[TemporaryStat] = container.__dict__.setdefault(

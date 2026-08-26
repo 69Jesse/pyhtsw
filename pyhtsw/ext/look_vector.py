@@ -1,9 +1,7 @@
-from pyhtsw.actions.player_position_pitch import PlayerPositionPitch
-from pyhtsw.actions.player_position_yaw import PlayerPositionYaw
-
 from pyhtsw.checkable import Checkable
 from pyhtsw.editable import Editable
 from pyhtsw.ext.approximate import approximate_sin_cos
+from pyhtsw.placeholders.player import PlayerPositionPitch, PlayerPositionYaw
 from pyhtsw.stats.temporary_stat import TemporaryStat
 
 __all__ = ('approximate_look_vector',)

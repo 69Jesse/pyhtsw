@@ -1,8 +1,8 @@
 import re
 from typing import Self, final
 
-from pyhtsw.actions.team import Team
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.declarations.team import Team
 from pyhtsw.expression.housing_type import HousingType, housing_type_from_string
 from pyhtsw.internal_type import InternalType
 from pyhtsw.stats.player_stat import _split_parts

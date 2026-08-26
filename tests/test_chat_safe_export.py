@@ -2,7 +2,8 @@ import tempfile
 from pathlib import Path
 
 from helpers import expect_exception
-from pyhtsw.importable import Project, _verify_chat_safe
+
+from pyhtsw.compiler.importable import Project, _verify_chat_safe
 
 CLEAN = 'var "s" = "&aok" true\nvar "t" = "%player.name%" true'
 

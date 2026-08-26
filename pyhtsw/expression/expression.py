@@ -3,8 +3,8 @@ from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, Any, ClassVar, final
 
 from pyhtsw.base_object import BaseObject
-from pyhtsw.container import Container, get_current_container
-from pyhtsw.registry import ActionMeta
+from pyhtsw.compiler.container import Container, get_current_container
+from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:

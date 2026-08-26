@@ -1,5 +1,3 @@
-from pyhtsw.actions.player_name import PlayerName
-
 from pyhtsw import (
     ExecutionContext,
     ExecutionPlayer,
@@ -11,6 +9,7 @@ from pyhtsw import (
     exit_function,
     trigger_function,
 )
+from pyhtsw.placeholders.player import PlayerName
 
 disable_global_export()
 

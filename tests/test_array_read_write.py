@@ -2,10 +2,9 @@ import math
 import random
 
 from helpers import expect_exception
-from pyhtsw.actions.conditional.statements import IfAll
-from pyhtsw.actions.random import RandomExpression
 
 from pyhtsw import Container, ExecutionContext, GlobalStat, PlayerStat
+from pyhtsw.actions.flow import IfAll, RandomExpression
 from pyhtsw.expression.binary_expression import BinaryExpression
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 from pyhtsw.ext.array_read_write import array_read, array_write

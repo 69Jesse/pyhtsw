@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from types import EllipsisType
 from typing import Literal
 
-from pyhtsw.actions.conditional.statements import Else, IfAll
+from pyhtsw.actions.flow import Else, IfAll
 from pyhtsw.checkable import Checkable
 from pyhtsw.editable import Editable, HousingType
 from pyhtsw.ext.array_read_write import MaybeSequence, assert_same_widths, into_sequence

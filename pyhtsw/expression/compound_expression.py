@@ -93,7 +93,7 @@ class CompoundExpression(Expression, Editable):
         )
 
     def into_inside_string(self, include_fallback_value: bool = True) -> str:
-        from pyhtsw.deferred import register_deferred
+        from pyhtsw.compiler.deferred import register_deferred
 
         return register_deferred(self, include_fallback_value)
 

@@ -3,8 +3,6 @@ import random
 import re
 from contextlib import redirect_stdout
 
-from pyhtsw.actions.no_optimization import OPTIMIZATION_PASSES
-
 from pyhtsw import (
     Container,
     ExecutionContext,
@@ -18,6 +16,7 @@ from pyhtsw import (
     pause_execution,
     play_sound,
 )
+from pyhtsw.directives.no_optimization import OPTIMIZATION_PASSES
 
 ONLY_REORDER_OFF = {name: True for name in OPTIMIZATION_PASSES if name != 'reorder'}
 

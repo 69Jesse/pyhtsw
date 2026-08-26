@@ -48,8 +48,8 @@ assert len(event_blocks) == 1, (
 
 
 # Inside a Random, a limit below 10 is raised to 10. full_heal is 5 normally.
-from pyhtsw.actions.full_heal import FullHealExpression  # noqa: E402
-from pyhtsw.limits import get_limit  # noqa: E402
+from pyhtsw.actions.player import FullHealExpression  # noqa: E402
+from pyhtsw.compiler.limits import get_limit  # noqa: E402
 
 assert get_limit(FullHealExpression) == 5
 assert get_limit(FullHealExpression, nested='random') == 10
@@ -57,7 +57,7 @@ assert get_limit(FullHealExpression, nested='conditional') == 5
 
 
 # Eight full_heals fit inside a random but not at block level.
-from pyhtsw.limits import Counter  # noqa: E402
+from pyhtsw.compiler.limits import Counter  # noqa: E402
 
 block_counter = Counter()
 random_counter = Counter(nested='random')

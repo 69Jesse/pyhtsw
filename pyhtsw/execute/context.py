@@ -6,7 +6,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Literal, overload
 
 from pyhtsw.checkable import Checkable
-from pyhtsw.container import Container, override_write_expression
+from pyhtsw.compiler.container import Container, override_write_expression
 from pyhtsw.execute.backend_type import (
     BackendType,
     backend_into_string,
@@ -36,7 +36,7 @@ from pyhtsw.utils.log import log
 from pyhtsw.utils.warn import warn
 
 if TYPE_CHECKING:
-    from pyhtsw.actions.function import Function
+    from pyhtsw.declarations.function import Function
 
 __all__ = ('ExecutionContext',)
 
@@ -107,7 +107,7 @@ class ExecutionContext(Container):
         resolved.context = self
         self.players.append(resolved)
         if resolved.name is not None:
-            from pyhtsw.actions.player_name import PlayerName
+            from pyhtsw.placeholders.player import PlayerName
 
             self.put(PlayerName, resolved.name, ignore_warning=True, player=resolved)
         return resolved

@@ -1,7 +1,5 @@
 from collections.abc import Callable
 
-from pyhtsw.actions.no_optimization import OPTIMIZATION_PASSES
-
 from pyhtsw import (
     Container,
     IfAll,
@@ -11,6 +9,7 @@ from pyhtsw import (
     create_function,
     pause_execution,
 )
+from pyhtsw.directives.no_optimization import OPTIMIZATION_PASSES
 
 # `NoOptimization` is an allow-list, so naming every pass but one disables
 # exactly that pass - the baseline each case here is measured against.

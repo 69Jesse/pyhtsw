@@ -6,10 +6,10 @@ from typing import cast, get_args
 
 import mido
 import pynbs
-from pyhtsw.actions.pause_execution import PauseExecutionExpression
-from pyhtsw.actions.play_sound import PlaySoundExpression
 from pyhtsw.types import ALL_SOUNDS, ALL_SOUNDS_PRETTY_TO_RAW, ALL_SOUNDS_RAW
 
+from pyhtsw.actions.flow import PauseExecutionExpression
+from pyhtsw.actions.world import PlaySoundExpression
 from pyhtsw.expression.expression import Expression
 from pyhtsw.utils.log import log
 

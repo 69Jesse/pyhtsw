@@ -2,18 +2,12 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from pyhtsw.actions.conditional.statements import IfAll, IfAny
-from pyhtsw.actions.create_function import create_function
-from pyhtsw.actions.exit_function import exit_function
-from pyhtsw.actions.function import Function
-from pyhtsw.actions.item import Item
-from pyhtsw.actions.player_position_x import PlayerPositionX
-from pyhtsw.actions.player_position_y import PlayerPositionY
-from pyhtsw.actions.player_position_z import PlayerPositionZ
-from pyhtsw.actions.trigger_function import trigger_function
-
+from pyhtsw.actions.flow import IfAll, IfAny, exit_function, trigger_function
+from pyhtsw.declarations.function import Function, create_function
+from pyhtsw.declarations.item import Item
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.ext.look_vector import approximate_look_vector
+from pyhtsw.placeholders.player import PlayerPositionX, PlayerPositionY, PlayerPositionZ
 from pyhtsw.stats.global_stat import GlobalStat
 from pyhtsw.stats.temporary_stat import TemporaryStat
 from pyhtsw.utils.callback import call_with_optional_arg

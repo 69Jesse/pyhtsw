@@ -1,7 +1,5 @@
 from typing import Self
 
-from pyhtsw.schedule import Resource, Stream, build_dependencies, effects_of
-
 from pyhtsw import (
     Container,
     IfAll,
@@ -16,6 +14,7 @@ from pyhtsw import (
     play_sound,
     teleport_player,
 )
+from pyhtsw.compiler.schedule import Resource, Stream, build_dependencies, effects_of
 from pyhtsw.expression.expression import Expression
 
 x = PlayerStat('x').as_long()

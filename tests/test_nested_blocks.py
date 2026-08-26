@@ -1,6 +1,6 @@
-import pyhtsw.container
 from helpers import expect_exception
 
+import pyhtsw.compiler.container
 from pyhtsw import (
     Container,
     Else,
@@ -154,7 +154,7 @@ with expect_exception(SyntaxError):
 
 # A function body that raises during finalize must not corrupt the container
 # stack: __exit__ always pops the container even when finalize raises.
-_depth_before = len(pyhtsw.container.CONTAINERS)
+_depth_before = len(pyhtsw.compiler.container.CONTAINERS)
 with expect_exception(SyntaxError):
     with Container():
         x = PlayerStat('x').as_long()
@@ -166,7 +166,9 @@ with expect_exception(SyntaxError):
                     chat('nope')
 
 
-assert len(pyhtsw.container.CONTAINERS) == _depth_before, pyhtsw.container.CONTAINERS
+assert len(pyhtsw.compiler.container.CONTAINERS) == _depth_before, (
+    pyhtsw.compiler.container.CONTAINERS
+)
 
 
 # `%` (modulo) and abs() expand into an if-block under the hood, so using them

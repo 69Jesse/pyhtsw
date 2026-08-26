@@ -1,5 +1,4 @@
-from pyhtsw.deferred import deferred_spans
-
+from pyhtsw.compiler.deferred import deferred_spans
 from pyhtsw.editable import Editable
 from pyhtsw.expression.binary_expression import SET_STRING_MAX_LENGTH
 from pyhtsw.stats.player_stat import PlayerStat

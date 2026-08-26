@@ -3,14 +3,14 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.compiler.registry import ConditionMeta
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
 from pyhtsw.internal_type import InternalType
-from pyhtsw.registry import ConditionMeta
 
 if TYPE_CHECKING:
     from pyhtsw.checkable import Checkable
-    from pyhtsw.container import Container
+    from pyhtsw.compiler.container import Container
     from pyhtsw.execute.context import ExecutionContext
     from pyhtsw.stats.stat import Stat
 

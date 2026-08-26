@@ -1,7 +1,15 @@
 import json
 from pathlib import Path
 
-from pyhtsw.importable import (
+from pyhtsw.types import (
+    ALL_CHAT_SPEEDS,
+    ALL_COMMAND_MODES,
+    ALL_DEFAULT_GAMEMODES,
+    ALL_HOUSING_COLORS,
+    ALL_PERMISSIONS,
+)
+
+from pyhtsw.compiler.importable import (
     EVENTS,
     CommandImportable,
     EventImportable,
@@ -13,18 +21,11 @@ from pyhtsw.importable import (
     RegionImportable,
     TeamImportable,
 )
-from pyhtsw.limits import (
+from pyhtsw.compiler.limits import (
     EVENT_CONDITIONAL_LIMIT,
     RANDOM_FLOOR,
     get_limit,
     get_limits,
-)
-from pyhtsw.types import (
-    ALL_CHAT_SPEEDS,
-    ALL_COMMAND_MODES,
-    ALL_DEFAULT_GAMEMODES,
-    ALL_HOUSING_COLORS,
-    ALL_PERMISSIONS,
 )
 
 CONTRACT = json.loads(
@@ -45,7 +46,7 @@ assert list(literal_values(ALL_COMMAND_MODES)) == enums['commandModes']
 assert list(literal_values(ALL_PERMISSIONS)) == enums['permissions']
 
 # EventName mirrors EVENTS; keep the two in step.
-from pyhtsw.importable import EventName, NpcSkin  # noqa: E402
+from pyhtsw.compiler.importable import EventName, NpcSkin  # noqa: E402
 
 assert list(literal_values(EventName)) == enums['events']
 assert list(literal_values(NpcSkin)) == enums['npcSkins']
@@ -84,7 +85,7 @@ for importable, kwargs in (
         raise AssertionError(f'{importable.__name__} accepted a fractional coordinate')
 
 
-from pyhtsw.registry import (  # noqa: E402
+from pyhtsw.compiler.registry import (  # noqa: E402
     iter_action_types,
     iter_condition_types,
     iter_placeholder_types,
@@ -126,8 +127,7 @@ for name in sorted(theirs):
     )
 
 
-from pyhtsw.actions.full_heal import FullHealExpression  # noqa: E402
-
+from pyhtsw.actions.player import FullHealExpression  # noqa: E402
 from pyhtsw.expression.condition.conditional_expression import (  # noqa: E402
     ConditionalExpression,
 )
@@ -153,11 +153,13 @@ assert (
 )
 
 
-from pyhtsw.actions.has_potion_effect import HasPotionEffect  # noqa: E402
-from pyhtsw.actions.is_doing_parkour import IsDoingParkourCondition  # noqa: E402
-from pyhtsw.limits import (  # noqa: E402
+from pyhtsw.compiler.limits import (  # noqa: E402
     COMPARISON_LIMIT,
     get_condition_limit,
+)
+from pyhtsw.conditions.player import (  # noqa: E402
+    HasPotionEffect,
+    IsDoingParkourCondition,
 )
 
 condition_limits = CONTRACT['conditionLimits']

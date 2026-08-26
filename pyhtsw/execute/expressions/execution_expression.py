@@ -1,5 +1,5 @@
+from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.expression.expression import Expression
-from pyhtsw.registry import ActionMeta
 
 __all__ = ('ExecutionExpression',)
 

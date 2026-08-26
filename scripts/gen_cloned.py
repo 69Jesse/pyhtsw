@@ -13,8 +13,8 @@ from pyhtsw.base_object import BaseObject  # noqa: E402
 
 # Clones that are deliberately hand-written.
 HAND_WRITTEN = {
-    ('pyhtsw.actions.item', 'Item'),
-    ('pyhtsw.actions.conditional.context_manager', 'IfContextManager'),
+    ('pyhtsw.declarations.item', 'Item'),
+    ('pyhtsw.actions.flow', 'IfContextManager'),
 }
 ANCHORS = ('equals', 'equals_raw', '__repr__')
 SHARED = ('Missing', 'MISSING', 'clone_with')

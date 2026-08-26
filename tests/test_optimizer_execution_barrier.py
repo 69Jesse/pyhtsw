@@ -1,5 +1,3 @@
-from pyhtsw.actions.pause_execution import PauseExecutionExpression
-
 from pyhtsw import (
     Container,
     IfAll,
@@ -8,6 +6,7 @@ from pyhtsw import (
     pause_execution,
     trigger_function,
 )
+from pyhtsw.actions.flow import PauseExecutionExpression
 from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 from pyhtsw.stats.temporary_stat import TemporaryStat
 

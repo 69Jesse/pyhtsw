@@ -1,10 +1,6 @@
 import tempfile
 from pathlib import Path
 
-from pyhtsw.importable import Project
-from pyhtsw.limits import packing_cost
-from pyhtsw.schedule import reorder_for_packing
-
 from pyhtsw import (
     ActionLimitError,
     Container,
@@ -17,6 +13,9 @@ from pyhtsw import (
     create_function,
     create_menu,
 )
+from pyhtsw.compiler.importable import Project
+from pyhtsw.compiler.limits import packing_cost
+from pyhtsw.compiler.schedule import reorder_for_packing
 
 y = PlayerStat('y').as_long()
 

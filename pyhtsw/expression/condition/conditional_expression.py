@@ -3,10 +3,10 @@ from enum import Enum
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.compiler.container import Container
+from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.config import INDENT
-from pyhtsw.container import Container
 from pyhtsw.expression.expression import Expression
-from pyhtsw.registry import ActionMeta
 
 if TYPE_CHECKING:
     from pyhtsw.execute.context import ExecutionContext

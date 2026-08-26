@@ -3,8 +3,8 @@ from abc import abstractmethod
 from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, ClassVar, Literal, Self, final, overload
 
-from pyhtsw.actions.no_type_casting import no_type_casting
 from pyhtsw.base_object import BaseObject
+from pyhtsw.directives.no_type_casting import no_type_casting
 from pyhtsw.execute.backend_type import BackendType, into_backend_type
 from pyhtsw.expression.condition.comparison_condition import (
     ComparisonCondition,

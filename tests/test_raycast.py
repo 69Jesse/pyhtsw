@@ -1,9 +1,3 @@
-from pyhtsw.actions.player_position_pitch import PlayerPositionPitch
-from pyhtsw.actions.player_position_x import PlayerPositionX
-from pyhtsw.actions.player_position_y import PlayerPositionY
-from pyhtsw.actions.player_position_yaw import PlayerPositionYaw
-from pyhtsw.actions.player_position_z import PlayerPositionZ
-
 from pyhtsw import (
     ExecutionContext,
     ExecutionPlayer,
@@ -14,6 +8,13 @@ from pyhtsw import (
     disable_global_export,
 )
 from pyhtsw.ext import create_raycast
+from pyhtsw.placeholders.player import (
+    PlayerPositionPitch,
+    PlayerPositionX,
+    PlayerPositionY,
+    PlayerPositionYaw,
+    PlayerPositionZ,
+)
 
 disable_global_export()
 

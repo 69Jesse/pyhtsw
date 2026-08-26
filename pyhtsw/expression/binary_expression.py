@@ -4,13 +4,13 @@ from functools import cached_property
 from typing import Any, NoReturn, Self, final
 
 import numpy as np
-from pyhtsw.actions.no_optimization import optimization_enabled
-from pyhtsw.actions.no_type_casting import no_type_casting
-from pyhtsw.actions.preserved import is_preserved
-from pyhtsw.registry import ActionMeta
 
 from pyhtsw.checkable import Checkable
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.compiler.registry import ActionMeta
+from pyhtsw.directives.no_optimization import optimization_enabled
+from pyhtsw.directives.no_type_casting import no_type_casting
+from pyhtsw.directives.preserved import is_preserved
 from pyhtsw.editable import Editable
 from pyhtsw.execute import java_long
 from pyhtsw.execute.backend_type import (
@@ -965,7 +965,7 @@ class BinaryExpression[
         )
 
     def into_inside_string(self, include_fallback_value: bool = True) -> str:
-        from pyhtsw.deferred import register_deferred
+        from pyhtsw.compiler.deferred import register_deferred
 
         return register_deferred(self, include_fallback_value)
 

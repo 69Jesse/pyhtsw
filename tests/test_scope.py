@@ -1,5 +1,4 @@
 from helpers import expect_exception
-from pyhtsw.scope import ScopeError
 
 from pyhtsw import (
     Container,
@@ -16,6 +15,7 @@ from pyhtsw import (
     kill_player,
     send_to_lobby,
 )
+from pyhtsw.compiler.scope import ScopeError
 
 flag = GlobalStat('flag').as_long()
 

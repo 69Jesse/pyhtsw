@@ -1,7 +1,7 @@
 from typing import ClassVar
 
-from pyhtsw.actions.no_fallback_values import NoFallbackValues
 from pyhtsw.checkable import Checkable
+from pyhtsw.directives.no_fallback_values import NoFallbackValues
 from pyhtsw.expression.housing_type import HousingType
 
 __all__ = (

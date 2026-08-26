@@ -1,0 +1,348 @@
+from typing import ClassVar, Self, final
+
+from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.compiler.registry import ConditionMeta
+from pyhtsw.compiler.schedule import Resource
+from pyhtsw.declarations.group import Group
+from pyhtsw.declarations.region import Region
+from pyhtsw.declarations.team import Team
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.expression.condition.named_condition import NamedCondition
+from pyhtsw.types import ALL_GAMEMODES, ALL_PERMISSIONS, ALL_POTION_EFFECTS
+
+__all__ = (
+    'IsFlyingCondition',
+    'IsFlying',
+    'PlayerFlyingCondition',
+    'PlayerFlying',
+    'IsSneakingCondition',
+    'IsSneaking',
+    'PlayerSneakingCondition',
+    'PlayerSneaking',
+    'IsDoingParkourCondition',
+    'IsDoingParkour',
+    'DoingParkourCondition',
+    'DoingParkour',
+    'CanPVPCondition',
+    'CanPVP',
+    'RequiredGamemode',
+    'RequiredGroup',
+    'RequiredTeam',
+    'HasPermission',
+    'WithinRegion',
+    'HasPotionEffect',
+)
+
+
+class IsFlyingCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_FLYING',
+        limit=20,
+        reads=frozenset((Resource.GAMEMODE,)),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('isFlying')
+
+
+IsFlying = IsFlyingCondition()
+
+
+class PlayerFlyingCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_FLYING',
+        reads=frozenset((Resource.GAMEMODE,)),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('isFlying')
+
+
+PlayerFlying = PlayerFlyingCondition()
+
+
+class IsSneakingCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_SNEAKING',
+        limit=20,
+        reads=frozenset(()),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('isSneaking')
+
+
+IsSneaking = IsSneakingCondition()
+
+
+class PlayerSneakingCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_SNEAKING',
+        reads=frozenset(()),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('isSneaking')
+
+
+PlayerSneaking = PlayerSneakingCondition()
+
+
+class IsDoingParkourCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_DOING_PARKOUR',
+        limit=1,
+        reads=frozenset((Resource.PARKOUR,)),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('doingParkour')
+
+
+IsDoingParkour = IsDoingParkourCondition()
+
+
+class DoingParkourCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_DOING_PARKOUR',
+        limit=1,
+        reads=frozenset((Resource.PARKOUR,)),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('doingParkour')
+
+
+DoingParkour = DoingParkourCondition()
+
+
+class CanPVPCondition(NamedCondition):
+    htsw_meta = ConditionMeta(
+        htsw_name='PVP_ENABLED',
+        limit=20,
+        reads=frozenset(()),
+        display_name='Can PvP',
+        scoped_events=('PvP State Change',),
+    )
+
+    def __init__(self) -> None:
+        super().__init__('canPvp')
+
+
+CanPVP = CanPVPCondition()
+
+
+@final
+class RequiredGamemode(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_GAMEMODE',
+        limit=20,
+        reads=frozenset((Resource.GAMEMODE,)),
+    )
+
+    gamemode: ALL_GAMEMODES
+
+    def __init__(
+        self,
+        gamemode: ALL_GAMEMODES,
+    ) -> None:
+        self.gamemode = gamemode
+
+    def into_htsl_raw(self) -> str:
+        return f'gamemode {self.inline(self.gamemode)}'
+
+    def cloned(
+        self,
+        *,
+        gamemode: ALL_GAMEMODES | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'gamemode': gamemode,
+                'inverted': inverted,
+            },
+        )
+
+
+@final
+class RequiredGroup(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_GROUP',
+        limit=20,
+        reads=frozenset((Resource.GROUP,)),
+    )
+
+    group: Group
+    include_higher_groups: bool
+
+    def __init__(
+        self,
+        group: Group | str,
+        include_higher_groups: bool = False,
+    ) -> None:
+        self.group = group if isinstance(group, Group) else Group(group)
+        self.include_higher_groups = include_higher_groups
+
+    def into_htsl_raw(self) -> str:
+        return f'hasGroup {self.inline_quoted(self.group.name)} {self.inline(self.include_higher_groups)}'
+
+    def cloned(
+        self,
+        *,
+        group: Group | str | Missing = MISSING,
+        include_higher_groups: bool | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'group': group,
+                'include_higher_groups': include_higher_groups,
+                'inverted': inverted,
+            },
+        )
+
+
+@final
+class RequiredTeam(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_TEAM',
+        limit=20,
+        reads=frozenset((Resource.TEAM,)),
+    )
+
+    team: Team | None
+
+    def __init__(
+        self,
+        team: Team | str | None,
+    ) -> None:
+        self.team = team if not isinstance(team, str) else Team(team)
+
+    def into_htsl_raw(self) -> str:
+        name = self.team.name if self.team is not None else 'None'
+        return f'hasTeam {self.inline_quoted(name)}'
+
+    def cloned(
+        self,
+        *,
+        team: Team | str | None | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'team': team,
+                'inverted': inverted,
+            },
+        )
+
+
+@final
+class HasPermission(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_PERMISSION',
+        limit=20,
+        reads=frozenset((Resource.GROUP,)),
+    )
+
+    permission: ALL_PERMISSIONS
+
+    def __init__(
+        self,
+        permission: ALL_PERMISSIONS,
+    ) -> None:
+        self.permission = permission
+
+    def into_htsl_raw(self) -> str:
+        return f'hasPermission {self.inline_quoted(self.permission)}'
+
+    def cloned(
+        self,
+        *,
+        permission: ALL_PERMISSIONS | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'permission': permission,
+                'inverted': inverted,
+            },
+        )
+
+
+def _region_name(region: 'Region | str') -> str:
+    if isinstance(region, str):
+        return region
+    if isinstance(region, Region):
+        return region.name
+    raise TypeError(f'Expected a Region or str, got {region!r}')
+
+
+@final
+class WithinRegion(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_IN_REGION',
+        limit=20,
+        reads=frozenset((Resource.POSITION,)),
+    )
+
+    name: str
+    __clone_map__: ClassVar[dict[str, str]] = {'region': 'name'}
+
+    def __init__(self, region: 'Region | str') -> None:
+        self.name = _region_name(region)
+
+    def into_htsl_raw(self) -> str:
+        return f'inRegion {self.inline_quoted(self.name)}'
+
+    def cloned(
+        self,
+        *,
+        region: 'Region | str | Missing' = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'region': region,
+                'inverted': inverted,
+            },
+        )
+
+
+@final
+class HasPotionEffect(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_POTION_EFFECT',
+        limit=22,
+        reads=frozenset((Resource.POTIONS,)),
+    )
+
+    effect: ALL_POTION_EFFECTS
+
+    def __init__(
+        self,
+        effect: ALL_POTION_EFFECTS,
+    ) -> None:
+        self.effect = effect
+
+    def into_htsl_raw(self) -> str:
+        return f'hasPotion {self.inline_quoted(self.effect)}'
+
+    def cloned(
+        self,
+        *,
+        effect: ALL_POTION_EFFECTS | Missing = MISSING,
+        inverted: bool | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'effect': effect,
+                'inverted': inverted,
+            },
+        )

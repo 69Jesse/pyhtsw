@@ -1,4 +1,4 @@
-from pyhtsw.actions.conditional.statements import IfAll, IfAny
+from pyhtsw.actions.flow import IfAll, IfAny
 from pyhtsw.checkable import Checkable
 from pyhtsw.stats.player_stat import PlayerStat
 from pyhtsw.stats.stat import Stat

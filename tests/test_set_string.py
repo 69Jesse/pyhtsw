@@ -53,7 +53,7 @@ with expect_exception(ValueError):
         set_string(s, value)
 
 
-import pyhtsw.container as _container_mod  # noqa: E402
+import pyhtsw.compiler.container as _container_mod  # noqa: E402
 
 caught = False
 try:

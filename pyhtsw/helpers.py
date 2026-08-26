@@ -2,13 +2,12 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from pyhtsw.actions.conditional.context_manager import (
+from pyhtsw.actions.flow import (
     ElseContextManager,
     IfContextManager,
 )
-from pyhtsw.container import get_current_container, override_write_expression
-from pyhtsw.limits import Counter
-
+from pyhtsw.compiler.container import get_current_container, override_write_expression
+from pyhtsw.compiler.limits import Counter
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
 if TYPE_CHECKING:

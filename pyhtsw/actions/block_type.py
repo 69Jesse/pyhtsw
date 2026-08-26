@@ -45,14 +45,3 @@ class BlockType(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, BlockType):
-            return False
-        return (
-            self.equals_or_eq(self.block, other.block)
-            and self.match_type_only == other.match_type_only
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<block={self.block!r} match_type_only={self.match_type_only} inverted={self.inverted}>'

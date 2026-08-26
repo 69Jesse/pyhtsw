@@ -33,14 +33,6 @@ class SetPlayerWeatherExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, SetPlayerWeatherExpression):
-            return False
-        return self.weather == other.weather
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.weather}>'
-
 
 def set_player_weather(weather: PLAYER_WEATHERS) -> None:
     SetPlayerWeatherExpression(weather=weather).write()

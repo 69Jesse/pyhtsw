@@ -36,11 +36,3 @@ class PortalType(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, PortalType):
-            return False
-        return self.portal == other.portal
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.portal} inverted={self.inverted}>'

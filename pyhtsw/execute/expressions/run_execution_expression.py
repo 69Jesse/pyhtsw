@@ -25,6 +25,9 @@ class RunExecutionExpression(ExecutionExpression):
     def __init__(self, callback: CallbackType) -> None:
         self.callback = callback
 
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        call_with_optional_arg(self.callback, context, noun='callback')
+
     def cloned(
         self,
         *,
@@ -36,14 +39,3 @@ class RunExecutionExpression(ExecutionExpression):
                 'callback': callback,
             },
         )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, RunExecutionExpression):
-            return False
-        return self.callback == other.callback
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(callback={self.callback!r})'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        call_with_optional_arg(self.callback, context, noun='callback')

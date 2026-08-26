@@ -32,14 +32,6 @@ class SendToLobbyExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, SendToLobbyExpression):
-            return False
-        return self.lobby == other.lobby
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.lobby}>'
-
 
 def send_to_lobby(lobby: str) -> None:
     SendToLobbyExpression(lobby=lobby).write()

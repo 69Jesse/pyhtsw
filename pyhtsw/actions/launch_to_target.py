@@ -54,18 +54,6 @@ class LaunchToTargetExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, LaunchToTargetExpression):
-            return False
-        return (
-            self.coordinates == other.coordinates
-            and self.location == other.location
-            and self.equals_or_eq(self.strength, other.strength)
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.location} strength={self.strength}>'
-
 
 def launch_to_target(
     location: Location,

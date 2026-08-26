@@ -16,6 +16,12 @@ class UnsetExpression(Expression):
     def __init__(self, target: 'Stat') -> None:
         self.target = target
 
+    def into_htsl(self) -> str:
+        return f'{self.target.into_string_lhs()} unset'
+
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        context.pop(self.target)
+
     def cloned(
         self,
         *,
@@ -27,17 +33,3 @@ class UnsetExpression(Expression):
                 'target': target,
             },
         )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, UnsetExpression):
-            return False
-        return self.target.equals(other.target)
-
-    def into_htsl(self) -> str:
-        return f'{self.target.into_string_lhs()} unset'
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{repr(self.target)}>'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        context.pop(self.target)

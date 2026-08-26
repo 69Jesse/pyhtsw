@@ -34,11 +34,3 @@ class FishingEnvironment(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, FishingEnvironment):
-            return False
-        return self.environment == other.environment
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.environment} inverted={self.inverted}>'

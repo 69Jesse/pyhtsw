@@ -34,11 +34,3 @@ class HasPermission(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, HasPermission):
-            return False
-        return self.permission == other.permission
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.permission} inverted={self.inverted}>'

@@ -13,12 +13,6 @@ class FullHealExpression(Expression):
     def into_htsl(self) -> str:
         return 'fullHeal'
 
-    def equals(self, other: object) -> bool:
-        return isinstance(other, FullHealExpression)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}'
-
 
 def full_heal() -> None:
     FullHealExpression().write()

@@ -17,12 +17,6 @@ class ExitFunctionExpression(Expression):
     def into_htsl(self) -> str:
         return 'exit'
 
-    def equals(self, other: object) -> bool:
-        return isinstance(other, ExitFunctionExpression)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}'
-
     def raw_execute(self, context: 'ExecutionContext') -> None:
         from ..execute.signal import ExitSignal
 

@@ -66,19 +66,6 @@ class GiveItemExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, GiveItemExpression):
-            return False
-        return (
-            self.item == other.item
-            and self.allow_multiple == other.allow_multiple
-            and self.inventory_slot == other.inventory_slot
-            and self.replace_existing_item == other.replace_existing_item
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.item} slot={self.inventory_slot}>'
-
 
 def give_item(
     item: Item,

@@ -27,6 +27,14 @@ class DisplayActionBarExpression(Expression):
     def into_htsl(self) -> str:
         return f'actionBar {self.inline_quoted(self.text)}'
 
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        log(
+            formatting_to_ansi(
+                '&7<display-action-bar>\n'
+                f'&7    text: &f{context.get(self.text, cast=False, output="string")}',
+            ),
+        )
+
     def cloned(
         self,
         *,
@@ -37,22 +45,6 @@ class DisplayActionBarExpression(Expression):
             {
                 'text': text,
             },
-        )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, DisplayActionBarExpression):
-            return False
-        return self.equals_or_eq(self.text, other.text)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.text}>'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        log(
-            formatting_to_ansi(
-                '&7<display-action-bar>\n'
-                f'&7    text: &f{context.get(self.text, cast=False, output="string")}',
-            ),
         )
 
 

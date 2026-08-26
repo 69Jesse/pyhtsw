@@ -28,9 +28,10 @@ class Condition(BaseObject):
     def into_htsl(self) -> str:
         return ('!' * self.inverted) + self.into_htsl_raw()
 
-    @abstractmethod
     def equals_raw(self, other: object) -> bool:
-        raise NotImplementedError
+        if type(other) is not type(self):
+            return False
+        return self.fields_equal(other)
 
     @final
     def equals(self, other: object) -> bool:

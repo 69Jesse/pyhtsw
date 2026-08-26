@@ -88,24 +88,6 @@ class DropItemExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, DropItemExpression):
-            return False
-        return (
-            self.item == other.item
-            and self.location == other.location
-            and self.coordinates == other.coordinates
-            and self.drop_naturally == other.drop_naturally
-            and self.disable_item_merging == other.disable_item_merging
-            and self.prioritize_player == other.prioritize_player
-            and self.fallback_to_inventory == other.fallback_to_inventory
-            and self.despawn_duration_ticks == other.despawn_duration_ticks
-            and self.pickup_delay_ticks == other.pickup_delay_ticks
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.item} at={self.location} {self.coordinates}>'
-
 
 def drop_item(
     item: Item,

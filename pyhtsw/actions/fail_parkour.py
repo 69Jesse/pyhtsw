@@ -32,14 +32,6 @@ class FailParkourExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, FailParkourExpression):
-            return False
-        return self.reason == other.reason
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.reason}>'
-
 
 def fail_parkour(reason: str = 'Failed!') -> None:
     FailParkourExpression(reason=reason).write()

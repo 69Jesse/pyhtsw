@@ -57,6 +57,19 @@ class PlaySoundExpression(Expression):
             line += f' {self.inline_quoted(self.coordinates)}'
         return line
 
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        from ..misc.sounds import preview_sound
+
+        found = preview_sound(
+            self.sound,
+            volume=self.volume * context.volume_multiplier,
+            pitch=self.pitch,
+        )
+        if not found:
+            log(
+                f'No sound found for \x1b[38;2;255;0;0m"{self.sound}"\x1b[0m, nothing will be played',
+            )
+
     def cloned(
         self,
         *,
@@ -78,33 +91,6 @@ class PlaySoundExpression(Expression):
                 'check_valid': check_valid,
             },
         )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, PlaySoundExpression):
-            return False
-        return (
-            self.sound == other.sound
-            and self.volume == other.volume
-            and self.pitch == other.pitch
-            and self.coordinates == other.coordinates
-            and self.location == other.location
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.sound} vol={self.volume} pitch={self.pitch}>'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        from ..misc.sounds import preview_sound
-
-        found = preview_sound(
-            self.sound,
-            volume=self.volume * context.volume_multiplier,
-            pitch=self.pitch,
-        )
-        if not found:
-            log(
-                f'No sound found for \x1b[38;2;255;0;0m"{self.sound}"\x1b[0m, nothing will be played',
-            )
 
 
 def play_sound(

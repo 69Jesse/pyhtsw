@@ -91,7 +91,6 @@ def render_enums(contract: dict) -> str:
     )
 
     sounds = contract['sounds']
-    # A path can carry two pretty names (the firework family does).
     paths = list(dict.fromkeys(entry['path'] for entry in sounds))
     lines.append('')
     lines += literal_block('Sound', paths)

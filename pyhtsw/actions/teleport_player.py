@@ -53,19 +53,6 @@ class TeleportPlayerExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, TeleportPlayerExpression):
-            return False
-        return (
-            self.coordinates == other.coordinates
-            and self.location == other.location
-            and self.prevent_teleport_inside_block
-            == other.prevent_teleport_inside_block
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.location} {self.coordinates}>'
-
 
 def teleport_player(
     location: Location,

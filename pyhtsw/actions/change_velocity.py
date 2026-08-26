@@ -47,18 +47,6 @@ class ChangeVelocityExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, ChangeVelocityExpression):
-            return False
-        return (
-            self.equals_or_eq(self.x, other.x)
-            and self.equals_or_eq(self.y, other.y)
-            and self.equals_or_eq(self.z, other.z)
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<x={self.x} y={self.y} z={self.z}>'
-
 
 def change_velocity(
     x: Checkable | NumericHousingType,

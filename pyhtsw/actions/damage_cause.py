@@ -34,13 +34,3 @@ class DamageCause(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, DamageCause):
-            return False
-        return self.damage_cause == other.damage_cause
-
-    def __repr__(self) -> str:
-        return (
-            f'{self.__class__.__name__}<{self.damage_cause} inverted={self.inverted}>'
-        )

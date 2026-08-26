@@ -45,14 +45,6 @@ class SetCompassTargetExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, SetCompassTargetExpression):
-            return False
-        return self.coordinates == other.coordinates and self.location == other.location
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.location} {self.coordinates}>'
-
 
 def set_compass_target(location: Location) -> None:
     keyword, coordinates = resolve_location(location)

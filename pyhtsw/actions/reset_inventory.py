@@ -13,12 +13,6 @@ class ResetInventoryExpression(Expression):
     def into_htsl(self) -> str:
         return 'resetInventory'
 
-    def equals(self, other: object) -> bool:
-        return isinstance(other, ResetInventoryExpression)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}'
-
 
 def reset_inventory() -> None:
     ResetInventoryExpression().write()

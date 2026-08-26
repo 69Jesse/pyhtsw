@@ -33,14 +33,6 @@ class SetPlayerTeamExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, SetPlayerTeamExpression):
-            return False
-        return self.team.name == other.team.name
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.team.name}>'
-
 
 def set_player_team(team: Team | str) -> None:
     team = team if isinstance(team, Team) else Team(team)

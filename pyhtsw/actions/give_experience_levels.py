@@ -32,14 +32,6 @@ class GiveExperienceLevelsExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, GiveExperienceLevelsExpression):
-            return False
-        return self.levels == other.levels
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.levels}>'
-
 
 def give_experience_levels(levels: int) -> None:
     GiveExperienceLevelsExpression(levels=levels).write()

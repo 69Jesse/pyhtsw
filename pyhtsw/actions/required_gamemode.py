@@ -34,11 +34,3 @@ class RequiredGamemode(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, RequiredGamemode):
-            return False
-        return self.gamemode == other.gamemode
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.gamemode} inverted={self.inverted}>'

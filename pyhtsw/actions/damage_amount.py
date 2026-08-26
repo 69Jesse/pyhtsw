@@ -58,20 +58,6 @@ class DamageAmountCondition(Condition):
             },
         )
 
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, DamageAmountCondition):
-            return False
-        return self.operator is other.operator and self.equals_or_eq(
-            self.amount,
-            other.amount,
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f'{self.__class__.__name__}<{self.operator.value} {self.amount} '
-            f'inverted={self.inverted}>'
-        )
-
 
 @final
 class _DamageAmount:

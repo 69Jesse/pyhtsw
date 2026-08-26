@@ -36,37 +36,10 @@ class RandomExpression(Expression):
         result += '\n}'
         return result
 
-    def cloned(
-        self,
-        *,
-        expressions: list[Expression] | None | Missing = MISSING,
-    ) -> Self:
-        return clone_with(
-            self,
-            {
-                'expressions': expressions,
-            },
-        )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, RandomExpression):
-            return False
-        return len(self.expressions) == len(other.expressions) and all(
-            expr.equals(other_expr)
-            for expr, other_expr in zip(
-                self.expressions,
-                other.expressions,
-                strict=False,
-            )
-        )
-
     def walk_expressions(self) -> Generator[Expression]:
         yield from super().walk_expressions()
         for expr in self.expressions:
             yield from expr.walk_expressions()
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<exprs={len(self.expressions)}>'
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
         # A Random action runs exactly *one* of its actions, chosen uniformly —
@@ -86,6 +59,18 @@ class RandomExpression(Expression):
 
     def describe_nestable_block(self) -> str:
         return 'Random'
+
+    def cloned(
+        self,
+        *,
+        expressions: list[Expression] | None | Missing = MISSING,
+    ) -> Self:
+        return clone_with(
+            self,
+            {
+                'expressions': expressions,
+            },
+        )
 
 
 @final

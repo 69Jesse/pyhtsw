@@ -45,6 +45,18 @@ class DisplayTitleExpression(Expression):
             f' {self.inline(self.fadein)} {self.inline(self.stay)} {self.inline(self.fadeout)}'
         )
 
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        log(
+            formatting_to_ansi(
+                '&7<display-title>\n'
+                f'&7    title: &f{context.get(self.title, cast=False, output="string")}\n'
+                f'&7    subtitle: &f{context.get(self.subtitle, cast=False, output="string")}\n'
+                f'&7    fadein: &f{self.fadein}\n'
+                f'&7    stay: &f{self.stay}\n'
+                f'&7    fadeout: &f{self.fadeout}',
+            ),
+        )
+
     def cloned(
         self,
         *,
@@ -63,32 +75,6 @@ class DisplayTitleExpression(Expression):
                 'stay': stay,
                 'fadeout': fadeout,
             },
-        )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, DisplayTitleExpression):
-            return False
-        return (
-            self.equals_or_eq(self.title, other.title)
-            and self.equals_or_eq(self.subtitle, other.subtitle)
-            and self.fadein == other.fadein
-            and self.stay == other.stay
-            and self.fadeout == other.fadeout
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<title={self.title} subtitle={self.subtitle} fadein={self.fadein} stay={self.stay} fadeout={self.fadeout}>'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        log(
-            formatting_to_ansi(
-                '&7<display-title>\n'
-                f'&7    title: &f{context.get(self.title, cast=False, output="string")}\n'
-                f'&7    subtitle: &f{context.get(self.subtitle, cast=False, output="string")}\n'
-                f'&7    fadein: &f{self.fadein}\n'
-                f'&7    stay: &f{self.stay}\n'
-                f'&7    fadeout: &f{self.fadeout}',
-            ),
         )
 
 

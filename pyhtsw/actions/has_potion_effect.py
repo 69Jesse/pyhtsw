@@ -34,11 +34,3 @@ class HasPotionEffect(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, HasPotionEffect):
-            return False
-        return self.effect == other.effect
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.effect} inverted={self.inverted}>'

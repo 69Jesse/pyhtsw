@@ -43,14 +43,6 @@ class SetPlayerTimeExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, SetPlayerTimeExpression):
-            return False
-        return self.time == other.time
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.time}>'
-
 
 def set_player_time(time: int) -> None:
     # htsw types this field as a plain bounded number, so a stat/placeholder

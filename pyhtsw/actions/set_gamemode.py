@@ -33,14 +33,6 @@ class SetGamemodeExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, SetGamemodeExpression):
-            return False
-        return self.gamemode == other.gamemode
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.gamemode}>'
-
 
 def set_gamemode(gamemode: ALL_GAMEMODES) -> None:
     SetGamemodeExpression(gamemode=gamemode).write()

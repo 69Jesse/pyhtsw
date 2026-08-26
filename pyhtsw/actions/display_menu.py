@@ -45,14 +45,6 @@ class DisplayMenuExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, DisplayMenuExpression):
-            return False
-        return self.name == other.name
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.name}>'
-
 
 def display_menu(menu: 'Menu | str') -> None:
     DisplayMenuExpression(menu=menu).write()

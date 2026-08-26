@@ -33,6 +33,19 @@ class PrintExecutionExpression(ExecutionExpression):
         self.values = values
         self.cast = cast
 
+    def flattened_values(self, context: 'ExecutionContext') -> tuple[object, ...]:
+        flattened = []
+        for value in self.values:
+            if callable(value):
+                flattened.append(call_with_optional_arg(value, context, noun='values'))
+            else:
+                flattened.append(value)
+        return tuple(flattened)
+
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        line = ' '.join(map(str, self.flattened_values(context)))
+        log(context.get(line, cast=self.cast, output='string'))
+
     def cloned(
         self,
         *,
@@ -50,24 +63,3 @@ class PrintExecutionExpression(ExecutionExpression):
                 'cast': cast,
             },
         )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, PrintExecutionExpression):
-            return False
-        return self.values == other.values and self.cast == other.cast
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(values={self.values!r}, cast={self.cast!r})'
-
-    def flattened_values(self, context: 'ExecutionContext') -> tuple[object, ...]:
-        flattened = []
-        for value in self.values:
-            if callable(value):
-                flattened.append(call_with_optional_arg(value, context, noun='values'))
-            else:
-                flattened.append(value)
-        return tuple(flattened)
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        line = ' '.join(map(str, self.flattened_values(context)))
-        log(context.get(line, cast=self.cast, output='string'))

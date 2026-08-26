@@ -35,11 +35,3 @@ class RequiredTeam(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, RequiredTeam):
-            return False
-        return self.equals_or_eq(self.team, other.team)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<team={self.team!r} inverted={self.inverted}>'

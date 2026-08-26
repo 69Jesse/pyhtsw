@@ -33,14 +33,6 @@ class ApplyInventoryLayoutExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, ApplyInventoryLayoutExpression):
-            return False
-        return self.layout.name == other.layout.name
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.layout.name}>'
-
 
 def apply_inventory_layout(layout: Layout | str) -> None:
     layout = layout if isinstance(layout, Layout) else Layout(layout)

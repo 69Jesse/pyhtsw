@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from abc import ABC
+from typing import TYPE_CHECKING, Any, ClassVar, Self, final
 
 from .clone import build_clone_spec, clone_with
 from .expression.housing_type import housing_type_as_rhs
@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from .expression.housing_type import HousingType
 
 
-class BaseObject(ABC):
+class BaseObject(ABC):  # noqa: B024
     # Derived from `__init__` at class creation; see the Cloning section in
     # CLAUDE.md for why the constructor is the single source of truth.
     __clone_fields__: ClassVar[tuple[str, ...]] = ()
@@ -17,6 +17,7 @@ class BaseObject(ABC):
     __clone_map__: ClassVar[dict[str, str]] = {}
     __clone_extra__: ClassVar[tuple[str, ...]] = ()
     __clone_carry__: ClassVar[tuple[str, ...]] = ()
+    __clone_compare__: ClassVar[tuple[str, ...]] = ()
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -46,21 +47,38 @@ class BaseObject(ABC):
             return value.cloned()
         return value
 
-    @abstractmethod
     def equals(self, other: object) -> bool:
-        raise NotImplementedError()
+        if type(other) is not type(self):
+            return False
+        return self.fields_equal(other)
+
+    @final
+    def fields_equal(self, other: 'BaseObject') -> bool:
+        return all(
+            self.equals_or_eq(getattr(self, name), getattr(other, name))
+            for name in self.__clone_compare__
+        )
 
     @staticmethod
     def equals_or_eq(a: object, b: object) -> bool:
         if isinstance(a, BaseObject) and isinstance(b, BaseObject):
             return a.equals(b)
+        if (
+            isinstance(a, list | tuple)
+            and isinstance(b, list | tuple)
+            and type(a) is type(b)
+            and len(a) == len(b)
+        ):
+            return all(BaseObject.equals_or_eq(x, y) for x, y in zip(a, b, strict=True))
         if not isinstance(a, BaseObject) and not isinstance(b, BaseObject):
             return a == b
         return False
 
-    @abstractmethod
     def __repr__(self) -> str:
-        raise NotImplementedError()
+        inner = ', '.join(
+            f'{name}={getattr(self, name)!r}' for name in self.__clone_compare__
+        )
+        return f'{type(self).__name__}<{inner}>'
 
     @staticmethod
     def inline(value: 'Checkable | HousingType | bool') -> str:

@@ -37,14 +37,6 @@ class RemoveItemExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, RemoveItemExpression):
-            return False
-        return self.item == other.item
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.item}>'
-
 
 def remove_item(item: Item) -> None:
     RemoveItemExpression(item=item).write()

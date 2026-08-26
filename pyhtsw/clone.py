@@ -83,6 +83,10 @@ def build_clone_spec(cls: type) -> None:
                 carry.append(name)
     cls.__clone_carry__ = tuple(carry)  # type: ignore[attr-defined]
 
+    compare = [mapping.get(field, field) for field in fields]
+    compare += [name for name in carry if name not in compare]
+    cls.__clone_compare__ = tuple(compare)  # type: ignore[attr-defined]
+
 
 def clone_with(obj: 'BaseObject', overrides: dict[str, Any]) -> Any:
     cls = type(obj)

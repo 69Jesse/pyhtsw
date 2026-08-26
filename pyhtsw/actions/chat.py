@@ -26,6 +26,13 @@ class ChatExpression(Expression):
     def into_htsl(self) -> str:
         return f'chat {self.inline_quoted(self.line)}'
 
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        log(
+            formatting_to_ansi(
+                f'&7* &f{context.get(self.line, cast=False, output="string")}',
+            ),
+        )
+
     def cloned(
         self,
         *,
@@ -36,21 +43,6 @@ class ChatExpression(Expression):
             {
                 'line': line,
             },
-        )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, ChatExpression):
-            return False
-        return self.line == other.line
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.line}>'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        log(
-            formatting_to_ansi(
-                f'&7* &f{context.get(self.line, cast=False, output="string")}',
-            ),
         )
 
 

@@ -59,22 +59,3 @@ class IsItem(Condition):
                 'inverted': inverted,
             },
         )
-
-    def equals_raw(self, other: object) -> bool:
-        if not isinstance(other, IsItem):
-            return False
-        return (
-            self.equals_or_eq(self.item, other.item)
-            and self.what_to_check == other.what_to_check
-            and self.where_to_check == other.where_to_check
-            and self.required_amount == other.required_amount
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f'{self.__class__.__name__}<item={self.item!r} '
-            f'what_to_check={self.what_to_check} '
-            f'where_to_check={self.where_to_check} '
-            f'required_amount={self.required_amount} '
-            f'inverted={self.inverted}>'
-        )

@@ -34,6 +34,12 @@ class TriggerFunctionExpression(Expression):
     def referenced_importables(self) -> list[tuple[str, str]]:
         return [('functions', self.function.name)]
 
+    def raw_execute(self, context: 'ExecutionContext') -> None:
+        context.execute_function(
+            self.function,
+            all_players=self.trigger_for_all_players,
+        )
+
     def cloned(
         self,
         *,
@@ -46,23 +52,6 @@ class TriggerFunctionExpression(Expression):
                 'function': function,
                 'trigger_for_all_players': trigger_for_all_players,
             },
-        )
-
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, TriggerFunctionExpression):
-            return False
-        return (
-            self.function.name == other.function.name
-            and self.trigger_for_all_players == other.trigger_for_all_players
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.function.name} all_players={self.trigger_for_all_players}>'
-
-    def raw_execute(self, context: 'ExecutionContext') -> None:
-        context.execute_function(
-            self.function,
-            all_players=self.trigger_for_all_players,
         )
 
 

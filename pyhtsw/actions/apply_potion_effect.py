@@ -59,20 +59,6 @@ class ApplyPotionEffectExpression(Expression):
             },
         )
 
-    def equals(self, other: object) -> bool:
-        if not isinstance(other, ApplyPotionEffectExpression):
-            return False
-        return (
-            self.potion == other.potion
-            and self.duration == other.duration
-            and self.level == other.level
-            and self.override_existing_effects == other.override_existing_effects
-            and self.show_potion_icon == other.show_potion_icon
-        )
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.potion} duration={self.duration} level={self.level}>'
-
 
 def apply_potion_effect(
     potion: ALL_POTION_EFFECTS,

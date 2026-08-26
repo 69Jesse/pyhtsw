@@ -235,7 +235,7 @@ class IntStack(_BitPackedBase):
                 f'multiple of {per_holder_capacity}.',
             )
 
-    def add(self, value: MaybeSequence[Checkable | int]) -> None:
+    def push(self, value: MaybeSequence[Checkable | int]) -> None:
         values = self._normalize_values(value, label='add')
 
         bits = self.bits
@@ -279,7 +279,7 @@ class IntStack(_BitPackedBase):
                     self.holders[w][0].value &= ~slot_mask
                     self.holders[w][0].value += values[w]
 
-    def remove(
+    def pop(
         self,
         *,
         output: MaybeSequence[Editable],
@@ -294,7 +294,7 @@ class IntStack(_BitPackedBase):
 
 
 class IntQueue(_BitPackedBase):
-    def add(self, value: MaybeSequence[Checkable | int]) -> None:
+    def push(self, value: MaybeSequence[Checkable | int]) -> None:
         values = self._normalize_values(value, label='add')
 
         if self.on_overflow == 'override_oldest':
@@ -307,7 +307,7 @@ class IntQueue(_BitPackedBase):
 
         self._insert_at_back(values)
 
-    def remove(
+    def pop(
         self,
         *,
         output: MaybeSequence[Editable],
@@ -477,7 +477,7 @@ class _SlotContainerBase:
 
 
 class Stack(_SlotContainerBase):
-    def add(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+    def push(self, value: MaybeSequence[Checkable | HousingType]) -> None:
         values = self._normalize_values(value, label='add')
 
         if self.on_overflow == 'ignore':
@@ -498,7 +498,7 @@ class Stack(_SlotContainerBase):
             with Else:
                 self._write_at_slot(0, values)
 
-    def remove(
+    def pop(
         self,
         *,
         output: MaybeSequence[Editable],
@@ -513,7 +513,7 @@ class Stack(_SlotContainerBase):
 
 
 class Queue(_SlotContainerBase):
-    def add(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+    def push(self, value: MaybeSequence[Checkable | HousingType]) -> None:
         values = self._normalize_values(value, label='add')
 
         if self.on_overflow == 'override_oldest':
@@ -568,7 +568,7 @@ class Queue(_SlotContainerBase):
                 self._write_at_slot(i, values)
                 self.counter.value += 1
 
-    def remove(
+    def pop(
         self,
         *,
         output: MaybeSequence[Editable],

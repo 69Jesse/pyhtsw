@@ -11,14 +11,13 @@ from pyhtsw.compiler.container import (
 )
 from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.compiler.schedule import Effects, Resource
-from pyhtsw.config import INDENT
 from pyhtsw.declarations.function import Function
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.expression.condition.conditional_expression import (
     ConditionalExpression,
     ConditionalMode,
 )
-from pyhtsw.expression.expression import Expression
+from pyhtsw.expression.expression import INDENT, Expression
 
 __all__ = (
     'ExitFunctionExpression',

@@ -1023,7 +1023,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     _qarr = StatArray([PlayerStat(f'qa{i}').as_long() for i in range(10)])
     _q = Queue(holders=_qarr, counter=PlayerStat('qac').as_long())
     for _v in (11, 22, 33):
-        _q.add(_v)
+        _q.push(_v)
 
     def check_queue_from_array(_a: StatArray = _qarr) -> None:
         got = [int(ctx.get(_a[i])) for i in range(3)]

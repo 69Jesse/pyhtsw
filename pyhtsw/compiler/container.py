@@ -9,11 +9,11 @@ from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, NamedTuple, NoReturn, Self
 
 from pyhtsw.config import (
+    get_cleanup_stale_files,
+    get_display_output,
+    get_global_export_disabled,
     get_project_name,
     get_projects_folder,
-    should_cleanup_stale_files,
-    should_disable_global_export,
-    should_display_output,
 )
 from pyhtsw.logger import AntiSpamLogger
 from pyhtsw.utils.kebab import into_kebab
@@ -676,10 +676,10 @@ class Container:
             CONTAINERS.pop()
             self.project = None
 
-        if should_cleanup_stale_files():
+        if get_cleanup_stale_files():
             project.cleanup_stale()
 
-        if should_display_output():
+        if get_display_output():
             for written in sorted(project.written_paths):
                 rel = written.relative_to(root).as_posix()
                 log(
@@ -814,7 +814,7 @@ def on_program_exit() -> None:
         )
 
     container.finalize()
-    if should_disable_global_export():
+    if get_global_export_disabled():
         log(
             '\x1b[38;2;255;0;0mGlobal export is disabled. No .htsl file will be written.\x1b[0m',
         )

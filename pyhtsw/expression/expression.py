@@ -14,7 +14,12 @@ if TYPE_CHECKING:
     from pyhtsw.stats.temporary_stat import TemporaryStat
 
 
-__all__ = ('Expression',)
+__all__ = (
+    'INDENT',
+    'Expression',
+)
+
+INDENT: str = ' ' * 4
 
 
 # Lazily cached to dodge import cycles; these are only touched well after every

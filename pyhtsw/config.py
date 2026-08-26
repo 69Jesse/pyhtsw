@@ -8,11 +8,11 @@ __all__ = (
     'set_projects_folder',
     'get_projects_folder',
     'disable_global_export',
-    'should_disable_global_export',
-    'display_output',
-    'should_display_output',
-    'cleanup_stale_files',
-    'should_cleanup_stale_files',
+    'get_global_export_disabled',
+    'set_display_output',
+    'get_display_output',
+    'set_cleanup_stale_files',
+    'get_cleanup_stale_files',
     'set_project_name',
     'get_project_name',
     'set_house_uuid',
@@ -22,8 +22,6 @@ __all__ = (
 
 HERE: Path = Path(__file__).parent
 CACHED_PROJECTS_FOLDER_PATH: Path = HERE / 'cached_projects_folder.txt'
-
-INDENT: str = ' ' * 4
 
 
 def _default_projects_folder() -> Path | None:
@@ -107,28 +105,28 @@ def disable_global_export(value: bool = True) -> None:
     DISABLE_GLOBAL_EXPORT = value
 
 
-def should_disable_global_export() -> bool:
+def get_global_export_disabled() -> bool:
     return DISABLE_GLOBAL_EXPORT
 
 
 DISPLAY_OUTPUT: bool = False
 
 
-def display_output(value: bool = True) -> None:
+def set_display_output(value: bool = True) -> None:
     """On export, print every generated file's contents (`.htsl`, `import.json`,
     `.snbt`) to the console."""
     global DISPLAY_OUTPUT
     DISPLAY_OUTPUT = value
 
 
-def should_display_output() -> bool:
+def get_display_output() -> bool:
     return DISPLAY_OUTPUT
 
 
 CLEANUP_STALE_FILES: bool = False
 
 
-def cleanup_stale_files(value: bool = True) -> None:
+def set_cleanup_stale_files(value: bool = True) -> None:
     """Opt in to deleting generated files (`.htsl`/`.snbt`/`import.json`) a prior
     export wrote into this project's folder that are no longer produced. Off by
     default; hand-placed files (e.g. `.txt`) are never touched either way."""
@@ -136,7 +134,7 @@ def cleanup_stale_files(value: bool = True) -> None:
     CLEANUP_STALE_FILES = value
 
 
-def should_cleanup_stale_files() -> bool:
+def get_cleanup_stale_files() -> bool:
     return CLEANUP_STALE_FILES
 
 

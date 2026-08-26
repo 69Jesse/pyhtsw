@@ -2,7 +2,7 @@ import warnings
 
 from helpers import expect_exception
 
-from pyhtsw.ext import (
+from pyhtsw.text import (
     fix_scoreboard_line,
     number_lengths,
     remove_formatting,

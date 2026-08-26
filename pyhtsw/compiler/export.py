@@ -7,7 +7,7 @@ from pyhtsw.compiler.importable import Importable
 from pyhtsw.declarations.function import Function
 
 type CallableNoArgs = Callable[[], Any]
-type Exportable = Function | CallableNoArgs | Sequence[Exportable] | ModuleType | object
+type Exportable = Function | CallableNoArgs | Sequence[Exportable] | ModuleType
 
 
 def export(

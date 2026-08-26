@@ -2444,4 +2444,11 @@ def read_skull_data() -> SkullData:
     }  # pyright: ignore[reportReturnType]
 
 
-SKULL_DATA: SkullData = read_skull_data()
+_SKULL_DATA: SkullData | None = None
+
+
+def get_skull_data() -> SkullData:
+    global _SKULL_DATA
+    if _SKULL_DATA is None:
+        _SKULL_DATA = read_skull_data()
+    return _SKULL_DATA

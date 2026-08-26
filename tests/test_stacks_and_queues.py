@@ -14,9 +14,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     s = IntStack(holder=h, counter=counter, most=255)
-    s.add(42)
-    s.add(7)
-    s.remove(output=out)
+    s.push(42)
+    s.push(7)
+    s.pop(output=out)
 
     def check_top() -> None:
         assert int(ctx.get(out)) == 7
@@ -32,9 +32,9 @@ for _n in (1, 5, 7):
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
         s = IntStack(holder=h, counter=counter, most=255)
         for i in range(_n):
-            s.add((i + 1) * 11)
+            s.push((i + 1) * 11)
         for i in range(_n):
-            s.remove(output=outs[i])
+            s.pop(output=outs[i])
 
         def check_lifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
@@ -51,7 +51,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     s = IntStack(holder=h, counter=counter, most=255)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_empty() -> None:
         assert int(ctx.get(out)) == -1
@@ -67,9 +67,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out_empty = PlayerStat('oe').as_long()
     out_real = PlayerStat('or').as_long()
     s = IntStack(holder=h, counter=counter, most=255, if_empty=999)
-    s.remove(output=out_empty)
-    s.add(42)
-    s.remove(output=out_real)
+    s.pop(output=out_empty)
+    s.push(42)
+    s.pop(output=out_real)
 
     def check_custom_sentinel() -> None:
         assert int(ctx.get(out_empty)) == 999
@@ -86,7 +86,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out = PlayerStat('out').as_long()
     ctx.put(sentinel_src, 7777, ignore_warning=True)
     s = IntStack(holder=h, counter=counter, most=255, if_empty=sentinel_src)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_dynamic_sentinel() -> None:
         assert int(ctx.get(out)) == 7777
@@ -107,7 +107,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         flag.value = 1
 
     s = IntStack(holder=h, counter=counter, most=255, if_empty=on_empty)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_callable_empty() -> None:
         assert int(ctx.get(flag)) == 1
@@ -124,7 +124,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out = PlayerStat('out').as_long()
     ctx.put(out, 555, ignore_warning=True)
     s = IntStack(holder=h, counter=counter, most=255, if_empty=None)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_none_empty() -> None:
         assert int(ctx.get(out)) == 555
@@ -143,11 +143,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         pops.value += 1
 
     s = IntStack(holder=h, counter=counter, most=255, if_present=on_pop)
-    s.add(10)
-    s.add(20)
-    s.remove(output=out)  # success -> pops=1
-    s.remove(output=out)  # success -> pops=2
-    s.remove(output=out)  # empty   -> pops stays at 2
+    s.push(10)
+    s.push(20)
+    s.pop(output=out)  # success -> pops=1
+    s.pop(output=out)  # success -> pops=2
+    s.pop(output=out)  # empty   -> pops stays at 2
 
     def check_if_present() -> None:
         assert int(ctx.get(pops)) == 2
@@ -166,9 +166,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out_suppress = PlayerStat('os').as_long()
     ctx.put(out_suppress, 42, ignore_warning=True)
     s = IntStack(holder=h, counter=counter, most=255, if_empty=100)
-    s.remove(output=out_class)  # uses class-level 100
-    s.remove(output=out_override, if_empty=200)  # overrides to 200
-    s.remove(output=out_suppress, if_empty=None)  # suppresses, untouched
+    s.pop(output=out_class)  # uses class-level 100
+    s.pop(output=out_override, if_empty=200)  # overrides to 200
+    s.pop(output=out_suppress, if_empty=None)  # suppresses, untouched
 
     def check_per_call() -> None:
         assert int(ctx.get(out_class)) == 100
@@ -183,9 +183,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     s = IntStack(holder=h, counter=counter, most=255)
-    s.add(1)
-    s.add(2)
-    s.add(3)
+    s.push(1)
+    s.push(2)
+    s.push(3)
 
     def check_counter() -> None:
         assert int(ctx.get(counter)) == 3
@@ -200,9 +200,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out_first = PlayerStat('of').as_long()
     out_second = PlayerStat('os').as_long()
     s = IntStack(holder=h, counter=counter, most=255)
-    s.add(99)
-    s.remove(output=out_first)
-    s.remove(output=out_second)
+    s.push(99)
+    s.pop(output=out_first)
+    s.pop(output=out_second)
 
     def check_double_pop() -> None:
         assert int(ctx.get(out_first)) == 99
@@ -230,14 +230,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='ignore',
     )
     for i in range(10):  # 7 successful pushes, 3 ignored
-        s.add(i + 1)
+        s.push(i + 1)
 
     def check_counter_saturated() -> None:
         assert int(ctx.get(counter)) == 7
 
     ctx.assert_all(check_counter_saturated)
     for i in range(7):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_ignore_pops(_outs: list = outs) -> None:
         for i in range(7):
@@ -262,14 +262,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_newest',
     )
     for i in range(10):  # values 1..6 stay, then 7 is replaced repeatedly by 8, 9, 10
-        s.add(i + 1)
+        s.push(i + 1)
 
     def check_stack_override_newest_counter() -> None:
         assert int(ctx.get(counter)) == 7
 
     ctx.assert_all(check_stack_override_newest_counter)
     for i in range(7):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_stack_override_newest(_outs: list = outs) -> None:
         # Stored: [1, 2, 3, 4, 5, 6, 10] (top = 10, since 7,8,9 each got
@@ -297,14 +297,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_oldest',
     )
     for i in range(11):  # values 1..3 get dropped, 4..11 survive
-        s.add(i + 1)
+        s.push(i + 1)
 
     def check_override_counter() -> None:
         assert int(ctx.get(counter)) == 8
 
     ctx.assert_all(check_override_counter)
     for i in range(8):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_override_pops(_outs: list = outs) -> None:
         for i in range(8):
@@ -330,9 +330,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         capacity=14,
     )
     for i in range(14):
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(14):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_cascade(_outs: list = outs) -> None:
         for i in range(14):
@@ -357,9 +357,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_oldest',
     )
     for i in range(22):  # values 1..6 dropped, 7..22 survive
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(16):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_multi_override(_outs: list = outs) -> None:
         for i in range(16):
@@ -382,11 +382,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         most=255,
         capacity=14,
     )
-    s.add(11)
-    s.add(22)
-    s.add(33)
+    s.push(11)
+    s.push(22)
+    s.push(33)
     for i in range(3):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_partial(_outs: list = outs) -> None:
         assert int(ctx.get(_outs[0])) == 33
@@ -411,11 +411,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         counter=counter,
         most=1023,
     )
-    s.add((1, 100))
-    s.add((2, 200))
-    s.add((3, 300))
+    s.push((1, 100))
+    s.push((2, 200))
+    s.push((3, 300))
     for i in range(3):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_width2(_outs: list = outs) -> None:
         expected = [(3, 300), (2, 200), (1, 100)]
@@ -443,9 +443,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         capacity=12,
     )
     for i in range(12):
-        s.add((i + 1, (i + 1) * 10))
+        s.push((i + 1, (i + 1) * 10))
     for i in range(12):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_width2_multi(_outs: list = outs) -> None:
         for i in range(12):
@@ -533,7 +533,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    s.add((1, 2))
+    s.push((1, 2))
 
 # Wrong-length push sequence on a width-2 stack (single value).
 with expect_exception(ValueError):
@@ -542,7 +542,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    s.add(1)
+    s.push(1)
 
 # Wrong-length pop output on a width-1 stack.
 with expect_exception(ValueError):
@@ -551,7 +551,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    s.remove(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
+    s.pop(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
 
 # Push value out of range (negative).
 with expect_exception(ValueError):
@@ -560,7 +560,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    s.add(-1)
+    s.push(-1)
 
 # Push value out of range (above most).
 with expect_exception(ValueError):
@@ -569,7 +569,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    s.add(256)
+    s.push(256)
 
 
 # ===========================================================================
@@ -584,9 +584,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     q = IntQueue(holder=h, counter=counter, most=255)
-    q.add(42)
-    q.add(7)
-    q.remove(output=out)
+    q.push(42)
+    q.push(7)
+    q.pop(output=out)
 
     def check_front() -> None:
         assert int(ctx.get(out)) == 42
@@ -602,9 +602,9 @@ for _n in (1, 5, 7):
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
         q = IntQueue(holder=h, counter=counter, most=255)
         for i in range(_n):
-            q.add((i + 1) * 11)
+            q.push((i + 1) * 11)
         for i in range(_n):
-            q.remove(output=outs[i])
+            q.pop(output=outs[i])
 
         def check_fifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
@@ -621,7 +621,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     q = IntQueue(holder=h, counter=counter, most=255)
-    q.remove(output=out)
+    q.pop(output=out)
 
     def check_dequeue_empty() -> None:
         assert int(ctx.get(out)) == -1
@@ -637,9 +637,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out_empty = PlayerStat('oe').as_long()
     out_real = PlayerStat('or').as_long()
     q = IntQueue(holder=h, counter=counter, most=255, if_empty=42)
-    q.remove(output=out_empty)
-    q.add(99)
-    q.remove(output=out_real)
+    q.pop(output=out_empty)
+    q.push(99)
+    q.pop(output=out_real)
 
     def check_q_custom_sentinel() -> None:
         assert int(ctx.get(out_empty)) == 42
@@ -653,9 +653,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     q = IntQueue(holder=h, counter=counter, most=255)
-    q.add(1)
-    q.add(2)
-    q.add(3)
+    q.push(1)
+    q.push(2)
+    q.push(3)
 
     def check_q_counter() -> None:
         assert int(ctx.get(counter)) == 3
@@ -671,12 +671,12 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out_b = PlayerStat('ob').as_long()
     out_c = PlayerStat('oc').as_long()
     q = IntQueue(holder=h, counter=counter, most=255)
-    q.add(11)
-    q.add(22)
-    q.remove(output=out_a)  # 11
-    q.add(33)
-    q.remove(output=out_b)  # 22
-    q.remove(output=out_c)  # 33
+    q.push(11)
+    q.push(22)
+    q.pop(output=out_a)  # 11
+    q.push(33)
+    q.pop(output=out_b)  # 22
+    q.pop(output=out_c)  # 33
 
     def check_interleave() -> None:
         assert int(ctx.get(out_a)) == 11
@@ -703,9 +703,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='ignore',
     )
     for i in range(10):  # 7 successful enqueues, 3 ignored
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(7):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_ignore(_outs: list = outs) -> None:
         for i in range(7):
@@ -732,9 +732,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_oldest',
     )
     for i in range(10):  # values 1..3 dropped, 4..10 survive
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(7):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_override(_outs: list = outs) -> None:
         for i in range(7):
@@ -759,14 +759,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_newest',
     )
     for i in range(10):  # 1..7 fill; 8, 9, 10 each replace the back
-        q.add(i + 1)
+        q.push(i + 1)
 
     def check_q_override_newest_counter() -> None:
         assert int(ctx.get(counter)) == 7
 
     ctx.assert_all(check_q_override_newest_counter)
     for i in range(7):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_override_newest(_outs: list = outs) -> None:
         # Stored: [1, 2, 3, 4, 5, 6, 10] (front -> back).
@@ -791,9 +791,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_newest',
     )
     for i in range(20):  # 1..16 fill; 17..20 each replace the back
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(16):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_multi_override_newest(_outs: list = outs) -> None:
         # Stored: [1..15, 20] (front -> back, since each push past full
@@ -822,9 +822,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_oldest',
     )
     for i in range(15):  # values 1..5 dropped, 6..15 survive
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(10):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_override_exact(_outs: list = outs) -> None:
         for i in range(10):
@@ -847,9 +847,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         capacity=14,
     )
     for i in range(14):
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(14):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_cascade(_outs: list = outs) -> None:
         for i in range(14):
@@ -874,9 +874,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         on_overflow='override_oldest',
     )
     for i in range(20):  # values 1..6 dropped, 7..20 survive
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(14):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_multi_override(_outs: list = outs) -> None:
         for i in range(14):
@@ -900,11 +900,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         counter=counter,
         most=1023,
     )
-    q.add((1, 100))
-    q.add((2, 200))
-    q.add((3, 300))
+    q.push((1, 100))
+    q.push((2, 200))
+    q.push((3, 300))
     for i in range(3):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_width2(_outs: list = outs) -> None:
         expected = [(1, 100), (2, 200), (3, 300)]
@@ -934,9 +934,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         capacity=12,
     )
     for i in range(12):
-        q.add((i + 1, (i + 1) * 10))
+        q.push((i + 1, (i + 1) * 10))
     for i in range(12):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_q_width2_multi(_outs: list = outs) -> None:
         for i in range(12):
@@ -991,7 +991,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    q.add((1, 2))
+    q.push((1, 2))
 
 # Wrong-length dequeue output
 with expect_exception(ValueError):
@@ -1000,7 +1000,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    q.remove(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
+    q.pop(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
 
 # Enqueue value out of range (negative)
 with expect_exception(ValueError):
@@ -1009,7 +1009,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    q.add(-1)
+    q.push(-1)
 
 # Enqueue value out of range (above most)
 with expect_exception(ValueError):
@@ -1018,7 +1018,7 @@ with expect_exception(ValueError):
         counter=PlayerStat('c').as_long(),
         most=255,
     )
-    q.add(256)
+    q.push(256)
 
 
 # ===========================================================================
@@ -1031,9 +1031,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     s = Stack(holders=holders, counter=counter)
-    s.add(42)
-    s.add(7)
-    s.remove(output=out)
+    s.push(42)
+    s.push(7)
+    s.pop(output=out)
 
     def check_stack_top() -> None:
         assert int(ctx.get(out)) == 7
@@ -1049,9 +1049,9 @@ for _n in (1, 4, 8):
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
         s = Stack(holders=holders, counter=counter)
         for i in range(_n):
-            s.add((i + 1) * 11)
+            s.push((i + 1) * 11)
         for i in range(_n):
-            s.remove(output=outs[i])
+            s.pop(output=outs[i])
 
         def check_stack_lifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
@@ -1070,7 +1070,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out = PlayerStat('out').as_long()
     ctx.put(out, 999, ignore_warning=True)
     s = Stack(holders=holders, counter=counter)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_stack_empty() -> None:
         assert int(ctx.get(out)) == 999  # untouched
@@ -1087,7 +1087,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out = PlayerStat('out').as_long()
     ctx.put(out, 100, ignore_warning=True)
     s = Stack(holders=holders, counter=counter, if_empty=-99)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_stack_if_empty() -> None:
         assert int(ctx.get(out)) == -99
@@ -1107,7 +1107,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         flag.value = 7
 
     s = Stack(holders=holders, counter=counter, if_empty=on_empty_stack)
-    s.remove(output=out)
+    s.pop(output=out)
 
     def check_stack_callable_empty() -> None:
         assert int(ctx.get(flag)) == 7
@@ -1128,12 +1128,12 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         pops.value += 1
 
     s = Stack(holders=holders, counter=counter, if_present=on_pop_stack)
-    s.add(1)
-    s.add(2)
-    s.add(3)
-    s.remove(output=out)  # success -> pops=1
-    s.remove(output=out, if_present=None)  # success but suppressed
-    s.remove(output=out)  # success -> pops=2
+    s.push(1)
+    s.push(2)
+    s.push(3)
+    s.pop(output=out)  # success -> pops=1
+    s.pop(output=out, if_present=None)  # success but suppressed
+    s.pop(output=out)  # success -> pops=2
 
     def check_stack_if_present() -> None:
         assert int(ctx.get(pops)) == 2
@@ -1146,9 +1146,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(5)]
     counter = PlayerStat('c').as_long()
     s = Stack(holders=holders, counter=counter)
-    s.add(1)
-    s.add(2)
-    s.add(3)
+    s.push(1)
+    s.push(2)
+    s.push(3)
 
     def check_stack_counter() -> None:
         assert int(ctx.get(counter)) == 3
@@ -1163,9 +1163,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
     s = Stack(holders=holders, counter=counter, on_overflow='ignore')
     for i in range(7):  # 4 successful, 3 ignored
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(4):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_stack_ignore(_outs: list = outs) -> None:
         for i, want in enumerate([4, 3, 2, 1]):
@@ -1182,9 +1182,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
     s = Stack(holders=holders, counter=counter, on_overflow='override_oldest')
     for i in range(7):  # values 1..3 dropped, 4..7 survive
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(4):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_stack_override_oldest(_outs: list = outs) -> None:
         for i, want in enumerate([7, 6, 5, 4]):
@@ -1201,9 +1201,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
     s = Stack(holders=holders, counter=counter, on_overflow='override_newest')
     for i in range(7):  # 1..4 fill; 5, 6, 7 each replace the top
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(4):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_stack_override_newest(_outs: list = outs) -> None:
         # Stored: [7, 3, 2, 1] (top to bottom). Pop order: 7, 3, 2, 1.
@@ -1225,11 +1225,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         for i in range(3)
     ]
     s = Stack(holders=holders, counter=counter)
-    s.add((1, 100))
-    s.add((2, 200))
-    s.add((3, 300))
+    s.push((1, 100))
+    s.push((2, 200))
+    s.push((3, 300))
     for i in range(3):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_stack_width2(_outs: list = outs) -> None:
         expected = [(3, 300), (2, 200), (1, 100)]
@@ -1248,11 +1248,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     str_outs = [PlayerStat(f'so{i}').as_string() for i in range(3)]
     s = Stack(holders=holders, counter=counter)
-    s.add('alpha')
-    s.add('beta')
-    s.add('gamma')
+    s.push('alpha')
+    s.push('beta')
+    s.push('gamma')
     for i in range(3):
-        s.remove(output=str_outs[i])
+        s.pop(output=str_outs[i])
 
     def check_stack_string() -> None:
         assert str(ctx.get(str_outs[0])) == 'gamma'
@@ -1289,7 +1289,7 @@ with expect_exception(ValueError):
         holders=[PlayerStat(f'h{i}').as_long() for i in range(3)],
         counter=PlayerStat('c').as_long(),
     )
-    s.add((1, 2))
+    s.push((1, 2))
 
 # Wrong-length pop output
 with expect_exception(ValueError):
@@ -1297,7 +1297,7 @@ with expect_exception(ValueError):
         holders=[PlayerStat(f'h{i}').as_long() for i in range(3)],
         counter=PlayerStat('c').as_long(),
     )
-    s.remove(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
+    s.pop(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
 
 
 # ===========================================================================
@@ -1310,9 +1310,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     q = Queue(holders=holders, counter=counter)
-    q.add(42)
-    q.add(7)
-    q.remove(output=out)
+    q.push(42)
+    q.push(7)
+    q.pop(output=out)
 
     def check_queue_front() -> None:
         assert int(ctx.get(out)) == 42
@@ -1328,9 +1328,9 @@ for _n in (1, 4, 8):
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
         q = Queue(holders=holders, counter=counter)
         for i in range(_n):
-            q.add((i + 1) * 11)
+            q.push((i + 1) * 11)
         for i in range(_n):
-            q.remove(output=outs[i])
+            q.pop(output=outs[i])
 
         def check_queue_fifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
@@ -1348,7 +1348,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out = PlayerStat('out').as_long()
     ctx.put(out, 999, ignore_warning=True)
     q = Queue(holders=holders, counter=counter)
-    q.remove(output=out)
+    q.pop(output=out)
 
     def check_queue_empty() -> None:
         assert int(ctx.get(out)) == 999
@@ -1365,12 +1365,12 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     out_b = PlayerStat('ob').as_long()
     out_c = PlayerStat('oc').as_long()
     q = Queue(holders=holders, counter=counter)
-    q.add(11)
-    q.add(22)
-    q.remove(output=out_a)  # 11
-    q.add(33)
-    q.remove(output=out_b)  # 22
-    q.remove(output=out_c)  # 33
+    q.push(11)
+    q.push(22)
+    q.pop(output=out_a)  # 11
+    q.push(33)
+    q.pop(output=out_b)  # 22
+    q.pop(output=out_c)  # 33
 
     def check_queue_interleave() -> None:
         assert int(ctx.get(out_a)) == 11
@@ -1388,9 +1388,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
     q = Queue(holders=holders, counter=counter, on_overflow='ignore')
     for i in range(7):
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(4):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_queue_ignore(_outs: list = outs) -> None:
         for i, want in enumerate([1, 2, 3, 4]):
@@ -1407,9 +1407,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
     q = Queue(holders=holders, counter=counter, on_overflow='override_oldest')
     for i in range(7):  # 1..3 dropped, 4..7 survive
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(4):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_queue_override_oldest(_outs: list = outs) -> None:
         for i, want in enumerate([4, 5, 6, 7]):
@@ -1426,9 +1426,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
     q = Queue(holders=holders, counter=counter, on_overflow='override_newest')
     for i in range(7):  # 1..4 fill, then 5, 6, 7 each replace the back
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(4):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_queue_override_newest(_outs: list = outs) -> None:
         # Stored: [1, 2, 3, 7] front -> back.
@@ -1451,11 +1451,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         for i in range(3)
     ]
     q = Queue(holders=holders, counter=counter)
-    q.add((1, 100))
-    q.add((2, 200))
-    q.add((3, 300))
+    q.push((1, 100))
+    q.push((2, 200))
+    q.push((3, 300))
     for i in range(3):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_queue_width2(_outs: list = outs) -> None:
         expected = [(1, 100), (2, 200), (3, 300)]
@@ -1474,11 +1474,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     counter = PlayerStat('c').as_long()
     qstr_outs = [PlayerStat(f'qso{i}').as_string() for i in range(3)]
     q = Queue(holders=holders, counter=counter)
-    q.add('first')
-    q.add('second')
-    q.add('third')
+    q.push('first')
+    q.push('second')
+    q.push('third')
     for i in range(3):
-        q.remove(output=qstr_outs[i])
+        q.pop(output=qstr_outs[i])
 
     def check_queue_string() -> None:
         assert str(ctx.get(qstr_outs[0])) == 'first'
@@ -1502,14 +1502,14 @@ with expect_exception(ValueError):
         holders=[PlayerStat(f'h{i}').as_long() for i in range(3)],
         counter=PlayerStat('c').as_long(),
     )
-    q.add((1, 2))
+    q.push((1, 2))
 
 with expect_exception(ValueError):
     q = Queue(
         holders=[PlayerStat(f'h{i}').as_long() for i in range(3)],
         counter=PlayerStat('c').as_long(),
     )
-    q.remove(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
+    q.pop(output=(PlayerStat('a').as_long(), PlayerStat('b').as_long()))
 
 
 _BIG = 28  # slot holders: a 27-deep shift clears the per-if action cap
@@ -1522,9 +1522,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'bigqo{i}').as_long() for i in range(_BIG)]
     q = Queue(holders=holders, counter=counter)
     for i in range(_BIG):
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(_BIG):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_big_queue(_outs: list = outs) -> None:
         for i in range(_BIG):
@@ -1540,9 +1540,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'bigqoo{i}').as_long() for i in range(_BIG)]
     q = Queue(holders=holders, counter=counter, on_overflow='override_oldest')
     for i in range(_BIG + 8):  # first 8 fall off the front
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(_BIG):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_big_queue_oldest(_outs: list = outs) -> None:
         for i in range(_BIG):
@@ -1559,9 +1559,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'bigqno{i}').as_long() for i in range(_BIG)]
     q = Queue(holders=holders, counter=counter, on_overflow='override_newest')
     for i in range(_BIG + 8):  # 1..28 fill; 29..36 each replace the back
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(_BIG):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_big_queue_newest(_outs: list = outs) -> None:
         # Stored front -> back: [1 .. 27, 36].
@@ -1579,9 +1579,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'bigso{i}').as_long() for i in range(_BIG)]
     s = Stack(holders=holders, counter=counter)
     for i in range(_BIG):
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(_BIG):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_big_stack(_outs: list = outs) -> None:
         for i in range(_BIG):
@@ -1598,9 +1598,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'bigsoo{i}').as_long() for i in range(_BIG)]
     s = Stack(holders=holders, counter=counter, on_overflow='override_oldest')
     for i in range(_BIG + 8):  # first 8 fall off the bottom
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(_BIG):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_big_stack_oldest(_outs: list = outs) -> None:
         for i in range(_BIG):
@@ -1617,9 +1617,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     outs = [PlayerStat(f'bigsno{i}').as_long() for i in range(_BIG)]
     s = Stack(holders=holders, counter=counter, on_overflow='override_newest')
     for i in range(_BIG + 8):  # 1..28 fill; 29..36 each replace the top
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(_BIG):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_big_stack_newest(_outs: list = outs) -> None:
         # Stored top -> bottom: [36, 27, 26, ..., 1].
@@ -1641,9 +1641,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         capacity=_INT_CAP,
     )
     for i in range(16):
-        q.add(i + 1)
+        q.push(i + 1)
     for i in range(16):
-        q.remove(output=outs[i])
+        q.pop(output=outs[i])
 
     def check_big_intqueue(_outs: list = outs) -> None:
         for i in range(16):
@@ -1663,9 +1663,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         capacity=_INT_CAP,
     )
     for i in range(16):
-        s.add(i + 1)
+        s.push(i + 1)
     for i in range(16):
-        s.remove(output=outs[i])
+        s.pop(output=outs[i])
 
     def check_big_intstack(_outs: list = outs) -> None:
         for i in range(16):
@@ -1684,8 +1684,8 @@ with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
                 counter=PlayerStat('fqc').as_long(),
                 on_overflow=_ov,
             )
-            _q.add(1)
-            _q.remove(output=PlayerStat('fqo').as_long())
+            _q.push(1)
+            _q.pop(output=PlayerStat('fqo').as_long())
         assert _container.into_htsl()
 
         with Container() as _container:
@@ -1694,8 +1694,8 @@ with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
                 counter=PlayerStat('fsc').as_long(),
                 on_overflow=_ov,
             )
-            _s.add(1)
-            _s.remove(output=PlayerStat('fso').as_long())
+            _s.push(1)
+            _s.pop(output=PlayerStat('fso').as_long())
         assert _container.into_htsl()
 
         with Container() as _container:
@@ -1706,8 +1706,8 @@ with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
                 capacity=_INT_CAP,
                 on_overflow=_ov,
             )
-            _iq.add(1)
-            _iq.remove(output=PlayerStat('fiqo').as_long())
+            _iq.push(1)
+            _iq.pop(output=PlayerStat('fiqo').as_long())
         assert _container.into_htsl()
 
         with Container() as _container:
@@ -1718,8 +1718,8 @@ with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
                 capacity=_INT_CAP,
                 on_overflow=_ov,
             )
-            _is.add(1)
-            _is.remove(output=PlayerStat('fiso').as_long())
+            _is.push(1)
+            _is.pop(output=PlayerStat('fiso').as_long())
         assert _container.into_htsl()
 
 
@@ -1734,7 +1734,7 @@ for _cap in (10, 25, 30, 50):
             )
             _pushed = _cap + 3
             for _v in range(_pushed):
-                _q.add(1000 + _v)
+                _q.push(1000 + _v)
 
             def check_fast_queue(
                 _c: int = _cap,

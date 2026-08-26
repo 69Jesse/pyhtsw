@@ -1,5 +1,5 @@
 def get_placeholder_parts(value: str) -> list[str]:
-    from ..checkable import Checkable
+    from pyhtsw.checkable import Checkable
 
     spans: list[tuple[int, int]] = []
     for pattern, _ in Checkable.iter_pattern_factories():

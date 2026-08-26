@@ -3,14 +3,13 @@ from collections.abc import Callable, Sequence
 from types import EllipsisType
 from typing import Literal
 
+from pyhtsw.actions.conditional.statements import Else, IfAll
+from pyhtsw.checkable import Checkable
+from pyhtsw.editable import Editable, HousingType
+from pyhtsw.ext.array_read_write import MaybeSequence, assert_same_widths, into_sequence
+from pyhtsw.helpers import chunked
 from pyhtsw.stats.stat import Stat
 from pyhtsw.stats.temporary_stat import TemporaryStat
-
-from ..actions.conditional.statements import Else, IfAll
-from ..checkable import Checkable
-from ..editable import Editable, HousingType
-from ..helpers import chunked
-from .array_read_write import MaybeSequence, assert_same_widths, into_sequence
 
 type Factory[T] = Callable[[int], T]
 type MaybeFactory[T] = T | Factory[T]
@@ -526,7 +525,7 @@ class Queue(_SlotContainerBase):
         # array_write's fast path (long stats named in an arithmetic run) the
         # per-slot conditional cascade collapses into the composed write plus
         # one counter guard.
-        from .array_read_write import _fast_write_plan, array_write
+        from pyhtsw.ext.array_read_write import _fast_write_plan, array_write
 
         if (
             _fast_write_plan(

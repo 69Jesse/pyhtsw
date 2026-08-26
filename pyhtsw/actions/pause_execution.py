@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 
-from ..expression.expression import Expression
-
 if TYPE_CHECKING:
-    from ..execute.context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 
 __all__ = (
@@ -32,7 +31,7 @@ class PauseExecutionExpression(Expression):
         return f'pause {self.inline(self.ticks)}'
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
-        from ..execute.signal import PauseSignal
+        from pyhtsw.execute.signal import PauseSignal
 
         raise PauseSignal(self.ticks)
 

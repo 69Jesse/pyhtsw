@@ -1,12 +1,11 @@
 from typing import Self, final
 
+from pyhtsw.checkable import Checkable
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
+from pyhtsw.expression.housing_type import NumericHousingType
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..checkable import Checkable
-from ..expression.expression import Expression
-from ..expression.housing_type import NumericHousingType
 
 __all__ = (
     'ChangeVelocityExpression',

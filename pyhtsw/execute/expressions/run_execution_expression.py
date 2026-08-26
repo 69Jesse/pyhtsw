@@ -2,12 +2,11 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Self
 
 from pyhtsw.clone import MISSING, Missing, clone_with
-
-from ...utils.callback import call_with_optional_arg
-from .execution_expression import ExecutionExpression
+from pyhtsw.execute.expressions.execution_expression import ExecutionExpression
+from pyhtsw.utils.callback import call_with_optional_arg
 
 if TYPE_CHECKING:
-    from ..context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 
 __all__ = (

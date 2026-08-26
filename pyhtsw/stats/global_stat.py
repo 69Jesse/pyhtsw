@@ -4,9 +4,8 @@ from typing import Self, final
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.expression.housing_type import HousingType, housing_type_from_string
 from pyhtsw.internal_type import InternalType
-
-from .player_stat import _split_parts
-from .stat import Stat
+from pyhtsw.stats.player_stat import _split_parts
+from pyhtsw.stats.stat import Stat
 
 __all__ = ('GlobalStat',)
 

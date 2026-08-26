@@ -1,8 +1,7 @@
 from typing import ClassVar, Self
 
 from pyhtsw.clone import MISSING, Missing, clone_with
-
-from .condition import Condition
+from pyhtsw.expression.condition.condition import Condition
 
 __all__ = ('NamedCondition',)
 

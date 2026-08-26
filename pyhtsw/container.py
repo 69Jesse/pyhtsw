@@ -8,24 +8,25 @@ from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, NamedTuple, NoReturn, Self
 
-from .config import (
+from pyhtsw.config import (
     get_project_name,
     get_projects_folder,
     should_cleanup_stale_files,
     should_disable_global_export,
     should_display_output,
 )
-from .logger import AntiSpamLogger
-from .utils.kebab import into_kebab
-from .utils.log import log
+from pyhtsw.logger import AntiSpamLogger
+from pyhtsw.utils.kebab import into_kebab
+from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from .block import Block
-    from .editable import Editable
-    from .expression.expression import Expression
-    from .importable import Importable, Project
-    from .item_plan import ItemPlan
-    from .limits import ImportableKind
+    from pyhtsw.block import Block
+    from pyhtsw.importable import Importable, Project
+    from pyhtsw.item_plan import ItemPlan
+    from pyhtsw.limits import ImportableKind
+
+    from pyhtsw.editable import Editable
+    from pyhtsw.expression.expression import Expression
 
 
 __all__ = (
@@ -108,7 +109,7 @@ class Container:
         ignore_scope: bool = False,
         allow_nested_expressions: bool = False,
     ) -> None:
-        from .block import GlobalBlock
+        from pyhtsw.block import GlobalBlock
 
         self.logger = AntiSpamLogger()
         self.blocks = []
@@ -145,7 +146,7 @@ class Container:
         )
 
     def _raise_action_limit_violations(self) -> None:
-        from .limits import ActionLimitError
+        from pyhtsw.limits import ActionLimitError
 
         if not self._action_limit_violations:
             return
@@ -170,7 +171,7 @@ class Container:
         )
 
     def _raise_scope_violations(self) -> None:
-        from .scope import check_scopes, raise_scope_violations
+        from pyhtsw.scope import check_scopes, raise_scope_violations
 
         if self.ignore_scope:
             return
@@ -248,8 +249,8 @@ class Container:
         return self.contexts[-1 - go_back].expressions_ref
 
     def write_expression(self, expression: 'Expression') -> None:
-        from .actions.preserved import currently_preserved, tag_preserved
-        from .actions.strict_order import (
+        from pyhtsw.actions.preserved import currently_preserved, tag_preserved
+        from pyhtsw.actions.strict_order import (
             current_strict_order_region,
             tag_strict_order_region,
         )
@@ -299,8 +300,8 @@ class Container:
         self,
         deferred_ids: list[int],
     ) -> tuple[list['Expression'], dict[int, str], dict[int, 'Editable']]:
-        from . import deferred
-        from .expression.binary_expression import BinaryExpression
+        from pyhtsw import deferred
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         setup: list[Expression] = []
         results: list[tuple[int, Editable, bool]] = []
@@ -324,13 +325,14 @@ class Container:
         self,
         expressions: list['Expression'],
     ) -> None:
-        from . import deferred
-        from .actions.strict_order import (
+        from pyhtsw.actions.strict_order import (
             strict_order_region_of,
             tag_strict_order_region,
         )
-        from .expression.binary_expression import BinaryExpression
-        from .expression.compound_expression import CompoundExpression
+
+        from pyhtsw import deferred
+        from pyhtsw.expression.binary_expression import BinaryExpression
+        from pyhtsw.expression.compound_expression import CompoundExpression
 
         index = 0
         while index < len(expressions):
@@ -408,9 +410,9 @@ class Container:
                         )
 
     def _pin_held_temps(self, expressions: list['Expression']) -> set[int]:
-        from . import deferred
-        from .expression.expression import Expression
-        from .stats.temporary_stat import Number, TemporaryStat
+        from pyhtsw import deferred
+        from pyhtsw.expression.expression import Expression
+        from pyhtsw.stats.temporary_stat import Number, TemporaryStat
 
         first: dict[Number, int] = {}
         last: dict[Number, int] = {}
@@ -478,9 +480,10 @@ class Container:
         """Finalize one block's expressions. Returns the block's reserved temp
         numbers (consumer names + this block's held temps) so the caller can
         activate the same set while rendering/executing the block."""
-        from .actions.no_optimization import optimization_enabled
-        from .expression.binary_expression import BinaryExpression
-        from .stats.temporary_stat import reserved_temp_numbers
+        from pyhtsw.actions.no_optimization import optimization_enabled
+
+        from pyhtsw.expression.binary_expression import BinaryExpression
+        from pyhtsw.stats.temporary_stat import reserved_temp_numbers
 
         block_reserved = self._pin_held_temps(expressions)
         with reserved_temp_numbers(block_reserved):
@@ -506,9 +509,10 @@ class Container:
 
     @staticmethod
     def _reorder_for_folding(expressions: list['Expression']) -> None:
-        from .expression.binary_expression import BinaryExpression
-        from .limits import total_action_count
-        from .schedule import reorder_for_folding
+        from pyhtsw.limits import total_action_count
+        from pyhtsw.schedule import reorder_for_folding
+
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         candidate = reorder_for_folding(expressions)
         if candidate is None:
@@ -525,9 +529,9 @@ class Container:
         expressions: list['Expression'],
         numbers: set[int],
     ) -> None:
-        from .checkable import Checkable
-        from .stats.stat import Stat
-        from .stats.temporary_stat import TemporaryStat
+        from pyhtsw.checkable import Checkable
+        from pyhtsw.stats.stat import Stat
+        from pyhtsw.stats.temporary_stat import TemporaryStat
 
         def consider(stat: object) -> None:
             if isinstance(stat, Stat) and not isinstance(stat, TemporaryStat):
@@ -553,7 +557,7 @@ class Container:
         return numbers
 
     def finalize(self) -> None:
-        from .item_plan import plan_items
+        from pyhtsw.item_plan import plan_items
 
         if self.is_finalized:
             raise RuntimeError('Container is already finalized')
@@ -597,7 +601,7 @@ class Container:
         return all(block.is_empty() for block in self.blocks)
 
     def _collect_importables(self, name: str) -> list['Importable']:
-        from .importable import FunctionImportable
+        from pyhtsw.importable import FunctionImportable
 
         importables = list(self.importables)
         global_block = self.blocks[0]
@@ -617,10 +621,11 @@ class Container:
         module_prefix: tuple[str, ...] | None = None,
         house_uuid: str | None = None,
     ) -> None:
-        from .config import get_house_uuid
-        from .importable import Project
-        from .item_plan import plan_items
-        from .module_export import export_project
+        from pyhtsw.importable import Project
+        from pyhtsw.item_plan import plan_items
+        from pyhtsw.module_export import export_project
+
+        from pyhtsw.config import get_house_uuid
 
         importables = self._collect_importables(name)
         # Replanned here rather than reusing finalize's: which module owns an
@@ -809,11 +814,11 @@ def on_program_exit() -> None:
     else:
         container.export(get_project_name() or GLOBAL_NAME)
 
-    from .execute.decorator import run_saved_execution_contexts
+    from pyhtsw.execute.decorator import run_saved_execution_contexts
 
     run_saved_execution_contexts()
 
-    from .misc.sounds import SOUND_MIXER
+    from pyhtsw.misc.sounds import SOUND_MIXER
 
     SOUND_MIXER.shutdown()
 

@@ -7,7 +7,7 @@ from typing import get_args
 import numpy as np
 import sounddevice as sd
 
-from ..types import ALL_SOUNDS, ALL_SOUNDS_PRETTY_TO_RAW, ALL_SOUNDS_RAW
+from pyhtsw.types import ALL_SOUNDS, ALL_SOUNDS_PRETTY_TO_RAW, ALL_SOUNDS_RAW
 
 __all__ = ('get_sound_paths', 'preview_sound')
 

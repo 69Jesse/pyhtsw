@@ -1,12 +1,11 @@
 from typing import Self, final
 
+from pyhtsw.actions.item import Item, item_action_reference, item_referenced_importables
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from ..types import _INVENTORY_SLOTS_PRETTY_NAME_MAPPING, INVENTORY_SLOTS
-from .item import Item, item_action_reference, item_referenced_importables
+from pyhtsw.types import _INVENTORY_SLOTS_PRETTY_NAME_MAPPING, INVENTORY_SLOTS
 
 __all__ = (
     'GiveItemExpression',

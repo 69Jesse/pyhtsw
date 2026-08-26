@@ -1,11 +1,10 @@
 from typing import TYPE_CHECKING, final
 
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 
-from ..expression.expression import Expression
-
 if TYPE_CHECKING:
-    from ..execute.context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 
 __all__ = (
@@ -27,7 +26,7 @@ class ExitFunctionExpression(Expression):
         return 'exit'
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
-        from ..execute.signal import ExitSignal
+        from pyhtsw.execute.signal import ExitSignal
 
         raise ExitSignal()
 

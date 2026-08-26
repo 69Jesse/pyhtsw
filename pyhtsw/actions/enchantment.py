@@ -1,4 +1,4 @@
-from ..types import ALL_ENCHANTMENTS
+from pyhtsw.types import ALL_ENCHANTMENTS
 
 __all__ = ('Enchantment',)
 

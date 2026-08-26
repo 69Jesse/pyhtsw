@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, Self
 
-from .checkable import Checkable
-from .expression.expression import Expression
-from .expression.housing_type import HousingType, NumericHousingType
+from pyhtsw.checkable import Checkable
+from pyhtsw.expression.expression import Expression
+from pyhtsw.expression.housing_type import HousingType, NumericHousingType
 
 if TYPE_CHECKING:
-    from .expression.binary_expression import BinaryOperator
+    from pyhtsw.expression.binary_expression import BinaryOperator
 
 
 __all__ = ('Editable',)
@@ -98,7 +98,7 @@ class Editable(Checkable):
         *,
         is_intentional_self_assignment: bool = False,
     ) -> Self:
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         BinaryExpression(
             left=self,
@@ -137,7 +137,7 @@ class Editable(Checkable):
         operator: 'BinaryOperator',
         other: Checkable | HousingType,
     ) -> Self:
-        from .expression.binary_expression import BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryOperator
 
         if operator is BinaryOperator.Set:
             return self.set(other)

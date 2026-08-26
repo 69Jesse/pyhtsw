@@ -1,17 +1,17 @@
 from typing import TYPE_CHECKING, final
 
-from ...container import (
+from pyhtsw.container import (
     ContainerContextManager,
     ExpressionContext,
     get_current_container,
 )
-from ...expression.condition.conditional_expression import (
+from pyhtsw.expression.condition.conditional_expression import (
     ConditionalExpression,
     ConditionalMode,
 )
 
 if TYPE_CHECKING:
-    from ...expression.condition.condition import Condition
+    from pyhtsw.expression.condition.condition import Condition
 
 
 @final

@@ -2,11 +2,11 @@ import itertools
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, NamedTuple, Union
 
-from .placeholders import get_placeholder_parts
-from .warn import warn
+from pyhtsw.utils.placeholders import get_placeholder_parts
+from pyhtsw.utils.warn import warn
 
 if TYPE_CHECKING:
-    from ..checkable import Checkable
+    from pyhtsw.checkable import Checkable
 
 __all__ = (
     'FIELD_MAX_LENGTH',

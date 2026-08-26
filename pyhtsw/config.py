@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 
-from .utils.log import log
+from pyhtsw.utils.log import log
 
 __all__ = (
     'set_projects_folder',

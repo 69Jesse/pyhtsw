@@ -1,8 +1,8 @@
-from ..actions.conditional.statements import IfAll, IfAny
-from ..checkable import Checkable
-from ..stats.player_stat import PlayerStat
-from ..stats.stat import Stat
-from ..stats.temporary_stat import TemporaryStat
+from pyhtsw.actions.conditional.statements import IfAll, IfAny
+from pyhtsw.checkable import Checkable
+from pyhtsw.stats.player_stat import PlayerStat
+from pyhtsw.stats.stat import Stat
+from pyhtsw.stats.temporary_stat import TemporaryStat
 
 __all__ = ('format_time_string',)
 

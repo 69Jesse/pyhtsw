@@ -5,10 +5,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict, cast, get_args
 
-from ..clone import MISSING, Missing
-from ..config import HERE
-from ..nbt import NBT, NBTByte, NBTCompound, NBTInt, NBTList, NBTShort, NBTString
-from ..types import (
+from pyhtsw.actions.enchantment import Enchantment
+from pyhtsw.types import (
     ALL_ENCHANTMENTS,
     ALL_HOUSING_MENU_TIERS,
     ALL_ITEM_KEY_STRINGS,
@@ -18,14 +16,17 @@ from ..types import (
     PLAYER_SKULL_ITEM_KEY,
     ColorType,
 )
-from ..utils.caller import caller_module
-from ..utils.formatting import normalize_formatting, remove_formatting
-from ..utils.kebab import into_kebab
-from .enchantment import Enchantment
+
+from pyhtsw.clone import MISSING, Missing
+from pyhtsw.config import HERE
+from pyhtsw.nbt import NBT, NBTByte, NBTCompound, NBTInt, NBTList, NBTShort, NBTString
+from pyhtsw.utils.caller import caller_module
+from pyhtsw.utils.formatting import normalize_formatting, remove_formatting
+from pyhtsw.utils.kebab import into_kebab
 
 if TYPE_CHECKING:
-    from ..block import NamedBlock
-    from ..importable import ItemImportable
+    from pyhtsw.block import NamedBlock
+    from pyhtsw.importable import ItemImportable
 
 __all__ = (
     'normalize_item_key',
@@ -111,7 +112,7 @@ def _resolve_click_handlers(
     if on_click is not None and (
         on_left_click is not None or on_right_click is not None
     ):
-        from ..utils.log import log
+        from pyhtsw.utils.log import log
 
         log(
             '\x1b[38;2;255;191;0mItem given both "on_click" and an explicit '
@@ -665,7 +666,7 @@ class Item:
     def anonymous_path(self) -> str:
         """Relative .snbt path for this item, registering it with the active
         project so the file gets written on export."""
-        from ..container import get_current_container
+        from pyhtsw.container import get_current_container
 
         container = get_current_container()
         if container.project is not None:
@@ -681,8 +682,8 @@ def _registered_twin(
     left_fn: 'ItemHandler | None',
     right_fn: 'ItemHandler | None',
 ) -> 'ItemImportable | None':
-    from ..container import get_current_container
-    from ..importable import ItemImportable
+    from pyhtsw.container import get_current_container
+    from pyhtsw.importable import ItemImportable
 
     snbt = item.into_snbt()
     for importable in get_current_container().importables:
@@ -698,7 +699,7 @@ def _registered_twin(
 
 
 def _free_item_name(base: str, count: int) -> str:
-    from ..container import get_current_container
+    from pyhtsw.container import get_current_container
 
     taken = get_current_container().importables_by_key
     if ('items', base) not in taken:
@@ -718,9 +719,9 @@ def _item_handler_block(
     item: 'Item',
     handler: 'ItemHandler',
 ) -> 'NamedBlock':
-    from ..block import NamedBlock
-    from ..container import get_current_container
-    from ..importable import call_with_args
+    from pyhtsw.block import NamedBlock
+    from pyhtsw.container import get_current_container
+    from pyhtsw.importable import call_with_args
 
     block = NamedBlock(
         f'{name} {side}',
@@ -738,8 +739,8 @@ def _register_item_instance_importable(
     right_fn: 'ItemHandler | None',
     module: str | None = None,
 ) -> 'ItemImportable':
-    from ..container import get_current_container
-    from ..importable import ItemImportable
+    from pyhtsw.container import get_current_container
+    from pyhtsw.importable import ItemImportable
 
     importable = ItemImportable(
         name=name,

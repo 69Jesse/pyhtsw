@@ -1,11 +1,10 @@
 from typing import Self, final
 
+from pyhtsw.actions.team import Team
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from .team import Team
 
 __all__ = (
     'SetPlayerTeamExpression',

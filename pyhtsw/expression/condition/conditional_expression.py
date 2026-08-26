@@ -3,16 +3,15 @@ from enum import Enum
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.config import INDENT
+from pyhtsw.container import Container
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 
-from ...config import INDENT
-from ...container import Container
-from ..expression import Expression
-
 if TYPE_CHECKING:
-    from ...execute.context import ExecutionContext
-    from ...stats.stat import Stat
-    from .condition import Condition
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.expression.condition.condition import Condition
+    from pyhtsw.stats.stat import Stat
 
 
 __all__ = ('ConditionalExpression',)

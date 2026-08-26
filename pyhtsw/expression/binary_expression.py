@@ -4,41 +4,40 @@ from functools import cached_property
 from typing import Any, NoReturn, Self, final
 
 import numpy as np
+from pyhtsw.actions.no_optimization import optimization_enabled
+from pyhtsw.actions.no_type_casting import no_type_casting
+from pyhtsw.actions.preserved import is_preserved
 from pyhtsw.registry import ActionMeta
 
+from pyhtsw.checkable import Checkable
 from pyhtsw.clone import MISSING, Missing, clone_with
-
-from ..actions.no_optimization import optimization_enabled
-from ..actions.no_type_casting import no_type_casting
-from ..actions.preserved import is_preserved
-from ..checkable import Checkable
-from ..editable import Editable
-from ..execute import java_long
-from ..execute.backend_type import (
+from pyhtsw.editable import Editable
+from pyhtsw.execute import java_long
+from pyhtsw.execute.backend_type import (
     BackendType,
     JavaLong,
     backend_to_default_backend,
     into_backend_type,
     is_default_backend,
 )
-from ..execute.context import ExecutionContext
-from ..execute.exception import (
+from pyhtsw.execute.context import ExecutionContext
+from pyhtsw.execute.exception import (
     MismatchedTypeException,
     NotANumberException,
     descriptive_backend_type,
 )
-from ..internal_type import InternalType
-from ..logger import log
-from ..stats.stat import Stat
-from ..stats.temporary_stat import (
+from pyhtsw.expression.compound_expression import CompoundExpression
+from pyhtsw.expression.condition.comparison_condition import ComparisonCondition
+from pyhtsw.expression.expression import Expression
+from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
+from pyhtsw.internal_type import InternalType
+from pyhtsw.logger import log
+from pyhtsw.stats.stat import Stat
+from pyhtsw.stats.temporary_stat import (
     Number,
     TemporaryStat,
     currently_reserved_temp_numbers,
 )
-from .compound_expression import CompoundExpression
-from .condition.comparison_condition import ComparisonCondition
-from .expression import Expression
-from .housing_type import HousingType, housing_type_as_rhs
 
 __all__ = (
     'BinaryOperator',
@@ -966,7 +965,7 @@ class BinaryExpression[
         )
 
     def into_inside_string(self, include_fallback_value: bool = True) -> str:
-        from ..deferred import register_deferred
+        from pyhtsw.deferred import register_deferred
 
         return register_deferred(self, include_fallback_value)
 
@@ -1175,7 +1174,7 @@ class BinaryExpression[
         rhs: 'Checkable | HousingType',
         context: 'ExecutionContext',
     ) -> BackendType:
-        from ..execute.value_parser import parse_string, parse_value
+        from pyhtsw.execute.value_parser import parse_string, parse_value
 
         if isinstance(rhs, Checkable):
             return parse_value(context, rhs.into_string_rhs())

@@ -1,7 +1,7 @@
-from ..declared import register_importable
-from ..importable import TeamImportable
-from ..types import ALL_HOUSING_COLORS
-from .team import Team
+from pyhtsw.actions.team import Team
+from pyhtsw.declared import register_importable
+from pyhtsw.importable import TeamImportable
+from pyhtsw.types import ALL_HOUSING_COLORS
 
 __all__ = ('create_team',)
 

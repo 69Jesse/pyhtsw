@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from .actions.function import Function
-    from .expression.condition.condition import Condition
-    from .expression.expression import Expression
-    from .placeholders import PlaceholderEditable
+    from pyhtsw.actions.function import Function
+    from pyhtsw.expression.condition.condition import Condition
+    from pyhtsw.expression.expression import Expression
+    from pyhtsw.placeholders import PlaceholderEditable
 
 
 # The action containers htsw distinguishes when resolving a limit.
@@ -47,7 +47,7 @@ def get_limits() -> dict[type['Expression'] | type['PlaceholderEditable'], int]:
     if _LIMITS is not None:
         return _LIMITS
 
-    from .registry import iter_action_types, iter_placeholder_types
+    from pyhtsw.registry import iter_action_types, iter_placeholder_types
 
     limits: dict[type[Expression] | type[PlaceholderEditable], int] = {}
     for cls in (*iter_action_types(), *iter_placeholder_types()):
@@ -63,7 +63,7 @@ def get_condition_limits() -> dict[type['Condition'], int]:
     if _CONDITION_LIMITS is not None:
         return _CONDITION_LIMITS
 
-    from .registry import iter_condition_types
+    from pyhtsw.registry import iter_condition_types
 
     limits: dict[type[Condition], int] = {}
     for cls in iter_condition_types():
@@ -84,11 +84,11 @@ ConditionKey = type['Condition'] | str
 
 
 def condition_into_key(condition: 'Condition') -> ConditionKey:
-    from .actions.player_health import PlayerHealthPlaceholder
-    from .actions.player_hunger import PlayerHungerPlaceholder
-    from .actions.player_max_health import PlayerMaxHealthPlaceholder
-    from .expression.condition.comparison_condition import ComparisonCondition
-    from .stats.stat import Stat
+    from pyhtsw.actions.player_health import PlayerHealthPlaceholder
+    from pyhtsw.actions.player_hunger import PlayerHungerPlaceholder
+    from pyhtsw.actions.player_max_health import PlayerMaxHealthPlaceholder
+    from pyhtsw.expression.condition.comparison_condition import ComparisonCondition
+    from pyhtsw.stats.stat import Stat
 
     if not isinstance(condition, ComparisonCondition):
         return type(condition)
@@ -131,7 +131,7 @@ def check_condition_limits(conditions: list['Condition'], *, where: str) -> None
 def check_all_condition_limits(expressions: list['Expression']) -> None:
     """Walk a block's expressions (and their nested action lists) and validate
     every conditional's condition list."""
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     for expression in expressions:
         if isinstance(expression, ConditionalExpression):
@@ -149,7 +149,7 @@ def get_limit(
     importable: ImportableKind = 'functions',
     nested: Nesting | None = None,
 ) -> int | None:
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     if cls is ConditionalExpression and importable == 'events' and nested is None:
         return EVENT_CONDITIONAL_LIMIT
@@ -194,8 +194,8 @@ class Counter:
     def expression_into_cls(
         expression: 'Expression',
     ) -> type['Expression'] | type['PlaceholderEditable']:
-        from .expression.binary_expression import BinaryExpression
-        from .placeholders import PlaceholderEditable
+        from pyhtsw.expression.binary_expression import BinaryExpression
+        from pyhtsw.placeholders import PlaceholderEditable
 
         if isinstance(expression, BinaryExpression):
             expr = expression.into_assignment_expression()
@@ -218,8 +218,8 @@ class Counter:
         compared as equal, undercounting a statement as a no-op it isn't (seen
         in practice: a `chunked()` chunk that measured under the limit still
         overflowed once the real, full-block finalize pass rendered it)."""
-        from .expression.binary_expression import BinaryExpression
-        from .expression.compound_expression import CompoundExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
+        from pyhtsw.expression.compound_expression import CompoundExpression
 
         key = id(expression)
         cached = self._memo.get(key)
@@ -275,8 +275,8 @@ def total_action_count(expressions: list['Expression']) -> int:
 
 def nesting_of(expression: 'Expression') -> Nesting | None:
     """Which kind of container an expression's nested action lists live in."""
-    from .actions.random import RandomExpression
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.actions.random import RandomExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     if isinstance(expression, RandomExpression):
         return 'random'
@@ -315,7 +315,7 @@ def plan_packing(
     index where the block ran out of room, and the counter holding the resulting
     action counts. `fix_action_limits` builds the objects from this, and the
     scheduler costs candidate orders with it."""
-    from .expression.condition.conditional_expression import (
+    from pyhtsw.expression.condition.conditional_expression import (
         ConditionalExpression,
         ConditionalMode,
     )
@@ -404,8 +404,8 @@ def packing_cost(
     trigger alone has three placements and a fallback that pushes expressions
     back into the overflow.
     """
-    from .actions.function import Function
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.actions.function import Function
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     if memo is None:
         memo = {}
@@ -456,8 +456,8 @@ def fix_action_limits(
     Returns a tuple of the fixed expressions that fit within a single block,
     and the remaining expressions that exceed the limits and need to be put in a new block.
     """
-    from .actions.trigger_function import TriggerFunctionExpression
-    from .expression.condition.conditional_expression import (
+    from pyhtsw.actions.trigger_function import TriggerFunctionExpression
+    from pyhtsw.expression.condition.conditional_expression import (
         ConditionalExpression,
         ConditionalMode,
     )

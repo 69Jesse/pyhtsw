@@ -2,7 +2,7 @@ import re
 from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
-    from .checkable import Checkable
+    from pyhtsw.checkable import Checkable
 
 __all__ = (
     'register_deferred',
@@ -29,7 +29,7 @@ _counter = 0
 
 
 def register_deferred(checkable: 'Checkable', include_fallback_value: bool) -> str:
-    from .actions.no_fallback_values import no_fallback_values
+    from pyhtsw.actions.no_fallback_values import no_fallback_values
 
     global _counter
     _counter += 1

@@ -1,10 +1,9 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.registry import ConditionMeta
-
-from ..expression.condition.condition import Condition
-from ..types import ALL_DAMAGE_CAUSES
+from pyhtsw.types import ALL_DAMAGE_CAUSES
 
 __all__ = ('DamageCause',)
 

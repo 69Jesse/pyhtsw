@@ -2,16 +2,16 @@ from abc import abstractmethod
 from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, ClassVar, Self, final
 
-from ...base_object import BaseObject
-from ...container import Container
-from ...registry import ConditionMeta
-from ...utils.log import log
+from pyhtsw.base_object import BaseObject
+from pyhtsw.container import Container
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from ...checkable import Checkable
-    from ...execute.context import ExecutionContext
-    from ...expression.housing_type import HousingType
-    from ...stats.stat import Stat
+    from pyhtsw.checkable import Checkable
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.expression.housing_type import HousingType
+    from pyhtsw.stats.stat import Stat
 
 
 __all__ = ('Condition',)
@@ -77,7 +77,7 @@ class Condition(BaseObject):
     def get_all_stats_used(
         self,
     ) -> Generator[tuple['Stat', Callable[['Stat'], None]]]:
-        from ...stats.stat import Stat
+        from pyhtsw.stats.stat import Stat
 
         for key, value in vars(self).items():
             if isinstance(value, Stat):

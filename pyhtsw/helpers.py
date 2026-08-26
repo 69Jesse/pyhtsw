@@ -2,16 +2,17 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from .actions.conditional.context_manager import (
+from pyhtsw.actions.conditional.context_manager import (
     ElseContextManager,
     IfContextManager,
 )
-from .container import get_current_container, override_write_expression
-from .expression.condition.conditional_expression import ConditionalExpression
-from .limits import Counter
+from pyhtsw.container import get_current_container, override_write_expression
+from pyhtsw.limits import Counter
+
+from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
 if TYPE_CHECKING:
-    from .expression.expression import Expression
+    from pyhtsw.expression.expression import Expression
 
 
 __all__ = ('chunk_expressions', 'chunked')

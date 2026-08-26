@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, cast
 
-from ..declared import Declared
+from pyhtsw.declared import Declared
 
 if TYPE_CHECKING:
-    from ..importable import EventName
+    from pyhtsw.importable import EventName
 
 
 __all__ = ('Event',)

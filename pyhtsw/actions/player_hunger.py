@@ -1,12 +1,11 @@
 import re
 from typing import final
 
+from pyhtsw.execute.backend_type import BackendType, JavaLong
+from pyhtsw.internal_type import InternalType
+from pyhtsw.placeholders import PlaceholderEditable
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..execute.backend_type import BackendType, JavaLong
-from ..internal_type import InternalType
-from ..placeholders import PlaceholderEditable
 
 __all__ = (
     'PlayerHungerPlaceholder',

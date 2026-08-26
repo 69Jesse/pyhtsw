@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
-from ..declared import Declared, declared_field
-from ..placeholders import PlaceholderCheckable
+from pyhtsw.declared import Declared, declared_field
+from pyhtsw.placeholders import PlaceholderCheckable
 
 if TYPE_CHECKING:
-    from ..stats.team_stat import TeamStat
-    from ..types import ALL_HOUSING_COLORS
+    from pyhtsw.stats.team_stat import TeamStat
+    from pyhtsw.types import ALL_HOUSING_COLORS
 
 
 __all__ = ('Team',)
@@ -20,11 +20,11 @@ class Team(Declared):
     friendly_fire: declared_field[bool | None] = declared_field()
 
     def stat(self, key: str) -> 'TeamStat':
-        from ..stats.team_stat import TeamStat
+        from pyhtsw.stats.team_stat import TeamStat
 
         return TeamStat(key, self)
 
     def players(self) -> PlaceholderCheckable:
-        from .team_players import TeamPlayers
+        from pyhtsw.actions.team_players import TeamPlayers
 
         return TeamPlayers(self)

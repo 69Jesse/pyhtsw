@@ -1,12 +1,11 @@
 from typing import Self, final
 
+from pyhtsw.actions.item import Item, item_action_reference, item_referenced_importables
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.registry import ConditionMeta
 from pyhtsw.schedule import Resource
-
-from ..expression.condition.condition import Condition
-from ..types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
-from .item import Item, item_action_reference, item_referenced_importables
+from pyhtsw.types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
 
 __all__ = ('IsItem',)
 

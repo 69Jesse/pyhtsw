@@ -3,18 +3,16 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
+from pyhtsw.internal_type import InternalType
 from pyhtsw.registry import ConditionMeta
 
-from ...expression.housing_type import HousingType
-from ...internal_type import InternalType
-from ..housing_type import housing_type_as_rhs
-from .condition import Condition
-
 if TYPE_CHECKING:
-    from ...checkable import Checkable
-    from ...container import Container
-    from ...execute.context import ExecutionContext
-    from ...stats.stat import Stat
+    from pyhtsw.checkable import Checkable
+    from pyhtsw.container import Container
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.stats.stat import Stat
 
 
 __all__ = (
@@ -55,7 +53,7 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         right: RightT,
         operator: ComparisonOperator,
     ) -> None:
-        from ..binary_expression import BinaryExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         self.left = left
         self.right = right
@@ -63,7 +61,7 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         BinaryExpression.fix_type_compatibility(self)
 
     def into_htsl_raw(self) -> str:
-        from ...checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         def format_rhs(value: Checkable | HousingType) -> str:
             if isinstance(value, Checkable):
@@ -82,14 +80,14 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         return line
 
     def _set_stat(self, key: str, value: 'Stat') -> None:
-        from ..binary_expression import BinaryExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         setattr(self, key, value)
         BinaryExpression.fix_type_compatibility(self)
 
     def finalize(self, container: 'Container') -> None:
-        from ..binary_expression import BinaryExpression
-        from ..compound_expression import CompoundExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
+        from pyhtsw.expression.compound_expression import CompoundExpression
 
         # Replace a computed operand with the temp stat holding its result, so
         # block-level optimization can see which temps the condition depends on.
@@ -124,7 +122,7 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         )
 
     def equals_raw(self, other: object) -> bool:
-        from ...checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         if not isinstance(other, ComparisonCondition):
             return False

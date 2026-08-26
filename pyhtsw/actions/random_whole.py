@@ -3,13 +3,12 @@ import re
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.execute.backend_type import BackendType, JavaLong
 from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.internal_type import InternalType
+from pyhtsw.placeholders import PlaceholderCheckable
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..execute.backend_type import BackendType, JavaLong
-from ..internal_type import InternalType
-from ..placeholders import PlaceholderCheckable
 
 __all__ = (
     'RandomWholePlaceholder',

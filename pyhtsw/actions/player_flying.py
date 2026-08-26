@@ -1,7 +1,6 @@
+from pyhtsw.expression.condition.named_condition import NamedCondition
 from pyhtsw.registry import ConditionMeta
 from pyhtsw.schedule import Resource
-
-from ..expression.condition.named_condition import NamedCondition
 
 __all__ = (
     'PlayerFlyingCondition',

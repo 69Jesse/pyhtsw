@@ -1,10 +1,10 @@
 from collections.abc import Callable
 
-from ..block import NamedBlock
-from ..container import get_current_container
-from ..declared import register_importable
-from ..importable import EventImportable, EventName
-from .event import Event
+from pyhtsw.actions.event import Event
+from pyhtsw.block import NamedBlock
+from pyhtsw.container import get_current_container
+from pyhtsw.declared import register_importable
+from pyhtsw.importable import EventImportable, EventName
 
 __all__ = ('create_event',)
 

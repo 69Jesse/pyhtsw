@@ -1,10 +1,10 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, ClassVar, overload
 
-from .utils.caller import caller_module
+from pyhtsw.utils.caller import caller_module
 
 if TYPE_CHECKING:
-    from .importable import Importable
+    from pyhtsw.importable import Importable
 
 
 __all__ = (
@@ -20,7 +20,7 @@ def register_importable[ImportableT: 'Importable'](
     """Attribute an importable to the user module that asked for it and put it
     in the current container. `caller_module` skips every pyhtsw frame, so this
     lands on the same module however many pyhtsw helpers deep the call is."""
-    from .container import get_current_container
+    from pyhtsw.container import get_current_container
 
     importable.module = caller_module()
     get_current_container().register_importable(importable)
@@ -99,7 +99,7 @@ class Declared:
     def name(self, value: str) -> None:
         importable = self.__htsw_importable__
         if importable is not None and value != importable.identifier():
-            from .container import get_current_container
+            from pyhtsw.container import get_current_container
 
             get_current_container().rename_importable(importable, value)
         self._name = value
@@ -114,7 +114,7 @@ class Declared:
         if declared is not None:
             return declared
 
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         kind = self.__htsw_kind__
         found = get_current_container().find_importable(kind, self._name)

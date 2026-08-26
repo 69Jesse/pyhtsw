@@ -2,14 +2,14 @@ from typing import TYPE_CHECKING, NoReturn
 
 import numpy as np
 
-from ..checkable import Checkable
-from ..editable import Editable
-from ..expression.housing_type import HousingType
-from ..internal_type import InternalType
-from .backend_type import BackendType, JavaLong
+from pyhtsw.checkable import Checkable
+from pyhtsw.editable import Editable
+from pyhtsw.execute.backend_type import BackendType, JavaLong
+from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.internal_type import InternalType
 
 if TYPE_CHECKING:
-    from ..expression.binary_expression import BinaryOperator
+    from pyhtsw.expression.binary_expression import BinaryOperator
 
 
 __all__ = (

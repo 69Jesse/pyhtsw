@@ -3,13 +3,12 @@ from typing import TYPE_CHECKING, Self, final
 from pyhtsw.registry import ConditionMeta
 
 from pyhtsw.clone import MISSING, Missing, clone_with
-
-from ..expression.condition.comparison_condition import ComparisonOperator
-from ..expression.condition.condition import Condition
-from ..expression.housing_type import HousingType, housing_type_as_rhs
+from pyhtsw.expression.condition.comparison_condition import ComparisonOperator
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
 
 if TYPE_CHECKING:
-    from ..checkable import Checkable
+    from pyhtsw.checkable import Checkable
 
 
 __all__ = (
@@ -44,7 +43,7 @@ class DamageAmountCondition(Condition):
         self.amount = amount
 
     def into_htsl_raw(self) -> str:
-        from ..checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         if isinstance(self.amount, Checkable):
             rhs = self.amount.into_string_rhs()

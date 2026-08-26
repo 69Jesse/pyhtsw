@@ -2,9 +2,9 @@ import math
 
 import numpy as np
 
-from ..expression.housing_type import HousingType
-from ..internal_type import InternalType
-from .java_long import INT64_MAX, INT64_MIN, JavaLong
+from pyhtsw.execute.java_long import INT64_MAX, INT64_MIN, JavaLong
+from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.internal_type import InternalType
 
 __all__ = (
     'BackendType',

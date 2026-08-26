@@ -1,11 +1,10 @@
 from typing import Self, final
 
+from pyhtsw.actions.layout import Layout
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from .layout import Layout
 
 __all__ = (
     'ApplyInventoryLayoutExpression',

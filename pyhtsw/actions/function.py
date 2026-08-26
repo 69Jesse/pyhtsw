@@ -1,10 +1,10 @@
 from typing import TYPE_CHECKING
 
-from ..declared import Declared, declared_field
+from pyhtsw.declared import Declared, declared_field
 
 if TYPE_CHECKING:
-    from ..block import FunctionBlock
-    from .item import Item
+    from pyhtsw.actions.item import Item
+    from pyhtsw.block import FunctionBlock
 
 
 __all__ = ('Function',)

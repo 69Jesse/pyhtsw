@@ -1,11 +1,10 @@
 from typing import Self, final
 
+from pyhtsw.actions.group import Group
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from .group import Group
 
 __all__ = (
     'ChangePlayerGroupExpression',

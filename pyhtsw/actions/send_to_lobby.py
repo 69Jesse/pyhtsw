@@ -1,9 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
-
-from ..expression.expression import Expression
 
 __all__ = (
     'SendToLobbyExpression',

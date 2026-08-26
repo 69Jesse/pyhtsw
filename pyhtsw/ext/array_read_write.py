@@ -2,13 +2,14 @@ import math
 from collections.abc import Iterable, Sequence
 from typing import Any, NamedTuple
 
-from ..actions.conditional.statements import Else, IfAll, IfAny
-from ..editable import Checkable, Editable, HousingType, NumericHousingType
-from ..internal_type import InternalType
-from ..stats.global_stat import GlobalStat
-from ..stats.player_stat import PlayerStat
-from ..stats.stat import Stat
-from .set_string import set_string
+from pyhtsw.actions.conditional.statements import Else, IfAll, IfAny
+
+from pyhtsw.editable import Checkable, Editable, HousingType, NumericHousingType
+from pyhtsw.ext.set_string import set_string
+from pyhtsw.internal_type import InternalType
+from pyhtsw.stats.global_stat import GlobalStat
+from pyhtsw.stats.player_stat import PlayerStat
+from pyhtsw.stats.stat import Stat
 
 __all__ = (
     'array_read',
@@ -189,7 +190,7 @@ def _fast_names_pool(pattern: list[ColumnInfo]) -> str:
 
 
 def _get_or_bake_composed_prefix(value: str, pool: str) -> PlayerStat:
-    from ..container import get_current_container
+    from pyhtsw.container import get_current_container
 
     container = get_current_container()
     top_ref = container.blocks[0].expressions
@@ -348,7 +349,7 @@ _HI_KEY = 500
 
 
 def _in_nested_container() -> bool:
-    from ..container import get_current_container
+    from pyhtsw.container import get_current_container
 
     return any(
         ctx.parent_expression is not None for ctx in get_current_container().contexts
@@ -418,9 +419,10 @@ def _emit_fast_write(
     input: Sequence[Checkable | NumericHousingType],
     chunk: int,
 ) -> None:
-    from ..actions.preserved import preserved
-    from ..actions.strict_order import strict_order
-    from ..stats.temporary_stat import TemporaryStat
+    from pyhtsw.actions.preserved import preserved
+    from pyhtsw.actions.strict_order import strict_order
+
+    from pyhtsw.stats.temporary_stat import TemporaryStat
 
     n = len(items)
     width = len(pattern)
@@ -650,8 +652,9 @@ def _emit_staged_write(
     input: Sequence[Checkable | HousingType],
     cs: int,
 ) -> None:
-    from ..actions.strict_order import strict_order
-    from ..stats.temporary_stat import TemporaryStat
+    from pyhtsw.actions.strict_order import strict_order
+
+    from pyhtsw.stats.temporary_stat import TemporaryStat
 
     n = len(items)
     width = len(pattern)

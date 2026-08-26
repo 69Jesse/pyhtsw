@@ -1,4 +1,4 @@
-from .utils.log import log
+from pyhtsw.utils.log import log
 
 
 class AntiSpamLogger:

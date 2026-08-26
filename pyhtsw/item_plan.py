@@ -2,10 +2,11 @@ from collections.abc import Callable, Iterator
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .actions.item import Item
-    from .block import Block
-    from .expression.expression import Expression
-    from .importable import Importable, ItemImportable
+    from pyhtsw.actions.item import Item
+    from pyhtsw.block import Block
+    from pyhtsw.importable import Importable, ItemImportable
+
+    from pyhtsw.expression.expression import Expression
 
 __all__ = ('ItemPlan', 'plan_items', 'promoted_importables')
 
@@ -78,8 +79,9 @@ class _Group:
 
 
 def _iter_item_fields(obj: object) -> "Iterator['Item']":
-    from .actions.item import Item
-    from .expression.condition.condition import Condition
+    from pyhtsw.actions.item import Item
+
+    from pyhtsw.expression.condition.condition import Condition
 
     for value in vars(obj).values():
         candidates = value if isinstance(value, list | tuple) else (value,)
@@ -158,7 +160,7 @@ def _collect(
     blocks: list['Block'],
     importables: list['Importable'],
 ) -> dict[str, _Group]:
-    from .importable import ItemImportable, MenuImportable, NpcImportable
+    from pyhtsw.importable import ItemImportable, MenuImportable, NpcImportable
 
     groups: dict[str, _Group] = {}
 
@@ -260,7 +262,7 @@ def plan_items(
 
 
 def promoted_importables(plan: ItemPlan) -> list['ItemImportable']:
-    from .importable import ItemImportable
+    from pyhtsw.importable import ItemImportable
 
     promoted: list[ItemImportable] = []
     for entry in plan.to_promote():

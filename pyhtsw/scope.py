@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, NamedTuple
 
 if TYPE_CHECKING:
-    from .block import Block
-    from .expression.expression import Expression
-    from .importable import Importable
-    from .limits import ImportableKind
-    from .registry import ActionMeta
+    from pyhtsw.block import Block
+    from pyhtsw.expression.expression import Expression
+    from pyhtsw.importable import Importable
+    from pyhtsw.limits import ImportableKind
+    from pyhtsw.registry import ActionMeta
 
 __all__ = (
     'ScopeError',
@@ -44,10 +44,10 @@ def _structural() -> 'tuple[frozenset[type], type, type]':
     if _STRUCTURAL is not None:
         return _STRUCTURAL
 
-    from .actions.cancel_event import CancelEventExpression
-    from .actions.exit_function import ExitFunctionExpression
-    from .actions.random import RandomExpression
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.actions.cancel_event import CancelEventExpression
+    from pyhtsw.actions.exit_function import ExitFunctionExpression
+    from pyhtsw.actions.random import RandomExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     _STRUCTURAL = (
         frozenset({ConditionalExpression, RandomExpression}),
@@ -58,7 +58,7 @@ def _structural() -> 'tuple[frozenset[type], type, type]':
 
 
 def _meta(cls: object) -> 'ActionMeta':
-    from .registry import ActionMeta
+    from pyhtsw.registry import ActionMeta
 
     meta = getattr(cls, 'htsw_meta', None)
     if not isinstance(meta, ActionMeta):
@@ -76,7 +76,7 @@ def _check_conditions(
     event: str | None,
     report: 'list[str]',
 ) -> None:
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     if not isinstance(expression, ConditionalExpression):
         return
@@ -146,7 +146,7 @@ def _walk(
     nested: bool,
     report: 'list[str]',
 ) -> None:
-    from .limits import Counter, nesting_of
+    from pyhtsw.limits import Counter, nesting_of
 
     counter = Counter(importable=kind)
     for expression in expressions:
@@ -174,7 +174,7 @@ def check_scopes(
     blocks: 'list[Block]',
     importables: 'list[Importable]',
 ) -> list[ScopeViolation]:
-    from .importable import EventImportable
+    from pyhtsw.importable import EventImportable
 
     events_by_block: dict[int, str] = {
         id(importable.block): importable.event

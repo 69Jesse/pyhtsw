@@ -1,9 +1,9 @@
 from collections.abc import Callable
 
-from ..expression.expression import Expression
-from ..utils.callback import call_with_optional_arg
-from .context import ExecutionContext
-from .expressions.run_execution_expression import CallbackType
+from pyhtsw.execute.context import ExecutionContext
+from pyhtsw.execute.expressions.run_execution_expression import CallbackType
+from pyhtsw.expression.expression import Expression
+from pyhtsw.utils.callback import call_with_optional_arg
 
 __all__ = (
     'execute',

@@ -2,11 +2,11 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, ClassVar, final
 
-from .player_stat import PlayerStat
-from .stat import Stat
+from pyhtsw.stats.player_stat import PlayerStat
+from pyhtsw.stats.stat import Stat
 
 if TYPE_CHECKING:
-    from ..expression.expression import Expression
+    from pyhtsw.expression.expression import Expression
 
 __all__ = (
     'TemporaryStat',
@@ -80,7 +80,7 @@ class TemporaryStat(Stat):
     def into_inside_string(self, include_fallback_value: bool = True) -> str:
         if self._number.finalized:
             return self.resolved_inside_string(include_fallback_value)
-        from ..deferred import register_deferred
+        from pyhtsw.deferred import register_deferred
 
         return register_deferred(self, include_fallback_value)
 

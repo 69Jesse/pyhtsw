@@ -5,9 +5,10 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .expression.condition.condition import Condition
-    from .expression.expression import Expression
-    from .limits import ImportableKind
+    from pyhtsw.limits import ImportableKind
+
+    from pyhtsw.expression.condition.condition import Condition
+    from pyhtsw.expression.expression import Expression
 
 
 __all__ = (
@@ -92,11 +93,11 @@ class _Collector:
         self.ok = True
 
     def checkable(self, value: object, *, write: bool = False) -> None:
-        from .checkable import Checkable
-        from .expression.binary_expression import BinaryExpression
-        from .expression.compound_expression import CompoundExpression
-        from .placeholders import PlaceholderCheckable
-        from .stats.stat import Stat
+        from pyhtsw.checkable import Checkable
+        from pyhtsw.expression.binary_expression import BinaryExpression
+        from pyhtsw.expression.compound_expression import CompoundExpression
+        from pyhtsw.placeholders import PlaceholderCheckable
+        from pyhtsw.stats.stat import Stat
 
         if isinstance(value, CompoundExpression):
             # A compound really does run its inner statements (`abs()` and `%`
@@ -135,7 +136,7 @@ class _Collector:
             self.ok = False
 
     def text(self, value: str) -> None:
-        from .checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         for ref in Checkable.iter_in_string(value):
             self.checkable(ref)
@@ -146,7 +147,7 @@ class _Collector:
         *,
         treat_all_as_reads: bool = False,
     ) -> None:
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         is_assignment = (
             not treat_all_as_reads
@@ -182,10 +183,10 @@ def effects_of(expression: 'Expression') -> Effects:
     """What `expression` reads, writes and displays. Anything this pass does not
     recognise comes back as a barrier, so an unclassified action can only ever
     cost packing, never correctness."""
-    from .expression.binary_expression import BinaryExpression
-    from .expression.compound_expression import CompoundExpression
-    from .expression.condition.conditional_expression import ConditionalExpression
-    from .expression.unset_expression import UnsetExpression
+    from pyhtsw.expression.binary_expression import BinaryExpression
+    from pyhtsw.expression.compound_expression import CompoundExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.expression.unset_expression import UnsetExpression
 
     if type(expression).htsw_meta.control:
         return BARRIER
@@ -284,7 +285,7 @@ def _summarize_bodies(
 
 
 def _ordering_barrier(expression: 'Expression', effects: Effects) -> bool:
-    from .actions.strict_order import strict_order_region_of
+    from pyhtsw.actions.strict_order import strict_order_region_of
 
     return effects.control or strict_order_region_of(expression) is not None
 
@@ -375,8 +376,8 @@ def _list_schedule(
 
 
 def _written_stat_key(expression: 'Expression') -> object | None:
-    from .expression.binary_expression import BinaryExpression
-    from .stats.stat import Stat
+    from pyhtsw.expression.binary_expression import BinaryExpression
+    from pyhtsw.stats.stat import Stat
 
     if isinstance(expression, BinaryExpression) and isinstance(expression.left, Stat):
         return expression.left.into_hashable()
@@ -417,7 +418,7 @@ def _packing_cost(
     memo: dict,
     allow_functions: bool = True,
 ) -> tuple[int, int]:
-    from .limits import packing_cost
+    from pyhtsw.limits import packing_cost
 
     return packing_cost(
         expressions,

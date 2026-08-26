@@ -1,16 +1,15 @@
 from typing import TYPE_CHECKING, Self, cast, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
+from pyhtsw.location import Location, resolve_location
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource, Stream
-
-from ..expression.expression import Expression
-from ..location import Location, resolve_location
-from ..types import ALL_LOCATIONS, ALL_SOUNDS
-from ..utils.log import log
+from pyhtsw.types import ALL_LOCATIONS, ALL_SOUNDS
+from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from ..execute.context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 __all__ = (
     'PlaySoundExpression',
@@ -68,7 +67,7 @@ class PlaySoundExpression(Expression):
         return line
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
-        from ..misc.sounds import preview_sound
+        from pyhtsw.misc.sounds import preview_sound
 
         found = preview_sound(
             self.sound,

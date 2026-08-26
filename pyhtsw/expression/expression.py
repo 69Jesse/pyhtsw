@@ -2,16 +2,16 @@ from abc import abstractmethod
 from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, Any, ClassVar, final
 
-from ..base_object import BaseObject
-from ..container import Container, get_current_container
-from ..registry import ActionMeta
-from ..utils.log import log
+from pyhtsw.base_object import BaseObject
+from pyhtsw.container import Container, get_current_container
+from pyhtsw.registry import ActionMeta
+from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from ..checkable import Checkable
-    from ..execute.context import ExecutionContext
-    from ..stats.stat import Stat
-    from ..stats.temporary_stat import TemporaryStat
+    from pyhtsw.checkable import Checkable
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.stats.stat import Stat
+    from pyhtsw.stats.temporary_stat import TemporaryStat
 
 
 __all__ = ('Expression',)
@@ -28,9 +28,9 @@ _TemporaryStat: type | None = None
 def _stat_refs() -> tuple[type['Stat'], type['Checkable'], type['TemporaryStat']]:
     global _Stat, _Checkable, _TemporaryStat
     if _Stat is None:
-        from ..checkable import Checkable
-        from ..stats.stat import Stat
-        from ..stats.temporary_stat import TemporaryStat
+        from pyhtsw.checkable import Checkable
+        from pyhtsw.stats.stat import Stat
+        from pyhtsw.stats.temporary_stat import TemporaryStat
 
         _Stat, _Checkable, _TemporaryStat = Stat, Checkable, TemporaryStat
     return _Stat, _Checkable, _TemporaryStat  # type: ignore[return-value]

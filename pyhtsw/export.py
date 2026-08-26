@@ -2,9 +2,9 @@ from collections.abc import Callable, Sequence
 from types import ModuleType
 from typing import Any
 
-from .actions.function import Function
-from .container import Container
-from .importable import Importable
+from pyhtsw.actions.function import Function
+from pyhtsw.container import Container
+from pyhtsw.importable import Importable
 
 type CallableNoArgs = Callable[[], Any]
 type Exportable = Function | CallableNoArgs | Sequence[Exportable] | ModuleType | object

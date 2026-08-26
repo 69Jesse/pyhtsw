@@ -1,10 +1,9 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.registry import ConditionMeta
-
-from ..expression.condition.condition import Condition
-from ..types import FISHING_ENVIRONMENTS
+from pyhtsw.types import FISHING_ENVIRONMENTS
 
 __all__ = ('FishingEnvironment',)
 

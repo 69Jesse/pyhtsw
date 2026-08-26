@@ -1,14 +1,14 @@
 from collections.abc import Mapping, Sequence
 
-from ..declared import register_importable
-from ..importable import GroupImportable
-from ..types import (
+from pyhtsw.actions.group import Group
+from pyhtsw.declared import register_importable
+from pyhtsw.importable import GroupImportable
+from pyhtsw.types import (
     ALL_CHAT_SPEEDS,
     ALL_DEFAULT_GAMEMODES,
     ALL_HOUSING_COLORS,
     ALL_PERMISSIONS,
 )
-from .group import Group
 
 __all__ = ('create_group',)
 

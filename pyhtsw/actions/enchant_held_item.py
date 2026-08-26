@@ -1,12 +1,11 @@
 from typing import Self, final
 
+from pyhtsw.actions.enchantment import Enchantment
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from ..types import ALL_ENCHANTMENTS
-from .enchantment import Enchantment
+from pyhtsw.types import ALL_ENCHANTMENTS
 
 __all__ = (
     'EnchantHeldItemExpression',

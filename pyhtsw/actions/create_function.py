@@ -1,14 +1,14 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from ..block import FunctionBlock
-from ..container import get_current_container
-from ..declared import register_importable
-from ..importable import FunctionImportable
-from .function import Function
+from pyhtsw.actions.function import Function
+from pyhtsw.block import FunctionBlock
+from pyhtsw.container import get_current_container
+from pyhtsw.declared import register_importable
+from pyhtsw.importable import FunctionImportable
 
 if TYPE_CHECKING:
-    from .item import Item
+    from pyhtsw.actions.item import Item
 
 __all__ = ('create_function',)
 

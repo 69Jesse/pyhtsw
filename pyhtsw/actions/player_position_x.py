@@ -3,12 +3,11 @@ from typing import final
 
 import numpy as np
 
+from pyhtsw.execute.backend_type import BackendType
+from pyhtsw.internal_type import InternalType
+from pyhtsw.placeholders import PlaceholderCheckable
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..execute.backend_type import BackendType
-from ..internal_type import InternalType
-from ..placeholders import PlaceholderCheckable
 
 __all__ = (
     'PlayerPositionXPlaceholder',

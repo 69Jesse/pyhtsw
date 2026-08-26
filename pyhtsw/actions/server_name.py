@@ -1,12 +1,11 @@
 import re
 from typing import final
 
+from pyhtsw.execute.backend_type import BackendType
+from pyhtsw.internal_type import InternalType
+from pyhtsw.placeholders import PlaceholderCheckable
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects
-
-from ..execute.backend_type import BackendType
-from ..internal_type import InternalType
-from ..placeholders import PlaceholderCheckable
 
 __all__ = (
     'ServerNamePlaceholder',

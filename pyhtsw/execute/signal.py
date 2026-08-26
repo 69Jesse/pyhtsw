@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..expression.expression import Expression
+    from pyhtsw.expression.expression import Expression
 
 
 class ExitSignal(Exception):

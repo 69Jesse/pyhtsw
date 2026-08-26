@@ -1,12 +1,11 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
-
-from .expression import Expression
+from pyhtsw.expression.expression import Expression
 
 if TYPE_CHECKING:
-    from ..execute.context import ExecutionContext
-    from ..stats.stat import Stat
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.stats.stat import Stat
 
 
 @final

@@ -1,12 +1,12 @@
 from abc import ABC
 from typing import TYPE_CHECKING, Any, ClassVar, Self, final
 
-from .clone import build_clone_spec, clone_with
-from .expression.housing_type import housing_type_as_rhs
+from pyhtsw.clone import build_clone_spec, clone_with
+from pyhtsw.expression.housing_type import housing_type_as_rhs
 
 if TYPE_CHECKING:
-    from .checkable import Checkable
-    from .expression.housing_type import HousingType
+    from pyhtsw.checkable import Checkable
+    from pyhtsw.expression.housing_type import HousingType
 
 
 class BaseObject(ABC):  # noqa: B024
@@ -82,7 +82,7 @@ class BaseObject(ABC):  # noqa: B024
 
     @staticmethod
     def inline(value: 'Checkable | HousingType | bool') -> str:
-        from .checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         if isinstance(value, bool):
             return str(value).lower()

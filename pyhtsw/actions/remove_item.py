@@ -1,11 +1,10 @@
 from typing import Self, final
 
+from pyhtsw.actions.item import Item, item_action_reference, item_referenced_importables
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from .item import Item, item_action_reference, item_referenced_importables
 
 __all__ = (
     'RemoveItemExpression',

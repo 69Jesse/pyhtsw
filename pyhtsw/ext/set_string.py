@@ -1,8 +1,9 @@
-from ..deferred import deferred_spans
-from ..editable import Editable
-from ..expression.binary_expression import SET_STRING_MAX_LENGTH
-from ..stats.player_stat import PlayerStat
-from ..utils.placeholders import get_placeholder_parts
+from pyhtsw.deferred import deferred_spans
+
+from pyhtsw.editable import Editable
+from pyhtsw.expression.binary_expression import SET_STRING_MAX_LENGTH
+from pyhtsw.stats.player_stat import PlayerStat
+from pyhtsw.utils.placeholders import get_placeholder_parts
 
 __all__ = ('set_string',)
 

@@ -1,11 +1,11 @@
 from collections.abc import Callable, Sequence
 from typing import Any, ClassVar, Literal
 
-from ..block import NamedBlock
-from ..container import get_current_container
-from ..declared import Declared, declared_field, register_importable
-from ..importable import MenuImportable, MenuSlot, XYCheck
-from .item import Item
+from pyhtsw.actions.item import Item
+from pyhtsw.block import NamedBlock
+from pyhtsw.container import get_current_container
+from pyhtsw.declared import Declared, declared_field, register_importable
+from pyhtsw.importable import MenuImportable, MenuSlot, XYCheck
 
 __all__ = ('Menu', 'create_menu')
 
@@ -27,7 +27,7 @@ def _slot_membership(
     rows: int,
     xy_check: XYCheck | None,
 ) -> XYCheck:
-    from ..importable import call_with_args
+    from pyhtsw.importable import call_with_args
 
     resolved: set[int] = set()
     total = rows * _COLS

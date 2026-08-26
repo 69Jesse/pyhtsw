@@ -3,26 +3,26 @@ from abc import abstractmethod
 from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING, ClassVar, Literal, Self, final, overload
 
-from .actions.no_type_casting import no_type_casting
-from .base_object import BaseObject
-from .execute.backend_type import BackendType, into_backend_type
-from .expression.condition.comparison_condition import (
+from pyhtsw.actions.no_type_casting import no_type_casting
+from pyhtsw.base_object import BaseObject
+from pyhtsw.execute.backend_type import BackendType, into_backend_type
+from pyhtsw.expression.condition.comparison_condition import (
     ComparisonCondition,
     ComparisonOperator,
 )
-from .expression.housing_type import (
+from pyhtsw.expression.housing_type import (
     HousingType,
     NumericHousingType,
     housing_type_as_rhs,
 )
-from .internal_type import InternalType
-from .utils.warn import warn
+from pyhtsw.internal_type import InternalType
+from pyhtsw.utils.warn import warn
 
 if TYPE_CHECKING:
-    from .editable import Editable
-    from .expression.binary_expression import BinaryExpression
-    from .expression.compound_expression import CompoundExpression
-    from .expression.expression import Expression
+    from pyhtsw.editable import Editable
+    from pyhtsw.expression.binary_expression import BinaryExpression
+    from pyhtsw.expression.compound_expression import CompoundExpression
+    from pyhtsw.expression.expression import Expression
 
 
 __all__ = ('Checkable',)
@@ -238,7 +238,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -250,7 +250,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -262,7 +262,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -274,7 +274,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -286,7 +286,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -298,7 +298,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -310,7 +310,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         if self.internal_type is InternalType.LONG:
             warn(
@@ -327,7 +327,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         if self.internal_type is InternalType.LONG:
             warn(
@@ -344,7 +344,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         if self.internal_type is InternalType.DOUBLE:
             warn(
@@ -361,7 +361,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         if self.internal_type is InternalType.DOUBLE:
             warn(
@@ -403,10 +403,10 @@ class Checkable(BaseObject):
         if other == 1:
             return self
 
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
-        from .expression.compound_expression import CompoundExpression
-        from .expression.expression import Expression
-        from .stats.temporary_stat import TemporaryStat
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.compound_expression import CompoundExpression
+        from pyhtsw.expression.expression import Expression
+        from pyhtsw.stats.temporary_stat import TemporaryStat
 
         tmp = TemporaryStat.transient().as_type(self.internal_type)
 
@@ -440,12 +440,12 @@ class Checkable(BaseObject):
         self,
         other: 'Checkable | NumericHousingType',
     ) -> 'CompoundExpression':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
-        from .expression.compound_expression import (
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.compound_expression import (
             CompoundExpression,
         )
-        from .expression.expression import Expression
-        from .stats.temporary_stat import TemporaryStat
+        from pyhtsw.expression.expression import Expression
+        from pyhtsw.stats.temporary_stat import TemporaryStat
 
         expressions: list[Expression] = []
 
@@ -511,17 +511,17 @@ class Checkable(BaseObject):
         self,
         other: 'Checkable | NumericHousingType',
     ) -> 'CompoundExpression':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
-        from .expression.compound_expression import CompoundExpression
-        from .expression.condition.comparison_condition import (
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.compound_expression import CompoundExpression
+        from pyhtsw.expression.condition.comparison_condition import (
             ComparisonCondition,
             ComparisonOperator,
         )
-        from .expression.condition.conditional_expression import (
+        from pyhtsw.expression.condition.conditional_expression import (
             ConditionalExpression,
             ConditionalMode,
         )
-        from .expression.expression import Expression
+        from pyhtsw.expression.expression import Expression
 
         remainder = self.remainder(other)
         result = remainder.result
@@ -553,7 +553,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -565,7 +565,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -577,7 +577,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -589,7 +589,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -601,7 +601,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -613,7 +613,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -625,7 +625,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -637,7 +637,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -649,7 +649,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -661,7 +661,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[T, Self]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             other,
@@ -673,7 +673,7 @@ class Checkable(BaseObject):
         self,
         other: T,
     ) -> 'BinaryExpression[Self, T]':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
         return BinaryExpression(
             self,
@@ -685,14 +685,14 @@ class Checkable(BaseObject):
         return self.__mul__(-1)
 
     def abs(self) -> 'CompoundExpression':
-        from .expression.binary_expression import BinaryExpression, BinaryOperator
-        from .expression.compound_expression import CompoundExpression
-        from .expression.condition.conditional_expression import (
+        from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
+        from pyhtsw.expression.compound_expression import CompoundExpression
+        from pyhtsw.expression.condition.conditional_expression import (
             ConditionalExpression,
             ConditionalMode,
         )
-        from .expression.expression import Expression
-        from .stats.temporary_stat import TemporaryStat
+        from pyhtsw.expression.expression import Expression
+        from pyhtsw.stats.temporary_stat import TemporaryStat
 
         tmp = TemporaryStat.transient().as_type(self.internal_type)
         expressions: list[Expression] = [

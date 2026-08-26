@@ -2,15 +2,14 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, NoReturn, Self
 
 from pyhtsw.clone import MISSING, Missing, clone_with
-
-from ...expression.condition.condition import Condition
-from ...expression.condition.conditional_expression import ConditionalMode
-from ...utils.callback import call_with_optional_arg
-from ..exception import descriptive_backend_type
-from .execution_expression import ExecutionExpression
+from pyhtsw.execute.exception import descriptive_backend_type
+from pyhtsw.execute.expressions.execution_expression import ExecutionExpression
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.expression.condition.conditional_expression import ConditionalMode
+from pyhtsw.utils.callback import call_with_optional_arg
 
 if TYPE_CHECKING:
-    from ..context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 
 __all__ = ('AssertExecutionExpression',)
@@ -89,7 +88,7 @@ class AssertExecutionExpression(ExecutionExpression):
         *,
         failed_conditions: list['Condition'],
     ) -> NoReturn:
-        from ...checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         assert len(failed_conditions) > 0
 

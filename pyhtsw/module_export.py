@@ -3,13 +3,15 @@ import posixpath
 from collections.abc import Generator
 from typing import TYPE_CHECKING
 
-from .importable import Project, build_import_json, module_to_folder
-from .utils.log import log
+from pyhtsw.importable import Project, build_import_json, module_to_folder
+
+from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from .block import Block
-    from .expression.expression import Expression
-    from .importable import Importable
+    from pyhtsw.block import Block
+    from pyhtsw.importable import Importable
+
+    from pyhtsw.expression.expression import Expression
 
 
 class _Node:
@@ -170,7 +172,7 @@ def export_project(
     prefix: tuple[str, ...] | None = None,
     house_uuid: str | None = None,
 ) -> None:
-    from .item_plan import promoted_importables
+    from pyhtsw.item_plan import promoted_importables
 
     if project.item_plan is not None:
         importables = [*importables, *promoted_importables(project.item_plan)]

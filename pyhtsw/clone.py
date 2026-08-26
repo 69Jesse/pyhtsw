@@ -2,7 +2,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .base_object import BaseObject
+    from pyhtsw.base_object import BaseObject
 
 __all__ = (
     'Missing',
@@ -30,7 +30,7 @@ _BaseObject: type | None = None
 def _base_object() -> type:
     global _BaseObject
     if _BaseObject is None:
-        from .base_object import BaseObject
+        from pyhtsw.base_object import BaseObject
 
         _BaseObject = BaseObject
     return _BaseObject

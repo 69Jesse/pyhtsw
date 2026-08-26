@@ -1,152 +1,152 @@
-from ..utils.formatting import (
-    formatting_to_ansi as formatting_to_ansi,
-)
-from ..utils.formatting import (
-    normalize_formatting as normalize_formatting,
-)
-from ..utils.formatting import (
-    remove_formatting as remove_formatting,
-)
-from ..utils.placeholders import (
-    get_placeholder_parts as get_placeholder_parts,
-)
-from ..utils.scoreboard import (
-    HypixelSplit as HypixelSplit,
-)
-from ..utils.scoreboard import (
-    fix_scoreboard_line as fix_scoreboard_line,
-)
-from ..utils.scoreboard import (
-    number_lengths as number_lengths,
-)
-from ..utils.scoreboard import (
-    simulate_hypixel_split as simulate_hypixel_split,
-)
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_acos as approximate_acos,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_asin as approximate_asin,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_atan as approximate_atan,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_atan2 as approximate_atan2,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_cos as approximate_cos,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_exp as approximate_exp,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_hypot as approximate_hypot,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_ln as approximate_ln,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_log10 as approximate_log10,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_pow as approximate_pow,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_sin as approximate_sin,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_sin_cos as approximate_sin_cos,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_sqrt as approximate_sqrt,
 )
-from .approximate import (
+from pyhtsw.ext.approximate import (
     approximate_tan as approximate_tan,
 )
-from .array_read_write import StatArray as StatArray
-from .array_read_write import array_read as array_read
-from .array_read_write import array_write as array_write
-from .compute_layout import (
+from pyhtsw.ext.array_read_write import StatArray as StatArray
+from pyhtsw.ext.array_read_write import array_read as array_read
+from pyhtsw.ext.array_read_write import array_write as array_write
+from pyhtsw.ext.compute_layout import (
     compute_best_layout as compute_best_layout,
 )
-from .format_time import (
+from pyhtsw.ext.format_time import (
     format_time_string as format_time_string,
 )
-from .look_vector import (
+from pyhtsw.ext.look_vector import (
     approximate_look_vector as approximate_look_vector,
 )
-from .music import (
+from pyhtsw.ext.music import (
     CustomInstrumentResolver as CustomInstrumentResolver,
 )
-from .music import (
+from pyhtsw.ext.music import (
     NoteEvent as NoteEvent,
 )
-from .music import (
+from pyhtsw.ext.music import (
     midi_into_expressions as midi_into_expressions,
 )
-from .music import (
+from pyhtsw.ext.music import (
     midi_into_note_events as midi_into_note_events,
 )
-from .music import (
+from pyhtsw.ext.music import (
     nbs_into_expressions as nbs_into_expressions,
 )
-from .music import (
+from pyhtsw.ext.music import (
     nbs_into_note_events as nbs_into_note_events,
 )
-from .music import (
+from pyhtsw.ext.music import (
     note_events_into_expressions as note_events_into_expressions,
 )
-from .ordinal import (
+from pyhtsw.ext.ordinal import (
     set_ordinal_suffix as set_ordinal_suffix,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     Block as Block,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     Box as Box,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     PositionRaycastResult as PositionRaycastResult,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     RayTarget as RayTarget,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     Shape as Shape,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     Sphere as Sphere,
 )
-from .position_raycast import (
+from pyhtsw.ext.position_raycast import (
     create_position_raycast as create_position_raycast,
 )
-from .raycast import (
+from pyhtsw.ext.raycast import (
     RaycastResult as RaycastResult,
 )
-from .raycast import (
+from pyhtsw.ext.raycast import (
     create_raycast as create_raycast,
 )
-from .round import (
+from pyhtsw.ext.round import (
     round_double as round_double,
 )
-from .set_string import (
+from pyhtsw.ext.set_string import (
     set_string as set_string,
 )
-from .stack_queue import (
+from pyhtsw.ext.stack_queue import (
     IntQueue as IntQueue,
 )
-from .stack_queue import (
+from pyhtsw.ext.stack_queue import (
     IntStack as IntStack,
 )
-from .stack_queue import (
+from pyhtsw.ext.stack_queue import (
     OnOverflow as OnOverflow,
 )
-from .stack_queue import (
+from pyhtsw.ext.stack_queue import (
     Queue as Queue,
 )
-from .stack_queue import (
+from pyhtsw.ext.stack_queue import (
     Stack as Stack,
+)
+from pyhtsw.utils.formatting import (
+    formatting_to_ansi as formatting_to_ansi,
+)
+from pyhtsw.utils.formatting import (
+    normalize_formatting as normalize_formatting,
+)
+from pyhtsw.utils.formatting import (
+    remove_formatting as remove_formatting,
+)
+from pyhtsw.utils.placeholders import (
+    get_placeholder_parts as get_placeholder_parts,
+)
+from pyhtsw.utils.scoreboard import (
+    HypixelSplit as HypixelSplit,
+)
+from pyhtsw.utils.scoreboard import (
+    fix_scoreboard_line as fix_scoreboard_line,
+)
+from pyhtsw.utils.scoreboard import (
+    number_lengths as number_lengths,
+)
+from pyhtsw.utils.scoreboard import (
+    simulate_hypixel_split as simulate_hypixel_split,
 )
 
 # Deprecated aliases: the original names described the implementation's cost,
@@ -154,4 +154,4 @@ from .stack_queue import (
 # array_read / array_write.
 cheap_read = array_read
 cheap_write = array_write
-from .ordinal import set_ordinal_inline as set_ordinal_inline  # noqa: E402
+from pyhtsw.ext.ordinal import set_ordinal_inline as set_ordinal_inline  # noqa: E402

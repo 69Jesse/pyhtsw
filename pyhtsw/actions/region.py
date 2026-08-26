@@ -1,10 +1,10 @@
 from collections.abc import Callable
 from typing import Any, Literal
 
-from ..block import NamedBlock
-from ..container import get_current_container
-from ..declared import Declared, declared_field, register_importable
-from ..importable import Bounds, Coord, Handler, RegionImportable, call_with_args
+from pyhtsw.block import NamedBlock
+from pyhtsw.container import get_current_container
+from pyhtsw.declared import Declared, declared_field, register_importable
+from pyhtsw.importable import Bounds, Coord, Handler, RegionImportable, call_with_args
 
 __all__ = ('Region', 'create_region')
 

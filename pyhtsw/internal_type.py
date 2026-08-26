@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, overload
 
 import numpy as np
 
-from .expression.housing_type import HousingType
+from pyhtsw.expression.housing_type import HousingType
 
 if TYPE_CHECKING:
-    from .checkable import Checkable
-    from .execute.backend_type import BackendType
+    from pyhtsw.checkable import Checkable
+    from pyhtsw.execute.backend_type import BackendType
 
 
 __all__ = ('InternalType',)
@@ -85,7 +85,7 @@ class InternalType(Enum):
         self,
         value: 'Checkable | HousingType',
     ) -> 'Checkable | HousingType':
-        from .checkable import Checkable
+        from pyhtsw.checkable import Checkable
 
         if isinstance(value, Checkable):
             return value.as_type(self)

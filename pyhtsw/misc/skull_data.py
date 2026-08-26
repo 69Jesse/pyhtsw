@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Literal, TypedDict
 
-from ..nbt import NBTCompound, NBTInt, NBTList, NBTString
+from pyhtsw.nbt import NBTCompound, NBTInt, NBTList, NBTString
 
 HERE = Path(__file__).parent.resolve()
 

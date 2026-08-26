@@ -1,7 +1,7 @@
-from ..actions.conditional.statements import IfAll
-from ..checkable import Checkable
-from ..editable import Editable
-from ..stats.temporary_stat import TemporaryStat
+from pyhtsw.actions.conditional.statements import IfAll
+from pyhtsw.checkable import Checkable
+from pyhtsw.editable import Editable
+from pyhtsw.stats.temporary_stat import TemporaryStat
 
 __all__ = ('set_ordinal_suffix',)
 

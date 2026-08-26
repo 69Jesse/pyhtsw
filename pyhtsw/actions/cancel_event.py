@@ -1,8 +1,7 @@
 from typing import final
 
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
-
-from ..expression.expression import Expression
 
 __all__ = (
     'CancelEventExpression',

@@ -1,12 +1,11 @@
 from typing import Self, cast, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
+from pyhtsw.location import Location, resolve_location
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from ..location import Location, resolve_location
-from ..types import ALL_LOCATIONS
+from pyhtsw.types import ALL_LOCATIONS
 
 __all__ = (
     'SetCompassTargetExpression',

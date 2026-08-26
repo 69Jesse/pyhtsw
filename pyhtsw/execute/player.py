@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING, Literal, overload
 
-from ..checkable import Checkable
-from ..expression.housing_type import HousingType
-from .backend_type import BackendType
+from pyhtsw.checkable import Checkable
+from pyhtsw.execute.backend_type import BackendType
+from pyhtsw.expression.housing_type import HousingType
 
 if TYPE_CHECKING:
-    from .context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 __all__ = ('ExecutionPlayer',)
 

@@ -1,10 +1,10 @@
 import math
 from typing import Literal, overload
 
-from ..checkable import Checkable
-from ..editable import Editable
-from ..stats.stat import Stat
-from ..stats.temporary_stat import TemporaryStat
+from pyhtsw.checkable import Checkable
+from pyhtsw.editable import Editable
+from pyhtsw.stats.stat import Stat
+from pyhtsw.stats.temporary_stat import TemporaryStat
 
 __all__ = (
     'approximate_acos',
@@ -28,7 +28,7 @@ _CARRY = 8
 
 
 def _scratch(index: int) -> TemporaryStat:
-    from ..container import get_current_container
+    from pyhtsw.container import get_current_container
 
     container = get_current_container()
     pool: list[TemporaryStat] = container.__dict__.setdefault(

@@ -1,15 +1,14 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Stream
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
 
-from ..expression.expression import Expression
-
 if TYPE_CHECKING:
-    from ..execute.context import ExecutionContext
+    from pyhtsw.execute.context import ExecutionContext
 
 
 __all__ = (

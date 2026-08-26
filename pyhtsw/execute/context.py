@@ -5,15 +5,9 @@ from contextlib import contextmanager
 from types import TracebackType
 from typing import TYPE_CHECKING, Literal, overload
 
-from ..checkable import Checkable
-from ..container import Container, override_write_expression
-from ..expression.condition.condition import Condition
-from ..expression.condition.conditional_expression import ConditionalMode
-from ..expression.expression import Expression
-from ..expression.housing_type import HousingType
-from ..utils.log import log
-from ..utils.warn import warn
-from .backend_type import (
+from pyhtsw.checkable import Checkable
+from pyhtsw.container import Container, override_write_expression
+from pyhtsw.execute.backend_type import (
     BackendType,
     backend_into_string,
     cast_to_backend_double,
@@ -21,15 +15,28 @@ from .backend_type import (
     into_backend_type,
     into_housing_type,
 )
-from .expressions.assert_execution_expression import AssertExecutionExpression
-from .expressions.print_execution_expression import PrintExecutionExpression
-from .expressions.run_execution_expression import CallbackType, RunExecutionExpression
-from .player import ExecutionPlayer
-from .schedulers import ActionScheduler, DelayedActionScheduler
-from .signal import ExitSignal, PauseSignal
+from pyhtsw.execute.expressions.assert_execution_expression import (
+    AssertExecutionExpression,
+)
+from pyhtsw.execute.expressions.print_execution_expression import (
+    PrintExecutionExpression,
+)
+from pyhtsw.execute.expressions.run_execution_expression import (
+    CallbackType,
+    RunExecutionExpression,
+)
+from pyhtsw.execute.player import ExecutionPlayer
+from pyhtsw.execute.schedulers import ActionScheduler, DelayedActionScheduler
+from pyhtsw.execute.signal import ExitSignal, PauseSignal
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.expression.condition.conditional_expression import ConditionalMode
+from pyhtsw.expression.expression import Expression
+from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.utils.log import log
+from pyhtsw.utils.warn import warn
 
 if TYPE_CHECKING:
-    from ..actions.function import Function
+    from pyhtsw.actions.function import Function
 
 __all__ = ('ExecutionContext',)
 
@@ -100,7 +107,7 @@ class ExecutionContext(Container):
         resolved.context = self
         self.players.append(resolved)
         if resolved.name is not None:
-            from ..actions.player_name import PlayerName
+            from pyhtsw.actions.player_name import PlayerName
 
             self.put(PlayerName, resolved.name, ignore_warning=True, player=resolved)
         return resolved

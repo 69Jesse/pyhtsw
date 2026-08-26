@@ -6,15 +6,16 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
-from .types import (
+from pyhtsw.types import (
     ALL_CHAT_SPEEDS,
     ALL_COMMAND_MODES,
     ALL_DEFAULT_GAMEMODES,
     ALL_HOUSING_COLORS,
     ALL_PERMISSIONS,
 )
-from .utils.kebab import into_kebab
-from .utils.log import log
+
+from pyhtsw.utils.kebab import into_kebab
+from pyhtsw.utils.log import log
 
 _ILLEGAL_HTSL_CHARS = frozenset(chr(code) for code in range(0x20)) | {
     '\x7f',
@@ -67,10 +68,10 @@ def module_to_folder(dotted: str | None) -> str:
 
 
 if TYPE_CHECKING:
-    from .actions.item import Item
-    from .actions.menu import Menu
-    from .block import Block
-    from .item_plan import ItemPlan
+    from pyhtsw.actions.item import Item
+    from pyhtsw.actions.menu import Menu
+    from pyhtsw.block import Block
+    from pyhtsw.item_plan import ItemPlan
 
 __all__ = (
     'EVENTS',
@@ -267,7 +268,7 @@ class Project:
         distinct item: the plan folded identical items across modules together
         and picked the name and owning module, so two menus showing the same
         item share a file instead of each writing their own copy."""
-        from .actions.item import normalize_item
+        from pyhtsw.actions.item import normalize_item
 
         resolved = normalize_item(item)
         snbt = resolved.into_snbt()
@@ -299,7 +300,7 @@ class Project:
         return relpath
 
     def icon(self, item: 'Item') -> dict[str, Any]:
-        from .actions.item import normalize_item
+        from pyhtsw.actions.item import normalize_item
 
         resolved = normalize_item(item)
         mid = resolved.minecraft_id()
@@ -329,8 +330,8 @@ def _block_replayer(block: 'Block') -> Callable[[], None]:
 def _clone_block_into_current(block: 'Block | None') -> 'Block | None':
     if block is None:
         return None
-    from .block import NamedBlock
-    from .container import get_current_container
+    from pyhtsw.block import NamedBlock
+    from pyhtsw.container import get_current_container
 
     fresh = NamedBlock(
         block.get_name(),
@@ -386,7 +387,7 @@ class FunctionImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .actions.create_function import create_function
+        from pyhtsw.actions.create_function import create_function
 
         function = create_function(
             name=self.name,
@@ -423,7 +424,7 @@ class EventImportable(Importable):
         self.event = name
 
     def reexport(self) -> None:
-        from .actions.create_event import create_event
+        from pyhtsw.actions.create_event import create_event
 
         event = create_event(self.event)(_block_replayer(self.block))  # type: ignore[arg-type]
         event.declaration().module = self.module
@@ -458,7 +459,7 @@ class ItemImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         get_current_container().register_importable(
             ItemImportable(
@@ -505,7 +506,7 @@ class RegionImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         get_current_container().register_importable(
             RegionImportable(
@@ -603,7 +604,7 @@ class MenuImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         slots = [
             MenuSlot(
@@ -728,7 +729,7 @@ class NpcImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         get_current_container().register_importable(
             NpcImportable(
@@ -804,7 +805,7 @@ class TeamImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         get_current_container().register_importable(
             TeamImportable(
@@ -860,7 +861,7 @@ class GroupImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .container import get_current_container
+        from pyhtsw.container import get_current_container
 
         get_current_container().register_importable(
             GroupImportable(
@@ -921,7 +922,7 @@ class CommandImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from .actions.create_command import create_command
+        from pyhtsw.actions.create_command import create_command
 
         command = create_command(
             name=self.name,

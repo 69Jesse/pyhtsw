@@ -1,10 +1,11 @@
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .expression.condition.condition import Condition
-    from .expression.condition.conditional_expression import ConditionalExpression
-    from .expression.expression import Expression
-    from .limits import ImportableKind
+    from pyhtsw.limits import ImportableKind
+
+    from pyhtsw.expression.condition.condition import Condition
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.expression.expression import Expression
 
 
 __all__ = ('simplify_expressions',)
@@ -28,7 +29,7 @@ def _can_merge(
     first: 'ConditionalExpression',
     second: 'ConditionalExpression',
 ) -> bool:
-    from .schedule import body_writes, conditions_read
+    from pyhtsw.schedule import body_writes, conditions_read
 
     if first.mode is not second.mode:
         return False
@@ -52,8 +53,9 @@ def _merge_conditionals(
     *,
     importable: 'ImportableKind',
 ) -> bool:
-    from .expression.condition.conditional_expression import ConditionalExpression
-    from .limits import is_within_limits
+    from pyhtsw.limits import is_within_limits
+
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     has_changed = False
     index = 0
@@ -93,7 +95,7 @@ def _merge_conditionals(
 
 
 def _drop_unreachable(expressions: list['Expression']) -> bool:
-    from .actions.exit_function import ExitFunctionExpression
+    from pyhtsw.actions.exit_function import ExitFunctionExpression
 
     for index, expression in enumerate(expressions):
         if isinstance(expression, ExitFunctionExpression) and index + 1 < len(
@@ -105,7 +107,7 @@ def _drop_unreachable(expressions: list['Expression']) -> bool:
 
 
 def _drop_empty_conditionals(expressions: list['Expression']) -> bool:
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 
     has_changed = False
     for index in range(len(expressions) - 1, -1, -1):
@@ -129,8 +131,9 @@ def simplify_expressions(
     """Merge conditionals that check the same thing and drop what cannot run.
     Recurses into nested action lists first, so an inner merge is visible to the
     limit check an outer merge makes."""
-    from .actions.no_optimization import optimization_enabled
-    from .expression.binary_expression import BinaryExpression
+    from pyhtsw.actions.no_optimization import optimization_enabled
+
+    from pyhtsw.expression.binary_expression import BinaryExpression
 
     has_changed = False
     for expression in expressions:

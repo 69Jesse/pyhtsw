@@ -1,8 +1,8 @@
 from typing import ClassVar
 
-from .actions.no_fallback_values import NoFallbackValues
-from .checkable import Checkable
-from .expression.housing_type import HousingType
+from pyhtsw.actions.no_fallback_values import NoFallbackValues
+from pyhtsw.checkable import Checkable
+from pyhtsw.expression.housing_type import HousingType
 
 __all__ = (
     'Location',

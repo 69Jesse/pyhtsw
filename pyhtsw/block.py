@@ -2,23 +2,24 @@ from abc import abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar, Self, final
 
-from pyhtsw.clone import MISSING, Missing, clone_with
-
-from .actions.function import Function
-from .base_object import BaseObject
-from .container import ContainerContextManager, ExpressionContext
-from .limits import (
+from pyhtsw.actions.function import Function
+from pyhtsw.container import ContainerContextManager, ExpressionContext
+from pyhtsw.limits import (
     FUNCTION_OVERFLOW_KINDS,
     ImportableKind,
     fix_action_limits,
 )
-from .utils.log import log
+
+from pyhtsw.base_object import BaseObject
+from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from .actions.item import Item
-    from .container import Container
-    from .execute.context import ExecutionContext
-    from .expression.expression import Expression
+    from pyhtsw.actions.item import Item
+    from pyhtsw.container import Container
+
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.expression.expression import Expression
 
 
 class Block(BaseObject):
@@ -91,7 +92,7 @@ class Block(BaseObject):
         return len(self.expressions) == 0
 
     def into_htsl(self) -> str:
-        from .stats.temporary_stat import reserved_temp_numbers
+        from pyhtsw.stats.temporary_stat import reserved_temp_numbers
 
         with reserved_temp_numbers(self._reserved_temp_numbers):
             return '\n'.join(expr.into_htsl() for expr in self.expressions)
@@ -107,7 +108,7 @@ class Block(BaseObject):
         """Merge conditionals that check the same thing and drop what cannot
         run. Both remove actions outright, so they are worth doing whether or not
         the block is anywhere near a limit."""
-        from .simplify import simplify_expressions
+        from pyhtsw.simplify import simplify_expressions
 
         simplify_expressions(self.expressions, importable=self.importable_kind)
 
@@ -121,8 +122,8 @@ class Block(BaseObject):
         """Resequence so the fixer needs as few wrapper conditionals and overflow
         functions as possible. Pure reshuffling - it only runs when the block
         would otherwise overflow, so a block that fits keeps its source order."""
-        from .actions.no_optimization import optimization_enabled
-        from .schedule import reorder_for_packing
+        from pyhtsw.actions.no_optimization import optimization_enabled
+        from pyhtsw.schedule import reorder_for_packing
 
         if not optimization_enabled('reorder'):
             return
@@ -135,7 +136,7 @@ class Block(BaseObject):
             self.expressions = reordered
 
     def _overflow_icon(self, root: 'Block', counter: int) -> 'Item | None':
-        from .actions.item import normalize_item
+        from pyhtsw.actions.item import normalize_item
 
         root_function = getattr(root, 'function', None)
         if root_function is None:
@@ -170,7 +171,7 @@ class Block(BaseObject):
         if function is None:
             container.report_action_limit_violation(self, len(rest))
             return
-        from .importable import FunctionImportable
+        from pyhtsw.importable import FunctionImportable
 
         new_block = FunctionBlock(
             function=function,
@@ -212,8 +213,8 @@ class Block(BaseObject):
             self.fix_action_limits(container, index)
 
     def execute_all_expressions(self, context: 'ExecutionContext') -> None:
-        from .execute.signal import ExitSignal, PauseSignal
-        from .stats.temporary_stat import reserved_temp_numbers
+        from pyhtsw.execute.signal import ExitSignal, PauseSignal
+        from pyhtsw.stats.temporary_stat import reserved_temp_numbers
 
         self.maybe_run_callback()
         block_reserved = context.finalize_expressions(self.expressions)

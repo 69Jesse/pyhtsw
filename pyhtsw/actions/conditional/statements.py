@@ -4,9 +4,8 @@ from pyhtsw.actions.conditional.context_manager import (
     ElseContextManager,
     IfContextManager,
 )
-
-from ...expression.condition.condition import Condition
-from ...expression.condition.conditional_expression import (
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.expression.condition.conditional_expression import (
     ConditionalMode,
 )
 

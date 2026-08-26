@@ -2,12 +2,12 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .schedule import Effects, ResourceKey
+from pyhtsw.schedule import Effects, ResourceKey
 
 if TYPE_CHECKING:
-    from .expression.condition.condition import Condition
-    from .expression.expression import Expression
-    from .placeholders import PlaceholderCheckable
+    from pyhtsw.expression.condition.condition import Condition
+    from pyhtsw.expression.expression import Expression
+    from pyhtsw.placeholders import PlaceholderCheckable
 
 __all__ = (
     'ActionMeta',
@@ -51,18 +51,18 @@ def _walk[T](cls: type[T]) -> Generator[type[T]]:
 
 
 def iter_action_types() -> Generator[type['Expression']]:
-    from .expression.expression import Expression
+    from pyhtsw.expression.expression import Expression
 
     yield from _walk(Expression)
 
 
 def iter_condition_types() -> Generator[type['Condition']]:
-    from .expression.condition.condition import Condition
+    from pyhtsw.expression.condition.condition import Condition
 
     yield from _walk(Condition)
 
 
 def iter_placeholder_types() -> Generator[type['PlaceholderCheckable']]:
-    from .placeholders import PlaceholderCheckable
+    from pyhtsw.placeholders import PlaceholderCheckable
 
     yield from _walk(PlaceholderCheckable)

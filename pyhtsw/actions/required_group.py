@@ -1,11 +1,10 @@
 from typing import Self, final
 
+from pyhtsw.actions.group import Group
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.registry import ConditionMeta
 from pyhtsw.schedule import Resource
-
-from ..expression.condition.condition import Condition
-from .group import Group
 
 __all__ = ('RequiredGroup',)
 

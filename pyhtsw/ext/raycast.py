@@ -2,20 +2,21 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from ..actions.conditional.statements import IfAll, IfAny
-from ..actions.create_function import create_function
-from ..actions.exit_function import exit_function
-from ..actions.function import Function
-from ..actions.item import Item
-from ..actions.player_position_x import PlayerPositionX
-from ..actions.player_position_y import PlayerPositionY
-from ..actions.player_position_z import PlayerPositionZ
-from ..actions.trigger_function import trigger_function
-from ..expression.condition.condition import Condition
-from ..stats.global_stat import GlobalStat
-from ..stats.temporary_stat import TemporaryStat
-from ..utils.callback import call_with_optional_arg
-from .look_vector import approximate_look_vector
+from pyhtsw.actions.conditional.statements import IfAll, IfAny
+from pyhtsw.actions.create_function import create_function
+from pyhtsw.actions.exit_function import exit_function
+from pyhtsw.actions.function import Function
+from pyhtsw.actions.item import Item
+from pyhtsw.actions.player_position_x import PlayerPositionX
+from pyhtsw.actions.player_position_y import PlayerPositionY
+from pyhtsw.actions.player_position_z import PlayerPositionZ
+from pyhtsw.actions.trigger_function import trigger_function
+
+from pyhtsw.expression.condition.condition import Condition
+from pyhtsw.ext.look_vector import approximate_look_vector
+from pyhtsw.stats.global_stat import GlobalStat
+from pyhtsw.stats.temporary_stat import TemporaryStat
+from pyhtsw.utils.callback import call_with_optional_arg
 
 __all__ = (
     'RaycastResult',

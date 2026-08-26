@@ -1,5 +1,5 @@
-from ..utils.formatting import remove_formatting
-from ..utils.placeholders import get_placeholder_parts
+from pyhtsw.utils.formatting import remove_formatting
+from pyhtsw.utils.placeholders import get_placeholder_parts
 
 __all__ = ('compute_best_layout',)
 

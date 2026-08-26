@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
 
-from ..declared import Declared, declared_field
+from pyhtsw.declared import Declared, declared_field
 
 if TYPE_CHECKING:
-    from ..types import ALL_COMMAND_MODES
+    from pyhtsw.types import ALL_COMMAND_MODES
 
 
 __all__ = ('Command',)

@@ -1,11 +1,10 @@
 from typing import ClassVar, Self, final
 
+from pyhtsw.actions.menu import Menu
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.expression.expression import Expression
 from pyhtsw.registry import ActionMeta
 from pyhtsw.schedule import Effects, Resource
-
-from ..expression.expression import Expression
-from .menu import Menu
 
 __all__ = (
     'DisplayMenuExpression',

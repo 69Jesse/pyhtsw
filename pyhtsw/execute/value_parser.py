@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .backend_type import BackendType, JavaLong, backend_into_string
-from .java_long import INT64_MAX, INT64_MIN
+from pyhtsw.execute.backend_type import BackendType, JavaLong, backend_into_string
+from pyhtsw.execute.java_long import INT64_MAX, INT64_MIN
 
 if TYPE_CHECKING:
-    from .context import ExecutionContext
-    from .player import ExecutionPlayer
+    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.player import ExecutionPlayer
 
 __all__ = (
     'parse_string',
@@ -77,10 +77,10 @@ def _run_placeholder(
     *,
     player: 'ExecutionPlayer | None',
 ) -> BackendType | None:
-    from ..checkable import Checkable
-    from ..stats.global_stat import GlobalStat
-    from ..stats.player_stat import PlayerStat
-    from ..stats.team_stat import TeamStat
+    from pyhtsw.checkable import Checkable
+    from pyhtsw.stats.global_stat import GlobalStat
+    from pyhtsw.stats.player_stat import PlayerStat
+    from pyhtsw.stats.team_stat import TeamStat
 
     trimmed = content.strip()
     slash = trimmed.find('/')

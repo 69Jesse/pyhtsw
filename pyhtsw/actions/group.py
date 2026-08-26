@@ -1,12 +1,12 @@
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from ..declared import Declared, declared_field
+from pyhtsw.declared import Declared, declared_field
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from ..types import (
+    from pyhtsw.types import (
         ALL_CHAT_SPEEDS,
         ALL_DEFAULT_GAMEMODES,
         ALL_HOUSING_COLORS,

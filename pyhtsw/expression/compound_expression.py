@@ -2,11 +2,10 @@ from collections.abc import Generator
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.editable import Editable
+from pyhtsw.expression.expression import Expression
 from pyhtsw.expression.housing_type import HousingType
 from pyhtsw.internal_type import InternalType
-
-from ..editable import Editable
-from .expression import Expression
 
 
 @final
@@ -51,7 +50,7 @@ class CompoundExpression(Expression, Editable):
         )
 
     def _flattened_expressions(self) -> list[Expression]:
-        from .binary_expression import BinaryExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         expressions: list[Expression] = []
         for expr in self.expressions:
@@ -63,7 +62,7 @@ class CompoundExpression(Expression, Editable):
         return expressions
 
     def into_executable_expressions(self) -> Generator[Expression]:
-        from .binary_expression import BinaryExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         expressions = self._flattened_expressions()
         BinaryExpression.optimize_binary_expressions(expressions)
@@ -71,7 +70,7 @@ class CompoundExpression(Expression, Editable):
         yield from expressions
 
     def write_and_get_result(self) -> Editable:
-        from .binary_expression import BinaryExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         expressions = self._flattened_expressions()
         BinaryExpression.optimize_binary_expressions(expressions)
@@ -94,12 +93,12 @@ class CompoundExpression(Expression, Editable):
         )
 
     def into_inside_string(self, include_fallback_value: bool = True) -> str:
-        from ..deferred import register_deferred
+        from pyhtsw.deferred import register_deferred
 
         return register_deferred(self, include_fallback_value)
 
     def into_htsl(self) -> str:
-        from .binary_expression import BinaryExpression
+        from pyhtsw.expression.binary_expression import BinaryExpression
 
         expressions = self._flattened_expressions()
         BinaryExpression.optimize_binary_expressions(expressions)

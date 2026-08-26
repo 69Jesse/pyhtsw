@@ -21,16 +21,9 @@ tmp = Path(tempfile.mkdtemp())
 set_projects_folder(tmp, save=False)
 
 
-class Black(Item, key='black_stained_glass_pane', name=' '):
-    pass
-
-
-class Gray(Item, key='gray_stained_glass_pane', name=' '):
-    pass
-
-
-class Wand(Item, key='blaze_rod', name='&aWand'):
-    pass
+Black = Item('black_stained_glass_pane', name=' ')
+Gray = Item('gray_stained_glass_pane', name=' ')
+Wand = Item('blaze_rod', name='&aWand')
 
 
 def build_page(title: str, greeting: str) -> Menu:
@@ -57,18 +50,16 @@ with Container() as container:
     def _nav() -> None:
         display_menu(pages[0])
 
-    class Legacy(Menu, name='Legacy', size=3):
-        @Menu.element(item=Black, xy_check=lambda x, y: x == 0)
-        def _top() -> None:
-            pass
+    legacy = create_menu('Legacy', 3)
+    legacy.place(Black, xy_check=lambda x, y: x == 0)
 
-        @Menu.element(item=Wand, slot=13)
-        def buy() -> None:
-            chat('bought')
+    @legacy.on(item=Wand, slot=13)
+    def buy() -> None:
+        chat('bought')
 
-        @Menu.element(item=Gray, slot=[18, 26])
-        def corners() -> None:
-            chat('corner')
+    @legacy.on(item=Gray, slot=[18, 26])
+    def corners() -> None:
+        chat('corner')
 
 
 container.export('Menu Builder Test')

@@ -74,7 +74,7 @@ def create_raycast(
     name: str,
     *,
     stat_prefix: str = 'rc/',
-    icon: Item | type[Item] | None = None,
+    icon: Item | None = None,
     on_hit_target: HitCallback | None = None,
     on_hit_sender: HitCallback | None = None,
     conditions: ConditionsArg | None = None,

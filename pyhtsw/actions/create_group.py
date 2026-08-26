@@ -1,6 +1,6 @@
 from collections.abc import Mapping, Sequence
 
-from ..container import get_current_container
+from ..declared import register_importable
 from ..importable import GroupImportable
 from ..types import (
     ALL_CHAT_SPEEDS,
@@ -8,7 +8,6 @@ from ..types import (
     ALL_HOUSING_COLORS,
     ALL_PERMISSIONS,
 )
-from ..utils.caller import caller_module
 from .group import Group
 
 __all__ = ('create_group',)
@@ -47,19 +46,17 @@ def create_group(
 ) -> Group:
     """Declare a group importable and return the `Group` that
     `change_player_group` and `RequiredGroup` already take."""
-    importable = GroupImportable(
-        name=name,
-        tag=tag,
-        tag_shown_in_chat=tag_shown_in_chat,
-        color=color,
-        priority=priority,
-        permissions=_merge_permissions(name, allow, deny, permissions),
-        chat_speed=chat_speed,
-        default_gamemode=default_gamemode,
-    )
-    importable.module = caller_module()
-    get_current_container().register_importable(importable)
-
     group = Group(name)
-    group.__htsw_importable__ = importable
+    group.__htsw_importable__ = register_importable(
+        GroupImportable(
+            name=name,
+            tag=tag,
+            tag_shown_in_chat=tag_shown_in_chat,
+            color=color,
+            priority=priority,
+            permissions=_merge_permissions(name, allow, deny, permissions),
+            chat_speed=chat_speed,
+            default_gamemode=default_gamemode,
+        ),
+    )
     return group

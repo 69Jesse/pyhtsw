@@ -5,12 +5,13 @@ from pathlib import Path
 from pyhtsw import (
     NPC,
     Container,
-    Item,
-    Menu,
-    Region,
     chat,
     create_event,
     create_function,
+    create_item,
+    create_menu,
+    create_npc,
+    create_region,
     give_item,
     set_projects_folder,
 )
@@ -19,52 +20,47 @@ tmp = Path(tempfile.mkdtemp())
 set_projects_folder(tmp, save=False)
 
 with Container() as container:
+    wand = create_item('blaze_rod', name='&aMagic Wand')
 
-    class MagicWand(Item, key='blaze_rod', name='&aMagic Wand'):
-        @Item.right_click
-        def on_right() -> None:
-            chat('used the wand')
+    @wand.right_click
+    def on_right() -> None:
+        chat('used the wand')
 
-    class Border(Item, key='black_stained_glass_pane', name=' '):
-        pass
+    border = create_item('black_stained_glass_pane', name=' ', importable_name='Border')
 
-    class Shop(Menu, name='Shop', size=6):
-        @Menu.element(item=Border, x=0)
-        def _border() -> None:
-            pass
+    shop = create_menu('Shop', 6)
+    shop.place(border, x=0)
+    shop.place(border, xy_check=lambda x, y: (x + y) % 2 == 0)
 
-        @Menu.element(item=Border, xy_check=lambda x, y: (x + y) % 2 == 0)
-        def _checker() -> None:
-            pass
+    @shop.on(item=wand, x=3, y=4)
+    def buy() -> None:
+        chat('bought')
 
-        @Menu.element(item=MagicWand, x=3, y=4)
-        def buy() -> None:
-            chat('bought')
+    spawn = create_region('Spawn', ((0, 100, 0), (10, 110, 10)))
 
-    class Spawn(Region, bounds=((0, 100, 0), (10, 110, 10))):
-        @Region.on_enter
-        def enter() -> None:
-            chat('entered')
+    @spawn.on_enter
+    def enter() -> None:
+        chat('entered')
 
-    class Merchant(
-        NPC,
-        name='Merchant',
-        pos=(1.5, 64, 2.5),
+    merchant = create_npc(
+        'Merchant',
+        (1, 64, 2),
         skin='Steve',
         look_at_players=True,
-        equipment=NPC.Equipment(hand=MagicWand),
-    ):
-        @NPC.right_click
-        def right() -> None:
-            chat('hello')
+        equipment=NPC.Equipment(hand=wand),
+    )
 
-    @create_function('Tick', repeat_ticks=20, icon=MagicWand)
+    @merchant.right_click
+    def right() -> None:
+        chat('hello')
+
+    @create_function('Tick', repeat_ticks=20, icon=wand)
     def tick() -> None:
         chat('tick')
 
     @create_event('Player Join')
     def join() -> None:
-        give_item(MagicWand)
+        give_item(wand)
 
 
 container.export('Export Test')
@@ -85,13 +81,13 @@ assert data['events'][0] == {
     'actions': 'events/player-join.htsl',
 }
 # the declared item is referenced by name from the action
-assert 'giveItem "MagicWand"' in (root / 'events' / 'player-join.htsl').read_text()
+assert 'giveItem "Magic Wand"' in (root / 'events' / 'player-join.htsl').read_text()
 
-# items: declared subclasses become items[] entries; class name is the reference
+# items: a declared item becomes an items[] entry, named after its display name
 items = {entry['name']: entry for entry in data['items']}
-assert items['MagicWand']['nbt'] == 'items/magicwand.snbt'
-assert items['MagicWand']['rightClickActions'] == 'items/magicwand/right.htsl'
-assert 'leftClickActions' not in items['MagicWand']
+assert items['Magic Wand']['nbt'] == 'items/magic-wand.snbt'
+assert items['Magic Wand']['rightClickActions'] == 'items/magic-wand/right.htsl'
+assert 'leftClickActions' not in items['Magic Wand']
 assert 'rightClickActions' not in items['Border']
 
 # region
@@ -106,10 +102,10 @@ assert region['onEnterActions'] == 'regions/spawn/enter.htsl'
 # npc
 npc = data['npcs'][0]
 assert npc['name'] == 'Merchant'
-assert npc['pos'] == {'x': 1.5, 'y': 64, 'z': 2.5}
+assert npc['pos'] == {'x': 1, 'y': 64, 'z': 2}
 assert npc['skin'] == 'Steve'
 assert npc['lookAtPlayers'] is True
-assert npc['equipment'] == {'hand': 'items/magicwand.snbt'}
+assert npc['equipment'] == {'hand': 'items/magic-wand.snbt'}
 
 # menu: x=0 fills the whole top row, the checkerboard fills (x+y) even cells,
 # and the explicit (3, 4) -> slot 31 overrides whatever was there.
@@ -117,10 +113,10 @@ menu = data['menus'][0]
 assert menu['size'] == 6
 slots = {entry['slot']: entry for entry in menu['slots']}
 assert set(range(9)).issubset(slots)  # row 0 fully filled
-assert slots[31]['nbt'] == 'items/magicwand.snbt'
+assert slots[31]['nbt'] == 'items/magic-wand.snbt'
 assert slots[31]['actions'] == 'menus/shop/slot-3-4.htsl'
 assert slots[10]['nbt'] == 'items/border.snbt'  # (1,1) -> checkerboard
 
 # pretty snbt is indented
-snbt = (root / 'items' / 'magicwand.snbt').read_text()
+snbt = (root / 'items' / 'magic-wand.snbt').read_text()
 assert '\n    id: "minecraft:blaze_rod"' in snbt

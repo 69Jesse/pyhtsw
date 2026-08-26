@@ -262,7 +262,7 @@ class Project:
             return root_relpath
         return posixpath.relpath(root_relpath, block_dir)
 
-    def item_path(self, item: 'Item | type[Item]') -> str:
+    def item_path(self, item: 'Item') -> str:
         """Write `item`'s .snbt and return the root-relative path. One file per
         distinct item: the plan folded identical items across modules together
         and picked the name and owning module, so two menus showing the same
@@ -298,7 +298,7 @@ class Project:
         self.item_paths[snbt] = relpath
         return relpath
 
-    def icon(self, item: 'Item | type[Item]') -> dict[str, Any]:
+    def icon(self, item: 'Item') -> dict[str, Any]:
         from .actions.item import normalize_item
 
         resolved = normalize_item(item)
@@ -349,6 +349,11 @@ class Importable(ABC):
     def identifier(self) -> str:
         raise NotImplementedError
 
+    def rename(self, name: str) -> None:
+        """Change what `identifier()` returns. Go through
+        `Container.rename_importable`, which keeps the name index in step."""
+        self.name = name  # type: ignore[attr-defined]
+
     @abstractmethod
     def build(self, project: Project) -> dict[str, Any]:
         raise NotImplementedError
@@ -370,7 +375,7 @@ class FunctionImportable(Importable):
         *,
         name: str,
         repeat_ticks: int | None = None,
-        icon: 'Item | type[Item] | None' = None,
+        icon: 'Item | None' = None,
     ) -> None:
         self.block = block
         self.name = name
@@ -414,11 +419,14 @@ class EventImportable(Importable):
     def identifier(self) -> str:
         return self.event
 
+    def rename(self, name: str) -> None:
+        self.event = name
+
     def reexport(self) -> None:
         from .actions.create_event import create_event
 
-        callback = create_event(self.event)(_block_replayer(self.block))  # type: ignore[arg-type]
-        callback.__htsw_importable__.module = self.module  # type: ignore[attr-defined]
+        event = create_event(self.event)(_block_replayer(self.block))  # type: ignore[arg-type]
+        event.declaration().module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:
         return {
@@ -528,15 +536,15 @@ class RegionImportable(Importable):
 
 
 MenuAxis = int | Sequence[int] | None
-# Receives (x, y), optionally also the Menu subclass; returns whether to fill.
-XYCheck = Callable[[int, int], bool] | Callable[[int, int, 'type[Menu] | Menu'], bool]
+# Receives (x, y), optionally also the menu itself; returns whether to fill.
+XYCheck = Callable[[int, int], bool] | Callable[[int, int, 'Menu'], bool]
 
 
 class MenuSlot:
     def __init__(
         self,
         *,
-        item: 'Item | type[Item]',
+        item: 'Item',
         x: MenuAxis,
         y: MenuAxis,
         xy_check: XYCheck | None,
@@ -584,12 +592,12 @@ class MenuImportable(Importable):
         name: str,
         size: int,
         slots: list[MenuSlot],
-        menu_cls: 'type[Menu] | Menu | None' = None,
+        menu: 'Menu | None' = None,
     ) -> None:
         self.name = name
         self.size = size
         self.slots = slots
-        self.menu_cls = menu_cls
+        self.menu = menu
 
     def identifier(self) -> str:
         return self.name
@@ -612,7 +620,7 @@ class MenuImportable(Importable):
                 name=self.name,
                 size=self.size,
                 slots=slots,
-                menu_cls=self.menu_cls,
+                menu=self.menu,
             ),
         )
 
@@ -629,7 +637,7 @@ class MenuImportable(Importable):
                         element.xy_check,
                         r,
                         c,
-                        self.menu_cls,
+                        self.menu,
                     ):
                         continue
                     slot = r * self.COLS + c
@@ -669,11 +677,11 @@ class NpcEquipment:
     def __init__(
         self,
         *,
-        helmet: 'Item | type[Item] | None' = None,
-        chestplate: 'Item | type[Item] | None' = None,
-        leggings: 'Item | type[Item] | None' = None,
-        boots: 'Item | type[Item] | None' = None,
-        hand: 'Item | type[Item] | None' = None,
+        helmet: 'Item | None' = None,
+        chestplate: 'Item | None' = None,
+        leggings: 'Item | None' = None,
+        boots: 'Item | None' = None,
+        hand: 'Item | None' = None,
     ) -> None:
         self.helmet = helmet
         self.chestplate = chestplate

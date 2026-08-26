@@ -77,7 +77,7 @@ class _Group:
         self.promotable = self.promotable and item._promotable
 
 
-def _iter_item_fields(obj: object) -> Iterator['Item | type[Item]']:
+def _iter_item_fields(obj: object) -> "Iterator['Item']":
     from .actions.item import Item
     from .expression.condition.condition import Condition
 
@@ -85,8 +85,6 @@ def _iter_item_fields(obj: object) -> Iterator['Item | type[Item]']:
         candidates = value if isinstance(value, list | tuple) else (value,)
         for candidate in candidates:
             if isinstance(candidate, Item):
-                yield candidate
-            elif isinstance(candidate, type) and issubclass(candidate, Item):
                 yield candidate
             elif isinstance(candidate, Condition):
                 yield from _iter_item_fields(candidate)
@@ -167,7 +165,7 @@ def _collect(
     def group_for(item: 'Item') -> _Group:
         return groups.setdefault(item.into_snbt(), _Group())
 
-    def add(value: 'Item | type[Item] | None', *, referenced: bool) -> None:
+    def add(value: 'Item | None', *, referenced: bool) -> None:
         if value is None:
             return
         # A declared subclass is referenced by its class name and its canonical

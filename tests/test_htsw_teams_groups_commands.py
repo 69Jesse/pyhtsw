@@ -3,12 +3,12 @@ import tempfile
 from pathlib import Path
 
 from pyhtsw import (
-    NPC,
     Container,
     change_player_group,
     chat,
     create_command,
     create_group,
+    create_npc,
     create_team,
     set_player_team,
     set_projects_folder,
@@ -38,17 +38,17 @@ with Container() as container:
         set_player_team(red)
         change_player_group(vip)
 
-    class Greeter(
-        NPC,
-        name='&aGreeter',
-        pos=(1, 2, 3),
+    greeter = create_npc(
+        '&aGreeter',
+        (1, 2, 3),
         left_click_redirect=True,
         look_at_players=True,
         skin='Alex',
-    ):
-        @NPC.right_click
-        def _hi() -> None:
-            chat('&ahello')
+    )
+
+    @greeter.right_click
+    def _hi() -> None:
+        chat('&ahello')
 
 
 container.export('TGC', house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e')

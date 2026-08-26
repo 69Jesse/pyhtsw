@@ -100,51 +100,20 @@ with expect_exception(ValueError):
         npc.attach('left', lambda: chat('x'))
 
 
-with Container() as container:
-
-    class Villager(NPC, name='Villager', pos=(9, 9, 9), skin='Steve'):
-        @NPC.right_click
-        def talk() -> None:
-            chat('hmm')
-
-
-villager = _entry(container, 'Villager')
-assert villager['right'] is not None and villager['left'] is None
-assert villager['skin'] == 'Steve'
-
-
-with Container() as container:
-
-    class Merchant(NPC, name='Merchant', pos=(4, 4, 4)):
-        @NPC.click
-        def trade() -> None:
-            chat('trade')
-
-
-merchant = _entry(container, 'Merchant')
-assert merchant['right'] is not None and merchant['left'] is None
-assert merchant['redirect'] is True
-
-
 with expect_exception(ValueError):
     with Container():
+        broken = create_npc('Broken', (0, 0, 0), left_click_redirect=False)
 
-        class Broken(
-            NPC,
-            name='Broken',
-            pos=(0, 0, 0),
-            left_click_redirect=False,
-        ):
-            @NPC.click
-            def both() -> None:
-                chat('nope')
+        @broken.click
+        def _both() -> None:
+            chat('nope')
 
 
 with Container() as container:
     helmet = Item('diamond_helmet')
 
     def _greet(npc: NPC) -> None:
-        chat(f'I am {npc.__htsw_name__}')
+        chat(f'I am {npc.name}')
 
     create_npc(
         'Knight',

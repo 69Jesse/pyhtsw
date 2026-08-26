@@ -1,4 +1,25 @@
-from pyhtsw import Container, Group, Team, create_group, create_team
+from pyhtsw import (
+    NPC,
+    Command,
+    Container,
+    Event,
+    Function,
+    Group,
+    Item,
+    Menu,
+    Region,
+    Team,
+    chat,
+    create_command,
+    create_event,
+    create_function,
+    create_group,
+    create_item,
+    create_menu,
+    create_npc,
+    create_region,
+    create_team,
+)
 
 with Container():
     vip = create_group(
@@ -57,21 +78,102 @@ with Container():
 
     raised = False
     try:
-        _ = Team('Ghost').color
+        _ = Team('Ghost').tag
     except RuntimeError as error:
         raised = True
         assert 'create_team' in str(error), error
     assert raised, 'expected a RuntimeError for an undeclared team'
 
 
-# A group declared in another container is not this container's group.
-with Container():
+with Container() as container:
+    wand = create_item('blaze_rod', name='&aWand')
+    shop = create_menu('Shop', 6)
+    smith = create_npc('Smith', (1, 64, 2), skin='Steve', look_at_players=True)
+    spawn = create_region('Spawn', ((0, 100, 0), (10, 110, 10)))
+    squad = create_team('Squad', tag='SQ')
+    mods = create_group('Mods', priority=9)
+
+    @create_function('Tick', repeat_ticks=20, icon=wand)
+    def tick() -> None:
+        chat('tick')
+
+    @create_command('warp', mode='Self', required_priority=3, listed=True)
+    def warp() -> None:
+        chat('warp')
+
+    @create_event('Player Join')
+    def join() -> None:
+        chat('hi')
+
+    # Each factory returns the value type, not a class or a raw callback.
+    assert isinstance(wand, Item)
+    assert isinstance(shop, Menu)
+    assert isinstance(smith, NPC)
+    assert isinstance(spawn, Region)
+    assert isinstance(squad, Team)
+    assert isinstance(mods, Group)
+    assert isinstance(tick, Function)
+    assert isinstance(warp, Command)
+    assert isinstance(join, Event)
+
+    # ...and every one of them answers for its own declaration.
+    assert shop.name == 'Shop' and shop.size == 6
+    assert smith.name == 'Smith' and smith.pos == (1, 64, 2)
+    assert smith.skin == 'Steve' and smith.look_at_players is True
+    assert smith.hide_name_tag is None
+    assert spawn.name == 'Spawn'
+    assert spawn.bounds == ((0, 100, 0), (10, 110, 10))
+    assert tick.name == 'Tick' and tick.repeat_ticks == 20
+    assert tick.icon is wand
+    assert warp.name == 'warp' and warp.mode == 'Self'
+    assert warp.required_priority == 3 and warp.listed is True
+    assert join.name == 'Player Join' and join.event == 'Player Join'
+    assert wand.importable.name == 'Wand'
+    assert wand.key == 'blaze_rod' and wand.name == '&aWand'
+
+    # `.importable` is the declaration itself, for every kind.
+    assert shop.importable is container.find_importable('menus', 'Shop')
+    assert join.importable is container.find_importable('events', 'Player Join')
+
+    smith.pos = (9.0, 65.0, 9.0)
+    smith.hide_name_tag = True
+    spawn.bounds = ((1, 1, 1), (2, 2, 2))
+    mods.priority = 11
+    tick.repeat_ticks = 40
+
+    assert smith.pos == (9.0, 65.0, 9.0) and smith.hide_name_tag is True
+    assert spawn.bounds == ((1, 1, 1), (2, 2, 2))
+    assert mods.priority == 11
+    assert tick.repeat_ticks == 40
+
+    # `corners` normalises either order into a low/high pair.
+    spawn.corners((10, 70, 10), (0, 60, 4))
+    assert spawn.bounds == ((0, 60, 4), (10, 70, 10)), spawn.bounds
+
+    # Renaming keeps the container's name index in step.
+    spawn.name = 'Lobby'
+    assert spawn.name == 'Lobby'
+    assert container.find_importable('regions', 'Lobby') is spawn.importable
+    assert container.find_importable('regions', 'Spawn') is None
+
+    # A name another importable of the same kind already holds is refused, and
+    # nothing moved; a name only another *kind* holds is fine.
+    admins = create_group('Admins')
+    mods.name = 'Squad'  # a team, not a group -> free
+    assert mods.name == 'Squad'
     raised = False
     try:
-        _ = Group('VIP').priority
+        mods.name = 'Admins'
     except RuntimeError:
         raised = True
-    assert raised, 'expected the declaration lookup to be per-container'
+    assert raised, 'expected a duplicate rename to be refused'
+    assert mods.name == 'Squad'
+    assert container.find_importable('groups', 'Admins') is admins.importable
 
-    # The object create_group handed out still knows its own declaration.
-    assert vip.priority == 5
+    # A read-only field says so rather than silently dropping the write.
+    raised = False
+    try:
+        mods.permissions = {}  # type: ignore[assignment]
+    except AttributeError:
+        raised = True
+    assert raised, 'expected permissions to reject assignment'

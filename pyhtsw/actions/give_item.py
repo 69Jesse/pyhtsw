@@ -14,14 +14,14 @@ __all__ = (
 
 @final
 class GiveItemExpression(Expression):
-    item: Item | type[Item]
+    item: Item
     allow_multiple: bool
     inventory_slot: str | int
     replace_existing_item: bool
 
     def __init__(
         self,
-        item: Item | type[Item],
+        item: Item,
         allow_multiple: bool = False,
         inventory_slot: str | int = 'first_slot',
         replace_existing_item: bool = False,
@@ -51,7 +51,7 @@ class GiveItemExpression(Expression):
     def cloned(
         self,
         *,
-        item: Item | type[Item] | Missing = MISSING,
+        item: Item | Missing = MISSING,
         allow_multiple: bool | Missing = MISSING,
         inventory_slot: str | int | Missing = MISSING,
         replace_existing_item: bool | Missing = MISSING,
@@ -81,7 +81,7 @@ class GiveItemExpression(Expression):
 
 
 def give_item(
-    item: Item | type[Item],
+    item: Item,
     allow_multiple: bool = False,
     inventory_slot: INVENTORY_SLOTS = 'first_slot',
     replace_existing_item: bool = False,

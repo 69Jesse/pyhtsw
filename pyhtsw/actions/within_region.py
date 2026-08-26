@@ -8,12 +8,12 @@ from .region import Region
 __all__ = ('WithinRegion',)
 
 
-def _region_name(region: 'type[Region] | str') -> str:
+def _region_name(region: 'Region | str') -> str:
     if isinstance(region, str):
         return region
-    if isinstance(region, type) and issubclass(region, Region):
-        return region.__htsw_name__ or region.__name__
-    raise TypeError(f'Expected a Region subclass or str, got {region!r}')
+    if isinstance(region, Region):
+        return region.name
+    raise TypeError(f'Expected a Region or str, got {region!r}')
 
 
 @final
@@ -21,7 +21,7 @@ class WithinRegion(Condition):
     name: str
     __clone_map__: ClassVar[dict[str, str]] = {'region': 'name'}
 
-    def __init__(self, region: 'type[Region] | str') -> None:
+    def __init__(self, region: 'Region | str') -> None:
         self.name = _region_name(region)
 
     def into_htsl_raw(self) -> str:
@@ -30,7 +30,7 @@ class WithinRegion(Condition):
     def cloned(
         self,
         *,
-        region: 'type[Region] | str | Missing' = MISSING,
+        region: 'Region | str | Missing' = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(

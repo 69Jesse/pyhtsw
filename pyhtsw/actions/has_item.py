@@ -11,14 +11,14 @@ __all__ = ('HasItem',)
 
 @final
 class HasItem(Condition):
-    item: Item | type[Item]
+    item: Item
     what_to_check: ITEM_CHECK_WHAT
     where_to_check: ITEM_CHECK_WHERE
     required_amount: ITEM_REQUIRED_AMOUNT
 
     def __init__(
         self,
-        item: Item | type[Item],
+        item: Item,
         what_to_check: ITEM_CHECK_WHAT = 'metadata',
         where_to_check: ITEM_CHECK_WHERE = 'anywhere',
         required_amount: ITEM_REQUIRED_AMOUNT = 'any_amount',
@@ -48,7 +48,7 @@ class HasItem(Condition):
     def cloned(
         self,
         *,
-        item: Item | type[Item] | Missing = MISSING,
+        item: Item | Missing = MISSING,
         what_to_check: ITEM_CHECK_WHAT | Missing = MISSING,
         where_to_check: ITEM_CHECK_WHERE | Missing = MISSING,
         required_amount: ITEM_REQUIRED_AMOUNT | Missing = MISSING,

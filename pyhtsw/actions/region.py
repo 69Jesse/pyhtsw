@@ -1,74 +1,89 @@
 from collections.abc import Callable
-from typing import Any, ClassVar
+from typing import Any, Literal
 
 from ..block import NamedBlock
 from ..container import get_current_container
-from ..importable import Bounds, Handler, RegionImportable, call_with_args
-from ..utils.caller import caller_module
+from ..declared import Declared, declared_field, register_importable
+from ..importable import Bounds, Coord, Handler, RegionImportable, call_with_args
 
-__all__ = ('Region',)
+__all__ = ('Region', 'create_region')
 
-
-def _on_enter(func: Callable[..., Any]) -> Callable[..., Any]:
-    func.__htsw_region__ = 'enter'  # type: ignore[attr-defined]
-    return func
+Side = Literal['enter', 'exit']
 
 
-def _on_exit(func: Callable[..., Any]) -> Callable[..., Any]:
-    func.__htsw_region__ = 'exit'  # type: ignore[attr-defined]
-    return func
+class Region(Declared):
+    __htsw_kind__ = 'regions'
+    __htsw_factory__ = 'create_region'
 
+    bounds: declared_field[Bounds | None] = declared_field()
 
-class Region:
-    __htsw_name__: ClassVar[str | None] = None
-    __htsw_importable__: ClassVar[RegionImportable]
-
-    on_enter = staticmethod(_on_enter)
-    on_exit = staticmethod(_on_exit)
-
-    def __init_subclass__(
-        cls,
+    def __init__(
+        self,
+        name: str,
         bounds: Bounds | None = None,
+        *,
         on_enter: Handler | None = None,
         on_exit: Handler | None = None,
     ) -> None:
-        super().__init_subclass__()
-        cls.__htsw_name__ = cls.__name__
-
-        enter_fn = on_enter
-        exit_fn = on_exit
-        for value in vars(cls).values():
-            tag = getattr(value, '__htsw_region__', None)
-            if tag == 'enter':
-                enter_fn = value
-            elif tag == 'exit':
-                exit_fn = value
-
-        container = get_current_container()
-        enter_block = exit_block = None
-        if enter_fn is not None:
-            handler = enter_fn
-            enter_block = NamedBlock(
-                f'{cls.__name__} enter',
-                callback=lambda: call_with_args(handler, None),
-                importable_kind='regions',
-            )
-            container.add_block(enter_block)
-        if exit_fn is not None:
-            handler = exit_fn
-            exit_block = NamedBlock(
-                f'{cls.__name__} exit',
-                callback=lambda: call_with_args(handler, None),
-                importable_kind='regions',
-            )
-            container.add_block(exit_block)
-
-        importable = RegionImportable(
-            name=cls.__name__,
-            bounds=bounds,
-            on_enter=enter_block,
-            on_exit=exit_block,
+        """Declare a region as a value. Prefer `create_region(...)`, which is
+        the same thing under a name matching `create_function` and friends."""
+        super().__init__(name)
+        self.__htsw_importable__ = register_importable(
+            RegionImportable(name=name, bounds=bounds),
         )
-        importable.module = caller_module()
-        container.register_importable(importable)
-        cls.__htsw_importable__ = importable
+        if on_enter is not None:
+            self.attach('enter', on_enter)
+        if on_exit is not None:
+            self.attach('exit', on_exit)
+
+    @property
+    def declared(self) -> RegionImportable:
+        importable = self.declaration()
+        assert isinstance(importable, RegionImportable)
+        return importable
+
+    def corners(self, first: Coord, second: Coord) -> None:
+        """Set `bounds` from two opposite corners in either order, the way the
+        in-game region tool hands them to you."""
+        (ax, ay, az), (bx, by, bz) = first, second
+        self.bounds = (
+            (min(ax, bx), min(ay, by), min(az, bz)),
+            (max(ax, bx), max(ay, by), max(az, bz)),
+        )
+
+    def attach(self, side: Side, handler: Handler) -> None:
+        """Give this region an enter or exit handler after the fact."""
+        importable = self.declared
+        block = NamedBlock(
+            f'{self.name} {side}',
+            callback=lambda: call_with_args(handler, self),
+            importable_kind='regions',
+        )
+        get_current_container().add_block(block)
+        if side == 'enter':
+            importable.on_enter = block
+        else:
+            importable.on_exit = block
+
+    def on_enter(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        """`@region.on_enter` - run these actions when a player walks in."""
+        self.attach('enter', func)
+        return func
+
+    def on_exit(self, func: Callable[..., Any]) -> Callable[..., Any]:
+        """`@region.on_exit` - run these actions when a player walks out."""
+        self.attach('exit', func)
+        return func
+
+
+def create_region(
+    name: str,
+    bounds: Bounds | None = None,
+    *,
+    on_enter: Handler | None = None,
+    on_exit: Handler | None = None,
+) -> Region:
+    """Declare a region and return it, so regions can be built by a function
+    called in a loop. Bounds are optional - htsw imports a region without them
+    and you place it in-game."""
+    return Region(name, bounds, on_enter=on_enter, on_exit=on_exit)

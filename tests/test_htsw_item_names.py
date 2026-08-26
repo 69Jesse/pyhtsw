@@ -10,9 +10,10 @@ from pyhtsw import (
     HasItem,
     IfAll,
     Item,
-    Menu,
     chat,
     create_function,
+    create_menu,
+    create_npc,
     give_item,
     set_projects_folder,
 )
@@ -71,17 +72,17 @@ with Container() as shared_c:
     twin = Item('gold_ingot', name='&6Coin')  # equal NBT -> same file and name
     badge = Item('emerald', name='&aBadge')  # menu-only, never in an action
 
-    class Purse(Menu, name='Purse', size=1):
-        @Menu.element(item=coin, x=0, y=0)
-        def _take() -> None:
-            chat('took')
+    purse = create_menu('Purse', 1)
 
-        @Menu.element(item=badge, x=0, y=1)
-        def _look() -> None:
-            chat('looked')
+    @purse.on(item=coin, x=0, y=0)
+    def _take() -> None:
+        chat('took')
 
-    class Teller(NPC, name='Teller', pos=(0, 0, 0), equipment=NPC.Equipment(hand=twin)):
-        pass
+    @purse.on(item=badge, x=0, y=1)
+    def _look() -> None:
+        chat('looked')
+
+    create_npc('Teller', (0, 0, 0), equipment=NPC.Equipment(hand=twin))
 
     @create_function('Pay')
     def pay() -> None:

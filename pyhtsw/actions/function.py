@@ -1,26 +1,24 @@
 from typing import TYPE_CHECKING
 
+from ..declared import Declared, declared_field
+
 if TYPE_CHECKING:
-    from pyhtsw.block import FunctionBlock
-    from pyhtsw.importable import FunctionImportable
+    from ..block import FunctionBlock
+    from .item import Item
 
 
 __all__ = ('Function',)
 
 
-class Function:
-    name: str
+class Function(Declared):
+    __htsw_kind__ = 'functions'
+    __htsw_factory__ = 'create_function'
+
     block: 'FunctionBlock | None'
-    __htsw_importable__: 'FunctionImportable'
 
-    def __init__(
-        self,
-        name: str,
-    ) -> None:
-        self.name = name
+    repeat_ticks: declared_field[int | None] = declared_field()
+    icon: 'declared_field[Item | None]' = declared_field()
+
+    def __init__(self, name: str) -> None:
+        super().__init__(name)
         self.block = None
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Function):
-            return NotImplemented
-        return self.name == other.name

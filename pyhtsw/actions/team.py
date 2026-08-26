@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING
 
+from ..declared import Declared, declared_field
 from ..placeholders import PlaceholderCheckable
-from .declaration import resolve_declaration
 
 if TYPE_CHECKING:
-    from ..importable import TeamImportable
     from ..stats.team_stat import TeamStat
     from ..types import ALL_HOUSING_COLORS
 
@@ -12,45 +11,13 @@ if TYPE_CHECKING:
 __all__ = ('Team',)
 
 
-class Team:
-    name: str
-    # Set by create_team; None for a plain reference to a team declared
-    # elsewhere (or in-game).
-    __htsw_importable__: 'TeamImportable | None' = None
+class Team(Declared):
+    __htsw_kind__ = 'teams'
+    __htsw_factory__ = 'create_team'
 
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Team):
-            return NotImplemented
-        return self.name == other.name
-
-    def __hash__(self) -> int:
-        return hash(self.name)
-
-    def _declaration(self, field: str) -> 'TeamImportable':
-        from ..importable import TeamImportable
-
-        return resolve_declaration(
-            self.__htsw_importable__,
-            TeamImportable,
-            self.name,
-            field,
-            'create_team',
-        )
-
-    @property
-    def tag(self) -> str | None:
-        return self._declaration('tag').tag
-
-    @property
-    def color(self) -> 'ALL_HOUSING_COLORS | None':
-        return self._declaration('color').color
-
-    @property
-    def friendly_fire(self) -> bool | None:
-        return self._declaration('friendly_fire').friendly_fire
+    tag: declared_field[str | None] = declared_field()
+    color: 'declared_field[ALL_HOUSING_COLORS | None]' = declared_field()
+    friendly_fire: declared_field[bool | None] = declared_field()
 
     def stat(self, key: str) -> 'TeamStat':
         from ..stats.team_stat import TeamStat
@@ -61,6 +28,3 @@ class Team:
         from .team_players import TeamPlayers
 
         return TeamPlayers(self)
-
-    def __repr__(self) -> str:
-        return f'{self.__class__.__name__}<{self.name}>'

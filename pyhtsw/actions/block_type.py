@@ -10,12 +10,12 @@ __all__ = ('BlockType',)
 
 @final
 class BlockType(Condition):
-    block: Item | type[Item]
+    block: Item
     match_type_only: bool
 
     def __init__(
         self,
-        block: Item | type[Item],
+        block: Item,
         match_type_only: bool = False,
     ) -> None:
         self.block = block
@@ -33,7 +33,7 @@ class BlockType(Condition):
     def cloned(
         self,
         *,
-        block: Item | type[Item] | Missing = MISSING,
+        block: Item | Missing = MISSING,
         match_type_only: bool | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:

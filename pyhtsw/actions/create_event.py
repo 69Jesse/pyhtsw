@@ -2,27 +2,25 @@ from collections.abc import Callable
 
 from ..block import NamedBlock
 from ..container import get_current_container
+from ..declared import register_importable
 from ..importable import EventImportable, EventName
-from ..utils.caller import caller_module
+from .event import Event
 
 __all__ = ('create_event',)
 
 
-def create_event(
-    event: EventName,
-) -> Callable[[Callable[[], None]], Callable[[], None]]:
-    def decorator(callback: Callable[[], None]) -> Callable[[], None]:
+def create_event(event: EventName) -> Callable[[Callable[[], None]], Event]:
+    def decorator(callback: Callable[[], None]) -> Event:
         block = NamedBlock(
             f'event {event}',
             callback=callback,
             importable_kind='events',
         )
-        container = get_current_container()
-        container.add_block(block)
-        importable = EventImportable(block, event=event)
-        importable.module = caller_module()
-        container.register_importable(importable)
-        callback.__htsw_importable__ = importable  # type: ignore[attr-defined]
-        return callback
+        get_current_container().add_block(block)
+        importable = register_importable(EventImportable(block, event=event))
+
+        value = Event(event)
+        value.__htsw_importable__ = importable
+        return value
 
     return decorator

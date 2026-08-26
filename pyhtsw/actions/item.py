@@ -24,12 +24,14 @@ from ..utils.kebab import into_kebab
 from .enchantment import Enchantment
 
 if TYPE_CHECKING:
+    from ..block import NamedBlock
     from ..importable import ItemImportable
 
 __all__ = (
     'normalize_item_key',
     'normalize_item',
     'Item',
+    'create_item',
 )
 
 
@@ -97,21 +99,6 @@ def normalize_item_key(key: ALL_ITEM_KEYS) -> str:
     return key[0]
 
 
-def left_click(func: Callable[[], None]) -> Callable[[], None]:
-    func.__htsw_click__ = 'left'  # type: ignore[attr-defined]
-    return func
-
-
-def right_click(func: Callable[[], None]) -> Callable[[], None]:
-    func.__htsw_click__ = 'right'  # type: ignore[attr-defined]
-    return func
-
-
-def click(func: Callable[[], None]) -> Callable[[], None]:
-    func.__htsw_click__ = 'both'  # type: ignore[attr-defined]
-    return func
-
-
 # A click handler takes no args, or one arg that receives the Item instance.
 ItemHandler = Callable[[], Any] | Callable[['Item'], Any]
 
@@ -137,11 +124,11 @@ def _resolve_click_handlers(
 
 
 class Item:
-    # Subclasses become items[] importables; the class name is the htsw reference.
-    __htsw_name__: ClassVar[str | None] = None
-    __htsw_item_defaults__: ClassVar[dict[str, Any]] = {}
-    __htsw_importable__: ClassVar['ItemImportable']
     __htsw_module__: 'str | None'
+    # The items[] entry this item declares, when it has one: an interactive
+    # item, or one given an explicit `importable_name`. A plain item has none
+    # until the export-time plan promotes it.
+    __htsw_importable__: 'ItemImportable | None'
     # Filled in by the export-time item plan (see pyhtsw/item_plan.py): the htsw
     # name this instance is referenced by, and the module its .snbt is written
     # under once identical items across modules have been folded together.
@@ -149,10 +136,6 @@ class Item:
     _owner_module: str | None
     # `Item(..., importable=False)` keeps an item out of import.json.
     _promotable: bool
-
-    left_click = staticmethod(left_click)
-    right_click = staticmethod(right_click)
-    click = staticmethod(click)
 
     key: ALL_ITEM_KEY_STRINGS
     name: str | None
@@ -201,10 +184,10 @@ class Item:
         importable: bool = True,
     ) -> None:
         self.__htsw_module__ = caller_module()
+        self.__htsw_importable__ = None
         self._reference_name = None
         self._owner_module = None
         self._promotable = importable
-        defaults = type(self).__htsw_item_defaults__
         explicit: dict[str, Any] = {
             'name': name,
             'lore': lore,
@@ -225,9 +208,9 @@ class Item:
             'hide_dye_flag': hide_dye_flag,
         }
 
-        resolved_key = key if key is not MISSING else defaults.get('key', MISSING)
-        if resolved_key is MISSING:
+        if key is MISSING:
             raise TypeError('Item requires a "key".')
+        resolved_key: Any = key
 
         faulty_tuple_key: str | None = None
         color_value: Any = explicit['color']
@@ -247,9 +230,7 @@ class Item:
         self.key = cast(ALL_ITEM_KEY_STRINGS, resolved_key)
         for field, hard_default in _FIELD_DEFAULTS.items():
             value = explicit[field]
-            if value is MISSING:
-                value = defaults.get(field, hard_default)
-            setattr(self, field, value)
+            setattr(self, field, hard_default if value is MISSING else value)
 
         self._get_item_data()
         if faulty_tuple_key is not None:
@@ -266,115 +247,83 @@ class Item:
         self._right_click_handler = right_fn
         self._importable_name: str | None = None
         if left_fn is not None or right_fn is not None or importable_name is not None:
-            resolved_name = importable_name
-            if resolved_name is None:
-                if self.name is None:
-                    raise TypeError(
-                        'An interactive Item (with on_click/on_left_click/'
-                        'on_right_click) needs a "name" or "importable_name".',
-                    )
-                twin = _registered_twin(self, left_fn, right_fn)
-                if twin is not None:
-                    self._importable_name = twin.name
-                    return
-                resolved_name = _free_item_name(
-                    remove_formatting(self.name).strip(),
-                    self.count,
+            self._declare(importable_name)
+
+    def _declare(self, importable_name: str | None = None) -> None:
+        left_fn = self._left_click_handler
+        right_fn = self._right_click_handler
+        name = importable_name
+        if name is None:
+            if self.name is None:
+                raise TypeError(
+                    'An interactive Item (with on_click/on_left_click/'
+                    'on_right_click) needs a "name" or "importable_name".',
                 )
-            self._importable_name = resolved_name
-            _register_item_instance_importable(
-                resolved_name,
-                self,
-                left_fn,
-                right_fn,
-                module=self.__htsw_module__,
-            )
-
-    def __init_subclass__(
-        cls,
-        key: ALL_ITEM_KEYS | Missing = MISSING,
-        name: str | None | Missing = MISSING,
-        lore: str | None | Missing = MISSING,
-        count: int | Missing = MISSING,
-        enchantments: list[Enchantment] | None | Missing = MISSING,
-        unbreakable: bool | Missing = MISSING,
-        damage: int | Missing = MISSING,
-        color: ColorType | Missing = MISSING,
-        skull_data: NBTCompound | None | Missing = MISSING,
-        is_cookie_item: bool | Missing = MISSING,
-        housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None | Missing' = MISSING,
-        hide_flags: int | None | Missing = MISSING,
-        hide_all_flags: bool | Missing = MISSING,
-        hide_enchantments_flag: bool | Missing = MISSING,
-        hide_modifiers_flag: bool | Missing = MISSING,
-        hide_unbreakable_flag: bool | Missing = MISSING,
-        hide_additional_flag: bool | Missing = MISSING,
-        hide_dye_flag: bool | Missing = MISSING,
-        on_click: ItemHandler | None = None,
-        on_left_click: ItemHandler | None = None,
-        on_right_click: ItemHandler | None = None,
-    ) -> None:
-        super().__init_subclass__()
-        passed: dict[str, Any] = {
-            'key': key,
-            'name': name,
-            'lore': lore,
-            'count': count,
-            'enchantments': enchantments,
-            'unbreakable': unbreakable,
-            'damage': damage,
-            'color': color,
-            'skull_data': skull_data,
-            'is_cookie_item': is_cookie_item,
-            'housing_menu_tier': housing_menu_tier,
-            'hide_flags': hide_flags,
-            'hide_all_flags': hide_all_flags,
-            'hide_enchantments_flag': hide_enchantments_flag,
-            'hide_modifiers_flag': hide_modifiers_flag,
-            'hide_unbreakable_flag': hide_unbreakable_flag,
-            'hide_additional_flag': hide_additional_flag,
-            'hide_dye_flag': hide_dye_flag,
-        }
-        defaults = dict(cls.__htsw_item_defaults__)
-        defaults.update(
-            {k: v for k, v in passed.items() if v is not MISSING},
-        )
-        cls.__htsw_item_defaults__ = defaults
-        cls.__htsw_name__ = cls.__name__
-        if 'key' not in defaults:
-            raise TypeError(
-                f'Item subclass "{cls.__name__}" must specify a key, e.g. '
-                f'class {cls.__name__}(Item, key="blaze_rod"): ...',
-            )
-        cls._register_importable(on_click, on_left_click, on_right_click)
-
-    @classmethod
-    def _register_importable(
-        cls,
-        on_click: ItemHandler | None,
-        on_left_click: ItemHandler | None,
-        on_right_click: ItemHandler | None,
-    ) -> None:
-        both_fn = on_click
-        left_fn = on_left_click
-        right_fn = on_right_click
-        for value in vars(cls).values():
-            tag = getattr(value, '__htsw_click__', None)
-            if tag == 'both':
-                both_fn = value
-            elif tag == 'left':
-                left_fn = value
-            elif tag == 'right':
-                right_fn = value
-
-        left_fn, right_fn = _resolve_click_handlers(both_fn, left_fn, right_fn)
-        cls.__htsw_importable__ = _register_item_instance_importable(
-            cls.__name__,
-            cls(),
+            twin = _registered_twin(self, left_fn, right_fn)
+            if twin is not None:
+                # htsw identifies an item by its NBT, so the twin already is
+                # this entry - point at it rather than registering a duplicate.
+                self._importable_name = twin.name
+                self.__htsw_importable__ = twin
+                return
+            name = _free_item_name(remove_formatting(self.name).strip(), self.count)
+        self._importable_name = name
+        self.__htsw_importable__ = _register_item_instance_importable(
+            name,
+            self,
             left_fn,
             right_fn,
-            module=caller_module(),
+            module=self.__htsw_module__,
         )
+
+    @property
+    def importable(self) -> 'ItemImportable':
+        """The items[] entry this item declares. Raises when it has none."""
+        if self.__htsw_importable__ is None:
+            raise RuntimeError(
+                f'Item "{self.derived_name()}" declares no items[] entry, so '
+                f'it has no importable to read. Give it a click handler or an '
+                f'"importable_name" to declare one.',
+            )
+        return self.__htsw_importable__
+
+    def _attach(self, which: str, func: 'ItemHandler') -> None:
+        sides = ('left', 'right') if which == 'both' else (which,)
+        for side in sides:
+            if getattr(self, f'_{side}_click_handler') is not None:
+                raise RuntimeError(
+                    f'Item "{self.derived_name()}" already has a {side}-click '
+                    f'handler; a second one would never run.',
+                )
+            setattr(self, f'_{side}_click_handler', func)
+        importable = self.__htsw_importable__
+        if importable is None:
+            self._declare()
+            return
+        # Already an items[] entry (create_item, or a twin it shares with) - it
+        # just gains the action list. htsw identifies an item by its NBT, so a
+        # twin is the same item and correctly gains it too.
+        for side in sides:
+            setattr(
+                importable,
+                side,
+                _item_handler_block(importable.name, side, self, func),
+            )
+
+    def left_click(self, func: 'ItemHandler') -> 'ItemHandler':
+        """`@item.left_click` - run these actions on a left click."""
+        self._attach('left', func)
+        return func
+
+    def right_click(self, func: 'ItemHandler') -> 'ItemHandler':
+        """`@item.right_click` - run these actions on a right click."""
+        self._attach('right', func)
+        return func
+
+    def click(self, func: 'ItemHandler') -> 'ItemHandler':
+        """`@item.click` - run these actions on either button."""
+        self._attach('both', func)
+        return func
 
     # Where the item came from and what export decided to call it, neither of
     # which is part of the item. `_snbt_cache` is lazy, so comparing it would
@@ -382,6 +331,7 @@ class Item:
     _EQ_IGNORE: ClassVar[frozenset[str]] = frozenset(
         {
             '__htsw_module__',
+            '__htsw_importable__',
             '_snbt_cache',
             '_reference_name',
             '_owner_module',
@@ -762,6 +712,25 @@ def _free_item_name(base: str, count: int) -> str:
     return f'{sized} {index}'
 
 
+def _item_handler_block(
+    name: str,
+    side: str,
+    item: 'Item',
+    handler: 'ItemHandler',
+) -> 'NamedBlock':
+    from ..block import NamedBlock
+    from ..container import get_current_container
+    from ..importable import call_with_args
+
+    block = NamedBlock(
+        f'{name} {side}',
+        callback=lambda: call_with_args(handler, item),
+        importable_kind='items',
+    )
+    get_current_container().add_block(block)
+    return block
+
+
 def _register_item_instance_importable(
     name: str,
     item: 'Item',
@@ -769,81 +738,87 @@ def _register_item_instance_importable(
     right_fn: 'ItemHandler | None',
     module: str | None = None,
 ) -> 'ItemImportable':
-    from ..block import NamedBlock
     from ..container import get_current_container
-    from ..importable import ItemImportable, call_with_args
-
-    container = get_current_container()
-    left_block = right_block = None
-    if left_fn is not None:
-        left_block = NamedBlock(
-            f'{name} left',
-            callback=lambda fn=left_fn: call_with_args(fn, item),
-            importable_kind='items',
-        )
-        container.add_block(left_block)
-    if right_fn is not None:
-        right_block = NamedBlock(
-            f'{name} right',
-            callback=lambda fn=right_fn: call_with_args(fn, item),
-            importable_kind='items',
-        )
-        container.add_block(right_block)
+    from ..importable import ItemImportable
 
     importable = ItemImportable(
         name=name,
         item=item,
-        left=left_block,
-        right=right_block,
+        left=(
+            None
+            if left_fn is None
+            else _item_handler_block(name, 'left', item, left_fn)
+        ),
+        right=(
+            None
+            if right_fn is None
+            else _item_handler_block(name, 'right', item, right_fn)
+        ),
     )
     importable.module = module
-    container.register_importable(importable)
+    get_current_container().register_importable(importable)
     return importable
 
 
-def normalize_item(value: 'Item | type[Item]') -> Item:
-    if isinstance(value, type):
-        if not issubclass(value, Item):
-            raise TypeError(f'Expected an Item subclass, got {value!r}')
-        return value()
-    if isinstance(value, Item):
-        return value
-    raise TypeError(f'Expected an Item or Item subclass, got {value!r}')
+def normalize_item(value: Item) -> Item:
+    if not isinstance(value, Item):
+        raise TypeError(f'Expected an Item, got {value!r}')
+    return value
 
 
-def item_reference_name(value: 'Item | type[Item]') -> str | None:
+def item_reference_name(value: Item) -> str | None:
     """The htsw items[] name `value` is referenced by, or None when it has none
-    (a plain instance in a container that was never planned, which falls back to
-    a direct .snbt path)."""
-    if isinstance(value, type):
-        if not issubclass(value, Item):
-            raise TypeError(f'Expected an Item subclass, got {value!r}')
-        name = value.__htsw_name__
-        if name is None:
-            raise TypeError(f'{value!r} is not a declared item importable')
-        return name
-    if isinstance(value, Item):
-        return value._importable_name or value._reference_name
-    raise TypeError(f'Expected an Item or Item subclass, got {value!r}')
+    (a plain item in a container that was never planned, which falls back to a
+    direct .snbt path)."""
+    if not isinstance(value, Item):
+        raise TypeError(f'Expected an Item, got {value!r}')
+    return value._importable_name or value._reference_name
 
 
-def item_action_reference(value: 'Item | type[Item]') -> str:
+def item_action_reference(value: Item) -> str:
     """How an item is referenced from an action: by its htsw name when it has
-    one (a declared subclass, an interactive instance, or a plain instance the
-    item plan promoted), otherwise by its .snbt path."""
+    one (a declared item, or a plain one the item plan promoted), otherwise by
+    its .snbt path."""
     name = item_reference_name(value)
-    if name is not None:
-        return name
-    assert isinstance(value, Item)
-    return value.anonymous_path()
+    return name if name is not None else value.anonymous_path()
 
 
-def item_referenced_importables(
-    value: 'Item | type[Item]',
-) -> list[tuple[str, str]]:
+def item_referenced_importables(value: Item) -> list[tuple[str, str]]:
     """`referenced_importables()` entry for an item field. A name that no
     importable claims (an item named only so its .snbt file reads nicely) is
     dropped by the include resolver, which looks names up against the real
     importables."""
     name = item_reference_name(value)
     return [('items', name)] if name is not None else []
+
+
+def create_item(
+    key: ALL_ITEM_KEYS,
+    *,
+    importable_name: str | None = None,
+    on_click: 'ItemHandler | None' = None,
+    on_left_click: 'ItemHandler | None' = None,
+    on_right_click: 'ItemHandler | None' = None,
+    **fields: Any,
+) -> Item:
+    """Declare an item as an items[] entry and return it. `Item(...)` on its
+    own builds a value the export-time plan names; this one is named up front,
+    so actions and other importables can reference it by that name."""
+    item = Item(
+        key,
+        on_click=on_click,
+        on_left_click=on_left_click,
+        on_right_click=on_right_click,
+        **fields,
+    )
+    if item.__htsw_importable__ is None:
+        item._declare(importable_name)
+    elif importable_name is not None:
+        from ..container import get_current_container
+
+        get_current_container().rename_importable(
+            item.__htsw_importable__,
+            importable_name,
+        )
+        item._importable_name = importable_name
+    return item

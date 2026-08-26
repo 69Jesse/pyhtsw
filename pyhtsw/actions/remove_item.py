@@ -13,9 +13,9 @@ __all__ = (
 
 @final
 class RemoveItemExpression(Expression):
-    item: Item | type[Item]
+    item: Item
 
-    def __init__(self, item: Item | type[Item]) -> None:
+    def __init__(self, item: Item) -> None:
         self.item = item
 
     def into_htsl(self) -> str:
@@ -28,7 +28,7 @@ class RemoveItemExpression(Expression):
     def cloned(
         self,
         *,
-        item: Item | type[Item] | Missing = MISSING,
+        item: Item | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -46,5 +46,5 @@ class RemoveItemExpression(Expression):
         return f'{self.__class__.__name__}<{self.item}>'
 
 
-def remove_item(item: Item | type[Item]) -> None:
+def remove_item(item: Item) -> None:
     RemoveItemExpression(item=item).write()

@@ -2,9 +2,9 @@ from collections.abc import Callable
 
 from ..block import NamedBlock
 from ..container import get_current_container
+from ..declared import register_importable
 from ..importable import CommandImportable
 from ..types import ALL_COMMAND_MODES
-from ..utils.caller import caller_module
 from .command import Command
 
 __all__ = ('create_command',)
@@ -25,18 +25,16 @@ def create_command(
             importable_kind='commands',
         )
 
-        container = get_current_container()
-        container.add_block(block)
-        importable = CommandImportable(
-            block,
-            name=name,
-            mode=mode,
-            required_priority=required_priority,
-            listed=listed,
+        get_current_container().add_block(block)
+        command.__htsw_importable__ = register_importable(
+            CommandImportable(
+                block,
+                name=name,
+                mode=mode,
+                required_priority=required_priority,
+                listed=listed,
+            ),
         )
-        importable.module = caller_module()
-        container.register_importable(importable)
-        command.__htsw_importable__ = importable
         return command
 
     return decorator

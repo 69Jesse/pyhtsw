@@ -186,6 +186,20 @@ class Container:
         self.importables_by_key[key] = importable
         self.importables.append(importable)
 
+    def rename_importable(self, importable: 'Importable', name: str) -> None:
+        key = (importable.kind, name)
+        if key in self.importables_by_key:
+            raise RuntimeError(
+                f'An importable of kind "{importable.kind}" named "{name}" '
+                f'already exists. Names must be unique.',
+            )
+        self.importables_by_key.pop(
+            (importable.kind, importable.identifier()),
+            None,
+        )
+        importable.rename(name)
+        self.importables_by_key[key] = importable
+
     def expressions(self) -> list['Expression']:
         def throw() -> NoReturn:
             raise RuntimeError(

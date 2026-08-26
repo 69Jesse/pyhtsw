@@ -11,11 +11,11 @@ from pyhtsw import (
     Enchantment,
     IfAll,
     Item,
-    Menu,
     PlayerStat,
     chat,
     create_event,
     create_function,
+    create_menu,
 )
 
 y = PlayerStat('y').as_long()
@@ -118,15 +118,15 @@ assert icons['Big 4'] == {'item': 'minecraft:diamond_sword', 'count': 4}, icons
 
 try:
     with Container() as container:
+        panel = create_menu('Panel', 3)
 
-        class Panel(Menu, name='Panel', size=3):
-            @Menu.element(item=Item('stone'), x=0, y=0)
-            def buy_sword() -> None:
-                _spill(700)
+        @panel.on(item=Item('stone'), x=0, y=0)
+        def buy_sword() -> None:
+            _spill(700)
 
-            @Menu.element(item=Item('dirt'), x=0, y=1)
-            def sell_all() -> None:
-                _spill(700)
+        @panel.on(item=Item('dirt'), x=0, y=1)
+        def sell_all() -> None:
+            _spill(700)
 
 except ActionLimitError as error:
     message = str(error)
@@ -176,11 +176,11 @@ assert 'event "event Player Join"' in message, message
 # === ignore_action_limits is still the way past it ===
 
 with Container(ignore_action_limits=True) as container:
+    quiet = create_menu('Quiet', 3)
 
-    class Quiet(Menu, name='Quiet', size=3):
-        @Menu.element(item=Item('stone'), x=0, y=0)
-        def open_it() -> None:
-            _spill(700)
+    @quiet.on(item=Item('stone'), x=0, y=0)
+    def open_it() -> None:
+        _spill(700)
 
 
 assert not any(
@@ -224,15 +224,15 @@ assert reordered_cost[0] == 0, (source_cost, reordered_cost)
 
 # And it really does rescue the block end to end.
 with Container() as container:
+    shop = create_menu('Shop', 3)
 
-    class Shop(Menu, name='Shop', size=3):
-        @Menu.element(item=Item('stone'), x=0, y=0)
-        def open_shop() -> None:
-            for i in range(20):
-                with IfAll(PlayerStat('x') > i):
-                    y.value += 1
-                for j in range(3):
-                    chat(f'm{i}-{j}')
+    @shop.on(item=Item('stone'), x=0, y=0)
+    def open_shop() -> None:
+        for i in range(20):
+            with IfAll(PlayerStat('x') > i):
+                y.value += 1
+            for j in range(3):
+                chat(f'm{i}-{j}')
 
 
 assert not any(

@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 
 from ..block import FunctionBlock
 from ..container import get_current_container
+from ..declared import register_importable
 from ..importable import FunctionImportable
-from ..utils.caller import caller_module
 from .function import Function
 
 if TYPE_CHECKING:
@@ -17,23 +17,21 @@ def create_function(
     name: str,
     *,
     repeat_ticks: int | None = None,
-    icon: 'Item | type[Item] | None' = None,
+    icon: 'Item | None' = None,
 ) -> Callable[[Callable[[], None]], Function]:
     def decorator(callback: Callable[[], None]) -> Function:
         function = Function(name=name)
         block = FunctionBlock(function=function, callback=callback)
 
-        container = get_current_container()
-        container.add_block(block)
-        importable = FunctionImportable(
-            block,
-            name=name,
-            repeat_ticks=repeat_ticks,
-            icon=icon,
+        get_current_container().add_block(block)
+        function.__htsw_importable__ = register_importable(
+            FunctionImportable(
+                block,
+                name=name,
+                repeat_ticks=repeat_ticks,
+                icon=icon,
+            ),
         )
-        importable.module = caller_module()
-        container.register_importable(importable)
-        function.__htsw_importable__ = importable
         return function
 
     return decorator

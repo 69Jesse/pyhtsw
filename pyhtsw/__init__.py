@@ -104,6 +104,7 @@ from .actions.enchant_held_item import (
     enchant_held_item as enchant_held_item,
 )
 from .actions.enchantment import Enchantment as Enchantment
+from .actions.event import Event as Event
 from .actions.exit_function import (
     ExitFunctionExpression as ExitFunctionExpression,
 )
@@ -174,6 +175,7 @@ from .actions.is_item import IsItem as IsItem
 from .actions.is_sneaking import IsSneaking as IsSneaking
 from .actions.is_sneaking import IsSneakingCondition as IsSneakingCondition
 from .actions.item import Item as Item
+from .actions.item import create_item as create_item
 from .actions.item import normalize_item as normalize_item
 from .actions.item import normalize_item_key as normalize_item_key
 from .actions.kill_player import (
@@ -294,6 +296,7 @@ from .actions.random_decimal import (
 from .actions.random_whole import RandomWhole as RandomWhole
 from .actions.random_whole import RandomWholePlaceholder as RandomWholePlaceholder
 from .actions.region import Region as Region
+from .actions.region import create_region as create_region
 from .actions.remove_item import (
     RemoveItemExpression as RemoveItemExpression,
 )

@@ -5,14 +5,14 @@ from types import SimpleNamespace
 
 import pyhtsw
 from pyhtsw import (
-    NPC,
     Container,
-    Item,
-    Menu,
-    Region,
     chat,
     create_event,
     create_function,
+    create_item,
+    create_menu,
+    create_npc,
+    create_region,
     give_item,
     set_projects_folder,
 )
@@ -24,56 +24,54 @@ set_projects_folder(tmp, save=False)
 # Define every importable kind in a throwaway container (so nothing lands in the
 # global one); the handles below carry their importable for `export` to find.
 with Container():
+    wand = create_item('blaze_rod', name='&aMagic Wand')
 
-    class MagicWand(Item, key='blaze_rod', name='&aMagic Wand'):
-        @Item.right_click
-        def on_right() -> None:
-            chat('used the wand')
+    @wand.right_click
+    def on_right() -> None:
+        chat('used the wand')
 
-    class Border(Item, key='black_stained_glass_pane', name=' '):
-        pass
+    border = create_item('black_stained_glass_pane', name=' ', importable_name='Border')
 
-    class Shop(Menu, name='Shop', size=6):
-        @Menu.element(item=Border, x=0)
-        def _border() -> None:
-            pass
+    shop = create_menu('Shop', 6)
+    shop.place(border, x=0)
 
-        @Menu.element(item=MagicWand, x=3, y=4)
-        def buy() -> None:
-            chat('bought')
+    @shop.on(item=wand, x=3, y=4)
+    def buy() -> None:
+        chat('bought')
 
-    class Spawn(Region, bounds=((0, 100, 0), (10, 110, 10))):
-        @Region.on_enter
-        def enter() -> None:
-            chat('entered')
+    spawn = create_region('Spawn', ((0, 100, 0), (10, 110, 10)))
 
-    class Merchant(
-        NPC,
-        name='Merchant',
-        pos=(1.5, 64, 2.5),
+    @spawn.on_enter
+    def enter() -> None:
+        chat('entered')
+
+    merchant = create_npc(
+        'Merchant',
+        (1, 64, 2),
         skin='Steve',
         look_at_players=True,
-    ):
-        @NPC.right_click
-        def right() -> None:
-            chat('hello')
+    )
 
-    @create_function('Tick', repeat_ticks=20, icon=MagicWand)
+    @merchant.right_click
+    def right() -> None:
+        chat('hello')
+
+    @create_function('Tick', repeat_ticks=20, icon=wand)
     def tick() -> None:
         chat('tick')
 
     @create_event('Player Join')
     def join() -> None:
-        give_item(MagicWand)
+        give_item(wand)
 
 
 # A module-like namespace; `tick`/`join` are listed twice to prove dedup.
 module = SimpleNamespace(
-    MagicWand=MagicWand,
-    Border=Border,
-    Shop=Shop,
-    Spawn=Spawn,
-    Merchant=Merchant,
+    wand=wand,
+    border=border,
+    shop=shop,
+    spawn=spawn,
+    merchant=merchant,
     tick=tick,
     join=join,
     tick_again=tick,
@@ -86,7 +84,7 @@ data = json.loads((root / 'import.json').read_text())
 # every kind made it across
 assert {fn['name'] for fn in data['functions']} == {'Tick'}
 assert {ev['event'] for ev in data['events']} == {'Player Join'}
-assert {it['name'] for it in data['items']} == {'MagicWand', 'Border'}
+assert {it['name'] for it in data['items']} == {'Magic Wand', 'Border'}
 assert {rg['name'] for rg in data['regions']} == {'Spawn'}
 assert {mn['name'] for mn in data['menus']} == {'Shop'}
 assert {np['name'] for np in data['npcs']} == {'Merchant'}
@@ -98,10 +96,10 @@ assert fn['icon'] == {'item': 'minecraft:blaze_rod'}
 assert 'chat "tick"' in (root / 'functions' / 'tick.htsl').read_text()
 
 # event body too
-assert 'giveItem "MagicWand"' in (root / 'events' / 'player-join.htsl').read_text()
+assert 'giveItem "Magic Wand"' in (root / 'events' / 'player-join.htsl').read_text()
 
 # item / region / npc / menu click bodies survived the re-run
-assert 'used the wand' in (root / 'items' / 'magicwand' / 'right.htsl').read_text()
+assert 'used the wand' in (root / 'items' / 'magic-wand' / 'right.htsl').read_text()
 assert 'entered' in (root / 'regions' / 'spawn' / 'enter.htsl').read_text()
 assert 'hello' in (root / 'npcs' / 'merchant' / 'right.htsl').read_text()
 assert 'bought' in (root / 'menus' / 'shop' / 'slot-3-4.htsl').read_text()

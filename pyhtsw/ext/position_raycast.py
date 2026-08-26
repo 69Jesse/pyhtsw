@@ -198,7 +198,7 @@ def create_position_raycast(
     *,
     shape: Shape | None = None,
     stat_prefix: str = 'pr/',
-    icon: Item | type[Item] | None = None,
+    icon: Item | None = None,
     origin: Sequence[Coord] | None = None,
     direction: Sequence[Coord] | None = None,
     eye_height: float = 1.62,

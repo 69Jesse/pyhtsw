@@ -14,7 +14,7 @@ __all__ = (
 
 @final
 class DropItemExpression(Expression):
-    item: Item | type[Item]
+    item: Item
     location: str
     coordinates: str | None
     drop_naturally: bool
@@ -26,7 +26,7 @@ class DropItemExpression(Expression):
 
     def __init__(
         self,
-        item: Item | type[Item],
+        item: Item,
         location: str,
         coordinates: str | None,
         drop_naturally: bool = False,
@@ -63,7 +63,7 @@ class DropItemExpression(Expression):
     def cloned(
         self,
         *,
-        item: Item | type[Item] | Missing = MISSING,
+        item: Item | Missing = MISSING,
         location: str | Missing = MISSING,
         coordinates: str | None | Missing = MISSING,
         drop_naturally: bool | Missing = MISSING,
@@ -108,7 +108,7 @@ class DropItemExpression(Expression):
 
 
 def drop_item(
-    item: Item | type[Item],
+    item: Item,
     location: Location,
     drop_naturally: bool = False,
     disable_item_merging: bool = False,

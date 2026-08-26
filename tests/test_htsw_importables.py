@@ -8,6 +8,7 @@ from pyhtsw import (
     Location,
     chat,
     create_function,
+    create_item,
     give_item,
     normalize_item,
     set_projects_folder,
@@ -66,14 +67,12 @@ assert resolve_location(Location.house_spawn()) == ('house_spawn', None)
 assert resolve_location(Location.custom(1, 2, 3)) == ('custom_coordinates', '1 2 3')
 
 
-# A declared class references by its class name; a plain instance is promoted
-# to an items[] entry and referenced by a derived name, never by path.
+# A declared item references by its declared name; a plain one is promoted to
+# an items[] entry and referenced by a derived name, never by path.
 with Container() as c:
+    sword = create_item('diamond_sword', name='&bSword')
 
-    class Sword(Item, key='diamond_sword', name='&bSword'):
-        pass
-
-    give_item(Sword)  # by class name
+    give_item(sword)  # by declared name
     give_item(Item('apple'))  # no display name -> the vanilla title
     give_item(Item('apple', count=3))  # ...plus the stack size
     give_item(Item('gold_ingot', name='&6Coin'))  # display name wins

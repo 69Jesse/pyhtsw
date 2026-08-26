@@ -1,8 +1,8 @@
 # Items
 
-An `Item` describes a Minecraft item stack. Construct one directly or declare a
-subclass (which also registers it as an importable — see
-[Importables](./importables.md)).
+An `Item` describes a Minecraft item stack. `Item(...)` builds a value;
+`create_item(...)` builds one and registers it as an importable under a name of
+its own (see [Importables](./importables.md)).
 
 ```python
 from pyhtsw import Item, Enchantment
@@ -23,33 +23,32 @@ breaks), `count`, `enchantments`, `unbreakable`, `damage`, `color`,
 
 ## Referencing items from actions
 
-Actions like `give_item` accept an item as a class or an instance; **you never
-pass a raw string**:
+Actions like `give_item` take the item itself; **you never pass a raw string**:
 
 ```python
-from pyhtsw import give_item, Item
+from pyhtsw import create_item, give_item, Item
 
 
-# A declared subclass (the class) -> referenced by its htsw name
-class Reward(Item, key='gold_ingot', name='&6Reward'):
-    pass
+# A declared item -> referenced by its declared htsw name
+reward = create_item('gold_ingot', name='&6Reward')
+give_item(reward)
 
+# A plain item -> promoted to an items[] entry with a derived name
+give_item(Item('apple'))
 
-give_item(Reward)
-
-# A plain instance -> promoted to an items[] entry with a derived name
-give_item(Item(key='apple'))
-
-# Load an instance from an existing .snbt file
+# Load one from an existing .snbt file
 give_item(Item.from_path('items/some-item.snbt'))
 ```
 
-- Pass an `Item` **subclass** to reference a declared item by its class name.
-- Pass an `Item` **instance** and export gives it a name and an `items[]` entry
-  of its own, so htsw lists it in the Project view and can open it in the Item
+- `create_item(...)` names the item up front, so every reference to it uses that
+  name. `importable_name=` overrides the derived one.
+- A plain `Item(...)` is given a name and an `items[]` entry of its own at
+  export, so htsw lists it in the Project view and can open it in the Item
   Editor. Its `.snbt` is written under the module that built it.
-- Use `Item.from_path('....snbt')` to load an instance from a file rather than
-  passing a string.
+- Use `Item.from_path('....snbt')` to load one from a file rather than passing a
+  string.
+- Layer variants with `cloned()`, which copies the item overriding only the
+  fields you name.
 
 ### Generated names
 

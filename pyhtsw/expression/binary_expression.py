@@ -4,6 +4,7 @@ from functools import cached_property
 from typing import Any, NoReturn, Self, final
 
 import numpy as np
+from pyhtsw.registry import ActionMeta
 
 from pyhtsw.clone import MISSING, Missing, clone_with
 
@@ -68,18 +69,6 @@ def _should_use_index(expressions: list['Expression']) -> bool:
     return False
 
 
-_BARRIER_TYPES: tuple[type, ...] | None = None
-
-
-def _barrier_types() -> tuple[type, ...]:
-    global _BARRIER_TYPES
-    if _BARRIER_TYPES is None:
-        from ..schedule import get_control_types
-
-        _BARRIER_TYPES = get_control_types()
-    return _BARRIER_TYPES
-
-
 def _is_single_placeholder(value: str) -> bool:
     return any(
         pattern.fullmatch(value) is not None
@@ -136,6 +125,11 @@ class BinaryExpression[
     LeftT: 'BinaryExpression | Checkable | HousingType',
     RightT: 'BinaryExpression | Checkable | HousingType',
 ](Expression, Editable):
+    htsw_meta = ActionMeta(
+        htsw_name='CHANGE_VAR',
+        limit=25,
+    )
+
     left: LeftT
     right: RightT
     operator: BinaryOperator
@@ -341,11 +335,9 @@ class BinaryExpression[
 
     @staticmethod
     def _is_execution_barrier(expression: Expression) -> bool:
-        types = _barrier_types()
-        for expr in expression.walk_expressions():
-            if isinstance(expr, types):
-                return True
-        return False
+        return any(
+            type(expr).htsw_meta.control for expr in expression.walk_expressions()
+        )
 
     @staticmethod
     def _stat_query_keys(stat: Stat) -> tuple[tuple, tuple]:

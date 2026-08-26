@@ -1,6 +1,7 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_DAMAGE_CAUSES
@@ -10,6 +11,14 @@ __all__ = ('DamageCause',)
 
 @final
 class DamageCause(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='DAMAGE_CAUSE',
+        limit=20,
+        reads=frozenset(()),
+        display_name='Damage Cause',
+        scoped_events=('Player Damage',),
+    )
+
     damage_cause: str
 
     def __init__(

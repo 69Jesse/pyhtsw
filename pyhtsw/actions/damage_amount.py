@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Self, final
 
+from pyhtsw.registry import ConditionMeta
+
 from pyhtsw.clone import MISSING, Missing, clone_with
 
 from ..expression.condition.comparison_condition import ComparisonOperator
@@ -21,6 +23,14 @@ class DamageAmountCondition(Condition):
     """`damageAmount > 5`. Housing exposes the damage amount only to this
     condition — there is no `%damage.amount%` placeholder — so it is not a
     Checkable and cannot be used as a value."""
+
+    htsw_meta = ConditionMeta(
+        htsw_name='COMPARE_DAMAGE',
+        limit=20,
+        reads=frozenset(()),
+        display_name='Damage Amount',
+        scoped_events=('Player Damage',),
+    )
 
     operator: ComparisonOperator
     amount: 'Checkable | HousingType'

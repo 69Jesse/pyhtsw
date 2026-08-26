@@ -1,6 +1,7 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
 
 from ..expression.condition.condition import Condition
 from .item import Item, item_action_reference, item_referenced_importables
@@ -10,6 +11,14 @@ __all__ = ('BlockType',)
 
 @final
 class BlockType(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='BLOCK_TYPE',
+        limit=20,
+        reads=frozenset(()),
+        display_name='Block Type',
+        scoped_events=('Player Block Break',),
+    )
+
     block: Item
     match_type_only: bool
 

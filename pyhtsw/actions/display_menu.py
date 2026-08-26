@@ -1,6 +1,8 @@
 from typing import ClassVar, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from .menu import Menu
@@ -21,6 +23,14 @@ def _menu_name(menu: 'Menu | str') -> str:
 
 @final
 class DisplayMenuExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='SET_MENU',
+        limit=10,
+        effects=Effects.of(writes=(Resource.MENU,)),
+        display_name='Display Menu',
+        forbidden_events=('Player Quit',),
+    )
+
     name: str
     __clone_map__: ClassVar[dict[str, str]] = {'menu': 'name'}
 

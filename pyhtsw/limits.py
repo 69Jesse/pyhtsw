@@ -47,93 +47,14 @@ def get_limits() -> dict[type['Expression'] | type['PlaceholderEditable'], int]:
     if _LIMITS is not None:
         return _LIMITS
 
-    from .actions.apply_inventory_layout import ApplyInventoryLayoutExpression
-    from .actions.apply_potion_effect import ApplyPotionEffectExpression
-    from .actions.cancel_event import CancelEventExpression
-    from .actions.change_player_group import ChangePlayerGroupExpression
-    from .actions.change_velocity import ChangeVelocityExpression
-    from .actions.chat import ChatExpression
-    from .actions.clear_potion_effects import ClearPotionEffectsExpression
-    from .actions.close_menu import CloseMenuExpression
-    from .actions.consume_item import ConsumeItemExpression
-    from .actions.display_action_bar import DisplayActionBarExpression
-    from .actions.display_menu import DisplayMenuExpression
-    from .actions.display_title import DisplayTitleExpression
-    from .actions.drop_item import DropItemExpression
-    from .actions.enchant_held_item import EnchantHeldItemExpression
-    from .actions.exit_function import ExitFunctionExpression
-    from .actions.fail_parkour import FailParkourExpression
-    from .actions.full_heal import FullHealExpression
-    from .actions.give_experience_levels import GiveExperienceLevelsExpression
-    from .actions.give_item import GiveItemExpression
-    from .actions.kill_player import KillPlayerExpression
-    from .actions.launch_to_target import LaunchToTargetExpression
-    from .actions.parkour_checkpoint import ParkourCheckpointExpression
-    from .actions.pause_execution import PauseExecutionExpression
-    from .actions.play_sound import PlaySoundExpression
-    from .actions.player_health import PlayerHealthPlaceholder
-    from .actions.player_hunger import PlayerHungerPlaceholder
-    from .actions.player_max_health import PlayerMaxHealthPlaceholder
-    from .actions.random import RandomExpression
-    from .actions.remove_item import RemoveItemExpression
-    from .actions.reset_inventory import ResetInventoryExpression
-    from .actions.send_to_lobby import SendToLobbyExpression
-    from .actions.set_compass_target import SetCompassTargetExpression
-    from .actions.set_gamemode import SetGamemodeExpression
-    from .actions.set_player_team import SetPlayerTeamExpression
-    from .actions.set_player_time import SetPlayerTimeExpression
-    from .actions.set_player_weather import SetPlayerWeatherExpression
-    from .actions.teleport_player import TeleportPlayerExpression
-    from .actions.toggle_nametag_display import ToggleNametagDisplayExpression
-    from .actions.trigger_function import TriggerFunctionExpression
-    from .expression.binary_expression import BinaryExpression
-    from .expression.condition.conditional_expression import ConditionalExpression
+    from .registry import iter_action_types, iter_placeholder_types
 
-    _LIMITS = {
-        # expressions
-        ConditionalExpression: 25,
-        ChangePlayerGroupExpression: 1,
-        KillPlayerExpression: 1,
-        FullHealExpression: 5,
-        DisplayTitleExpression: 5,
-        DisplayActionBarExpression: 5,
-        ResetInventoryExpression: 1,
-        ParkourCheckpointExpression: 1,
-        GiveItemExpression: 40,
-        RemoveItemExpression: 40,
-        ChatExpression: 20,
-        ApplyPotionEffectExpression: 22,
-        ClearPotionEffectsExpression: 5,
-        GiveExperienceLevelsExpression: 5,
-        BinaryExpression: 25,
-        TeleportPlayerExpression: 5,
-        FailParkourExpression: 1,
-        PlaySoundExpression: 25,
-        SetCompassTargetExpression: 5,
-        SetGamemodeExpression: 1,
-        RandomExpression: 25,
-        TriggerFunctionExpression: 10,
-        ApplyInventoryLayoutExpression: 5,
-        EnchantHeldItemExpression: 24,
-        PauseExecutionExpression: 30,
-        SetPlayerTeamExpression: 1,
-        DisplayMenuExpression: 10,
-        DropItemExpression: 5,
-        ChangeVelocityExpression: 5,
-        LaunchToTargetExpression: 5,
-        SetPlayerWeatherExpression: 5,
-        SetPlayerTimeExpression: 5,
-        ToggleNametagDisplayExpression: 5,
-        ExitFunctionExpression: 1,
-        CancelEventExpression: 1,
-        CloseMenuExpression: 1,
-        ConsumeItemExpression: 1,
-        SendToLobbyExpression: 1,
-        # placeholders
-        PlayerMaxHealthPlaceholder: 5,
-        PlayerHealthPlaceholder: 5,
-        PlayerHungerPlaceholder: 5,
-    }
+    limits: dict[type[Expression] | type[PlaceholderEditable], int] = {}
+    for cls in (*iter_action_types(), *iter_placeholder_types()):
+        meta = cls.__dict__.get('htsw_meta')
+        if meta is not None and meta.limit is not None:
+            limits[cls] = meta.limit
+    _LIMITS = limits
     return _LIMITS
 
 
@@ -142,47 +63,15 @@ def get_condition_limits() -> dict[type['Condition'], int]:
     if _CONDITION_LIMITS is not None:
         return _CONDITION_LIMITS
 
-    from .actions.block_type import BlockType
-    from .actions.can_pvp import CanPVPCondition
-    from .actions.damage_amount import DamageAmountCondition
-    from .actions.damage_cause import DamageCause
-    from .actions.doing_parkour import DoingParkourCondition
-    from .actions.fishing_environment import FishingEnvironment
-    from .actions.has_item import HasItem
-    from .actions.has_permission import HasPermission
-    from .actions.has_potion_effect import HasPotionEffect
-    from .actions.is_doing_parkour import IsDoingParkourCondition
-    from .actions.is_flying import IsFlyingCondition
-    from .actions.is_item import IsItem
-    from .actions.is_sneaking import IsSneakingCondition
-    from .actions.portal_type import PortalType
-    from .actions.required_gamemode import RequiredGamemode
-    from .actions.required_group import RequiredGroup
-    from .actions.required_team import RequiredTeam
-    from .actions.within_region import WithinRegion
+    from .registry import iter_condition_types
 
-    limits: dict[type[Condition], int] = {
-        RequiredGroup: 20,
-        HasPermission: 20,
-        WithinRegion: 20,
-        HasItem: 20,
-        IsDoingParkourCondition: 1,
-        DoingParkourCondition: 1,
-        HasPotionEffect: 22,
-        IsSneakingCondition: 20,
-        IsFlyingCondition: 20,
-        RequiredGamemode: 20,
-        RequiredTeam: 20,
-        DamageCause: 20,
-        CanPVPCondition: 20,
-        FishingEnvironment: 20,
-        PortalType: 20,
-        BlockType: 20,
-        IsItem: 20,
-        DamageAmountCondition: 20,
-    }
+    limits: dict[type[Condition], int] = {}
+    for cls in iter_condition_types():
+        meta = cls.__dict__.get('htsw_meta')
+        if meta is not None and meta.limit is not None:
+            limits[cls] = meta.limit
     _CONDITION_LIMITS = limits
-    return limits
+    return _CONDITION_LIMITS
 
 
 # A ComparisonCondition maps to one of several htsw condition types depending on

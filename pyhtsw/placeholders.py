@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import final
+from typing import ClassVar, final
 
 from pyhtsw.editable import Editable
 
 from .checkable import Checkable
 from .execute.backend_type import BackendType
 from .internal_type import InternalType
+from .registry import ActionMeta
 
 __all__ = (
     'PlaceholderCheckable',
@@ -14,6 +15,8 @@ __all__ = (
 
 
 class PlaceholderCheckable(Checkable, ABC):
+    htsw_meta: ClassVar[ActionMeta] = ActionMeta()
+
     placeholder: str
     constant_internal_type: InternalType
     default_backend_value: BackendType

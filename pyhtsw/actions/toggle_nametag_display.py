@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 
@@ -12,6 +14,14 @@ __all__ = (
 
 @final
 class ToggleNametagDisplayExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='TOGGLE_NAMETAG_DISPLAY',
+        limit=5,
+        effects=Effects.of(writes=(Resource.NAMETAG,)),
+        display_name='Toggle Nametag Display',
+        forbidden_events=('Player Quit',),
+    )
+
     display: bool
 
     def __init__(self, display: bool) -> None:

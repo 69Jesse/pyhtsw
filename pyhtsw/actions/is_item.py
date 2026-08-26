@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.schedule import Resource
 
 from ..expression.condition.condition import Condition
 from ..types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
@@ -11,6 +13,18 @@ __all__ = ('IsItem',)
 
 @final
 class IsItem(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_ITEM',
+        limit=20,
+        reads=frozenset((Resource.INVENTORY,)),
+        display_name='Is Item',
+        scoped_events=(
+            'Player Drop Item',
+            'Player Pick Up Item',
+            'Player Change Held Item',
+        ),
+    )
+
     item: Item
     what_to_check: ITEM_CHECK_WHAT
     where_to_check: ITEM_CHECK_WHERE

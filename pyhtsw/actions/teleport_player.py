@@ -1,6 +1,8 @@
 from typing import Self, cast, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -14,6 +16,14 @@ __all__ = (
 
 @final
 class TeleportPlayerExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='TELEPORT',
+        limit=5,
+        effects=Effects.of(reads=(Resource.POSITION,), writes=(Resource.POSITION,)),
+        display_name='Teleport Player',
+        forbidden_events=('Player Quit',),
+    )
+
     coordinates: str | None
     location: ALL_LOCATIONS
     prevent_teleport_inside_block: bool

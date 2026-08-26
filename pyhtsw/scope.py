@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from .expression.expression import Expression
     from .importable import Importable
     from .limits import ImportableKind
+    from .registry import ActionMeta
 
 __all__ = (
     'ScopeError',
@@ -35,182 +36,38 @@ CANCELLABLE_EVENTS: frozenset[str] = frozenset(
     },
 )
 
-_TABLES: 'dict[str, object] | None' = None
+_STRUCTURAL: 'tuple[frozenset[type], type, type] | None' = None
 
 
-def _tables() -> 'dict[str, object]':
-    global _TABLES
-    if _TABLES is not None:
-        return _TABLES
+def _structural() -> 'tuple[frozenset[type], type, type]':
+    global _STRUCTURAL
+    if _STRUCTURAL is not None:
+        return _STRUCTURAL
 
-    from .actions.apply_inventory_layout import ApplyInventoryLayoutExpression
-    from .actions.apply_potion_effect import ApplyPotionEffectExpression
-    from .actions.block_type import BlockType
-    from .actions.can_pvp import CanPVPCondition
     from .actions.cancel_event import CancelEventExpression
-    from .actions.change_player_group import ChangePlayerGroupExpression
-    from .actions.change_velocity import ChangeVelocityExpression
-    from .actions.chat import ChatExpression
-    from .actions.clear_potion_effects import ClearPotionEffectsExpression
-    from .actions.close_menu import CloseMenuExpression
-    from .actions.consume_item import ConsumeItemExpression
-    from .actions.damage_amount import DamageAmountCondition
-    from .actions.damage_cause import DamageCause
-    from .actions.display_action_bar import DisplayActionBarExpression
-    from .actions.display_menu import DisplayMenuExpression
-    from .actions.display_title import DisplayTitleExpression
-    from .actions.drop_item import DropItemExpression
-    from .actions.enchant_held_item import EnchantHeldItemExpression
     from .actions.exit_function import ExitFunctionExpression
-    from .actions.fail_parkour import FailParkourExpression
-    from .actions.fishing_environment import FishingEnvironment
-    from .actions.full_heal import FullHealExpression
-    from .actions.give_experience_levels import GiveExperienceLevelsExpression
-    from .actions.give_item import GiveItemExpression
-    from .actions.is_item import IsItem
-    from .actions.kill_player import KillPlayerExpression
-    from .actions.launch_to_target import LaunchToTargetExpression
-    from .actions.parkour_checkpoint import ParkourCheckpointExpression
-    from .actions.play_sound import PlaySoundExpression
-    from .actions.player_health import PlayerHealthPlaceholder
-    from .actions.player_hunger import PlayerHungerPlaceholder
-    from .actions.player_max_health import PlayerMaxHealthPlaceholder
-    from .actions.portal_type import PortalType
     from .actions.random import RandomExpression
-    from .actions.remove_item import RemoveItemExpression
-    from .actions.reset_inventory import ResetInventoryExpression
-    from .actions.send_to_lobby import SendToLobbyExpression
-    from .actions.set_compass_target import SetCompassTargetExpression
-    from .actions.set_gamemode import SetGamemodeExpression
-    from .actions.set_player_team import SetPlayerTeamExpression
-    from .actions.set_player_time import SetPlayerTimeExpression
-    from .actions.set_player_weather import SetPlayerWeatherExpression
-    from .actions.teleport_player import TeleportPlayerExpression
-    from .actions.toggle_nametag_display import ToggleNametagDisplayExpression
     from .expression.condition.conditional_expression import ConditionalExpression
 
-    condition_names = {
-        BlockType: 'Block Type',
-        CanPVPCondition: 'Can PvP',
-        DamageAmountCondition: 'Damage Amount',
-        DamageCause: 'Damage Cause',
-        FishingEnvironment: 'Fishing Environment',
-        IsItem: 'Is Item',
-        PortalType: 'Portal Type',
-    }
+    _STRUCTURAL = (
+        frozenset({ConditionalExpression, RandomExpression}),
+        CancelEventExpression,
+        ExitFunctionExpression,
+    )
+    return _STRUCTURAL
 
-    names = {
-        ApplyInventoryLayoutExpression: 'Apply Inventory Layout',
-        ApplyPotionEffectExpression: 'Apply Potion Effect',
-        CancelEventExpression: 'Cancel Event',
-        ChangePlayerGroupExpression: "Change Player's Group",
-        ChangeVelocityExpression: 'Change Velocity',
-        ChatExpression: 'Send a Chat Message',
-        ClearPotionEffectsExpression: 'Clear All Potion Effects',
-        CloseMenuExpression: 'Close Menu',
-        ConditionalExpression: 'Conditional',
-        ConsumeItemExpression: 'Use/Remove Held Item',
-        DisplayActionBarExpression: 'Display Action Bar',
-        DisplayMenuExpression: 'Display Menu',
-        DisplayTitleExpression: 'Display Title',
-        DropItemExpression: 'Drop Item',
-        EnchantHeldItemExpression: 'Enchant Held Item',
-        ExitFunctionExpression: 'Exit',
-        FailParkourExpression: 'Fail Parkour',
-        FullHealExpression: 'Full Heal',
-        GiveExperienceLevelsExpression: 'Give Experience Levels',
-        GiveItemExpression: 'Give Item',
-        KillPlayerExpression: 'Kill Player',
-        LaunchToTargetExpression: 'Launch to Target',
-        ParkourCheckpointExpression: 'Parkour Checkpoint',
-        PlaySoundExpression: 'Play Sound',
-        PlayerHealthPlaceholder: 'Change Health',
-        PlayerHungerPlaceholder: 'Change Hunger Level',
-        PlayerMaxHealthPlaceholder: 'Change Max Health',
-        RandomExpression: 'Random Action',
-        RemoveItemExpression: 'Remove Item',
-        ResetInventoryExpression: 'Reset Inventory',
-        SendToLobbyExpression: 'Send to Lobby',
-        SetCompassTargetExpression: 'Set Compass Target',
-        SetGamemodeExpression: 'Set Gamemode',
-        SetPlayerTeamExpression: 'Set Player Team',
-        SetPlayerTimeExpression: 'Set Player Time',
-        SetPlayerWeatherExpression: 'Set Player Weather',
-        TeleportPlayerExpression: 'Teleport Player',
-        ToggleNametagDisplayExpression: 'Toggle Nametag Display',
-    }
 
-    _TABLES = {
-        'names': names,
-        'nestable': frozenset({ConditionalExpression, RandomExpression}),
-        'cancel_event': CancelEventExpression,
-        'exit': ExitFunctionExpression,
-        'item_only': {ConsumeItemExpression: 'Use/Remove Held Item'},
-        'menu_only': {CloseMenuExpression: 'Close Menu'},
-        'all_events_forbidden': frozenset(
-            {
-                KillPlayerExpression,
-                SendToLobbyExpression,
-            },
-        ),
-        'event_forbidden': {
-            'Player Quit': frozenset(
-                {
-                    ChangePlayerGroupExpression,
-                    FullHealExpression,
-                    DisplayTitleExpression,
-                    DisplayActionBarExpression,
-                    ResetInventoryExpression,
-                    PlayerMaxHealthPlaceholder,
-                    ParkourCheckpointExpression,
-                    GiveItemExpression,
-                    RemoveItemExpression,
-                    ChatExpression,
-                    ApplyPotionEffectExpression,
-                    ClearPotionEffectsExpression,
-                    GiveExperienceLevelsExpression,
-                    TeleportPlayerExpression,
-                    FailParkourExpression,
-                    PlaySoundExpression,
-                    SetCompassTargetExpression,
-                    SetGamemodeExpression,
-                    PlayerHealthPlaceholder,
-                    PlayerHungerPlaceholder,
-                    ApplyInventoryLayoutExpression,
-                    EnchantHeldItemExpression,
-                    SetPlayerTeamExpression,
-                    DisplayMenuExpression,
-                    DropItemExpression,
-                    ChangeVelocityExpression,
-                    LaunchToTargetExpression,
-                    SetPlayerWeatherExpression,
-                    SetPlayerTimeExpression,
-                    ToggleNametagDisplayExpression,
-                },
-            ),
-            'Group Change': frozenset({ChangePlayerGroupExpression}),
-        },
-        'condition_names': condition_names,
-        'event_scoped_conditions': {
-            DamageAmountCondition: ('Player Damage',),
-            DamageCause: ('Player Damage',),
-            CanPVPCondition: ('PvP State Change',),
-            FishingEnvironment: ('Fish Caught',),
-            PortalType: ('Player Enter Portal',),
-            BlockType: ('Player Block Break',),
-            IsItem: (
-                'Player Drop Item',
-                'Player Pick Up Item',
-                'Player Change Held Item',
-            ),
-        },
-    }
-    return _TABLES
+def _meta(cls: object) -> 'ActionMeta':
+    from .registry import ActionMeta
+
+    meta = getattr(cls, 'htsw_meta', None)
+    if not isinstance(meta, ActionMeta):
+        return ActionMeta()
+    return meta
 
 
 def _name(cls: object) -> str:
-    names: dict = _tables()['names']  # type: ignore[assignment]
-    return names.get(cls, getattr(cls, '__name__', str(cls)))
+    return _meta(cls).display_name or getattr(cls, '__name__', str(cls))
 
 
 def _check_conditions(
@@ -224,15 +81,12 @@ def _check_conditions(
     if not isinstance(expression, ConditionalExpression):
         return
 
-    tables = _tables()
-    scoped: dict = tables['event_scoped_conditions']  # type: ignore[assignment]
-    condition_names: dict = tables['condition_names']  # type: ignore[assignment]
-
     for condition in expression.conditions:
-        allowed = scoped.get(type(condition))
-        if allowed is None or (event is not None and event in allowed):
+        meta = type(condition).htsw_meta
+        allowed = meta.scoped_events
+        if not allowed or (event is not None and event in allowed):
             continue
-        name = condition_names.get(type(condition), type(condition).__name__)
+        name = meta.display_name or type(condition).__name__
         context = f'{event} event' if event else 'this context'
         report.append(
             f'{name} condition can only be used inside: '
@@ -248,39 +102,37 @@ def _check_action(
     nested: bool,
     report: 'list[str]',
 ) -> None:
-    tables = _tables()
+    nestable, cancel_event, exit_cls = _structural()
+    meta = _meta(cls)
 
-    if kind == 'items' and cls in tables['nestable']:  # type: ignore[operator]
+    if kind == 'items' and cls in nestable:
         report.append(f'{_name(cls)} action cannot be used inside items')
 
-    if cls is tables['cancel_event']:
+    if cls is cancel_event:
         if kind != 'events':
             report.append(f'Cancel Event action cannot be used inside {kind}')
         elif event is not None and event not in CANCELLABLE_EVENTS:
             report.append(f'{event} event cannot be cancelled.')
 
-    item_only: dict = tables['item_only']  # type: ignore[assignment]
-    if cls in item_only and kind != 'items':
+    if meta.item_only and kind != 'items':
         report.append(
-            f'{item_only[cls]} action can only be used inside items, not {kind}',
+            f'{_name(cls)} action can only be used inside items, not {kind}',
         )
 
-    menu_only: dict = tables['menu_only']  # type: ignore[assignment]
-    if cls in menu_only and kind != 'menus':
+    if meta.menu_only and kind != 'menus':
         report.append(
-            f'{menu_only[cls]} action can only be used inside menus, not {kind}',
+            f'{_name(cls)} action can only be used inside menus, not {kind}',
         )
 
-    if cls is tables['exit'] and not nested:
+    if cls is exit_cls and not nested:
         report.append(
             'Exit action can only be used inside conditional or random actions',
         )
 
     if kind == 'events':
-        if cls in tables['all_events_forbidden']:  # type: ignore[operator]
+        if meta.forbidden_in_events:
             report.append(f'{_name(cls)} action cannot be used inside events')
-        event_forbidden: dict = tables['event_forbidden']  # type: ignore[assignment]
-        if event is not None and cls in event_forbidden.get(event, frozenset()):
+        if event is not None and event in meta.forbidden_events:
             report.append(
                 f'{_name(cls)} action cannot be used inside {event} events',
             )

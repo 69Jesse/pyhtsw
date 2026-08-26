@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from ..types import PLAYER_WEATHERS
@@ -13,6 +15,14 @@ __all__ = (
 
 @final
 class SetPlayerWeatherExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='SET_PLAYER_WEATHER',
+        limit=5,
+        effects=Effects.of(writes=(Resource.WEATHER,)),
+        display_name='Set Player Weather',
+        forbidden_events=('Player Quit',),
+    )
+
     weather: PLAYER_WEATHERS
 
     def __init__(self, weather: PLAYER_WEATHERS) -> None:

@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.schedule import Resource
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_POTION_EFFECTS
@@ -10,6 +12,12 @@ __all__ = ('HasPotionEffect',)
 
 @final
 class HasPotionEffect(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_POTION_EFFECT',
+        limit=22,
+        reads=frozenset((Resource.POTIONS,)),
+    )
+
     effect: ALL_POTION_EFFECTS
 
     def __init__(

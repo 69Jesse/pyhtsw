@@ -3,6 +3,8 @@ from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -26,6 +28,10 @@ class TeamPlayersPlaceholder(
     pattern=re.compile(r'%player\.team\.players(?:/([^%]*))?%'),
     pattern_factory=_team_players_factory,
 ):
+    htsw_meta = ActionMeta(
+        effects=Effects.of(reads=(Resource.TEAM,)),
+    )
+
     team: Team | None
 
     def __init__(self, team: Team | str | None = None) -> None:

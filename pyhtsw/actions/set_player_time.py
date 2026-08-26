@@ -1,6 +1,8 @@
 from typing import ClassVar, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 
@@ -23,6 +25,14 @@ class PlayerTime:
 
 @final
 class SetPlayerTimeExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='SET_PLAYER_TIME',
+        limit=5,
+        effects=Effects.of(writes=(Resource.TIME,)),
+        display_name='Set Player Time',
+        forbidden_events=('Player Quit',),
+    )
+
     time: int
 
     def __init__(self, time: int) -> None:

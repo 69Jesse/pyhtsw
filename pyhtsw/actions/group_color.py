@@ -1,6 +1,9 @@
 import re
 from typing import final
 
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
+
 from ..execute.backend_type import BackendType
 from ..internal_type import InternalType
 from ..placeholders import PlaceholderCheckable
@@ -17,6 +20,10 @@ class GroupColorPlaceholder(
     pattern=re.compile(re.escape('%player.group.color%')),
     pattern_factory=lambda _: GroupColor,
 ):
+    htsw_meta = ActionMeta(
+        effects=Effects.of(reads=(Resource.GROUP,)),
+    )
+
     def __init__(self) -> None:
         super().__init__(
             placeholder='%player.group.color%',

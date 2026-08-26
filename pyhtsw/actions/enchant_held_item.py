@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from ..types import ALL_ENCHANTMENTS
@@ -14,6 +16,14 @@ __all__ = (
 
 @final
 class EnchantHeldItemExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='ENCHANT_HELD_ITEM',
+        limit=24,
+        effects=Effects.of(reads=(Resource.INVENTORY,), writes=(Resource.INVENTORY,)),
+        display_name='Enchant Held Item',
+        forbidden_events=('Player Quit',),
+    )
+
     enchantment_name: str
     level: int
 

@@ -3,6 +3,8 @@ from collections.abc import Generator
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..config import INDENT
 from ..container import Container, ContainerContextManager, ExpressionContext
@@ -20,6 +22,13 @@ __all__ = (
 
 @final
 class RandomExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='RANDOM',
+        limit=25,
+        effects=Effects.of(reads=(Resource.VOLATILE,), writes=(Resource.VOLATILE,)),
+        display_name='Random Action',
+    )
+
     expressions: list[Expression]
 
     def __init__(

@@ -3,6 +3,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
 
 from ...expression.housing_type import HousingType
 from ...internal_type import InternalType
@@ -40,6 +41,10 @@ class ComparisonOperator(Enum):
 class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType'](
     Condition,
 ):
+    htsw_meta = ConditionMeta(
+        reads=frozenset(()),
+    )
+
     left: LeftT
     right: RightT
     operator: ComparisonOperator

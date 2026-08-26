@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
 
 from ..expression.expression import Expression
 
@@ -16,6 +17,12 @@ __all__ = (
 
 @final
 class PauseExecutionExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='PAUSE',
+        limit=30,
+        control=True,
+    )
+
     ticks: int
 
     def __init__(self, ticks: int = 20) -> None:

@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Self, cast, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource, Stream
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -23,6 +25,14 @@ def custom_sound(name: str) -> ALL_SOUNDS:
 
 @final
 class PlaySoundExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='PLAY_SOUND',
+        limit=25,
+        effects=Effects.of(reads=(Resource.POSITION,), stream=Stream.SOUND),
+        display_name='Play Sound',
+        forbidden_events=('Player Quit',),
+    )
+
     sound: ALL_SOUNDS
     volume: float
     pitch: float

@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.schedule import Resource
 
 from ..expression.condition.condition import Condition
 from .group import Group
@@ -10,6 +12,12 @@ __all__ = ('RequiredGroup',)
 
 @final
 class RequiredGroup(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_GROUP',
+        limit=20,
+        reads=frozenset((Resource.GROUP,)),
+    )
+
     group: Group
     include_higher_groups: bool
 

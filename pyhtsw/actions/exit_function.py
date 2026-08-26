@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, final
 
+from pyhtsw.registry import ActionMeta
+
 from ..expression.expression import Expression
 
 if TYPE_CHECKING:
@@ -14,6 +16,13 @@ __all__ = (
 
 @final
 class ExitFunctionExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='EXIT',
+        limit=1,
+        control=True,
+        display_name='Exit',
+    )
+
     def into_htsl(self) -> str:
         return 'exit'
 

@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from ..location import Location, resolve_location
@@ -14,6 +16,23 @@ __all__ = (
 
 @final
 class DropItemExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='DROP_ITEM',
+        limit=5,
+        effects=Effects.of(
+            reads=(
+                Resource.INVENTORY,
+                Resource.POSITION,
+            ),
+            writes=(
+                Resource.INVENTORY,
+                Resource.WORLD,
+            ),
+        ),
+        display_name='Drop Item',
+        forbidden_events=('Player Quit',),
+    )
+
     item: Item
     location: str
     coordinates: str | None

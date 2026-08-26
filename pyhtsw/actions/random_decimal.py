@@ -6,6 +6,8 @@ import numpy as np
 
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..execute.backend_type import BackendType
 from ..internal_type import InternalType
@@ -27,6 +29,10 @@ class RandomDecimalPlaceholder(
     pattern=re.compile(r'%random\.decimal/([\d.\-]+) ([\d.\-]+)%'),
     pattern_factory=_random_decimal_factory,
 ):
+    htsw_meta = ActionMeta(
+        effects=Effects.of(reads=(Resource.VOLATILE,), writes=(Resource.VOLATILE,)),
+    )
+
     lower_bound: float
     exclusive_upper_bound: float
 

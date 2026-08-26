@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
 
 from ..expression.expression import Expression
 from .function import Function
@@ -17,6 +18,12 @@ __all__ = (
 
 @final
 class TriggerFunctionExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='FUNCTION',
+        limit=10,
+        control=True,
+    )
+
     function: Function
     trigger_for_all_players: bool
 

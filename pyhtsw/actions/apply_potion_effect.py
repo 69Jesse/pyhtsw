@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from ..types import ALL_POTION_EFFECTS
@@ -13,6 +15,14 @@ __all__ = (
 
 @final
 class ApplyPotionEffectExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='APPLY_POTION_EFFECT',
+        limit=22,
+        effects=Effects.of(writes=(Resource.POTIONS,)),
+        display_name='Apply Potion Effect',
+        forbidden_events=('Player Quit',),
+    )
+
     potion: ALL_POTION_EFFECTS
     duration: int
     level: int

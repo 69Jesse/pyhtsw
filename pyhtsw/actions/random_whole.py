@@ -4,6 +4,8 @@ from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
@@ -25,6 +27,10 @@ class RandomWholePlaceholder(
     pattern=re.compile(r'%random\.whole/(-?\d+) (-?\d+)%'),
     pattern_factory=_random_whole_factory,
 ):
+    htsw_meta = ActionMeta(
+        effects=Effects.of(reads=(Resource.VOLATILE,), writes=(Resource.VOLATILE,)),
+    )
+
     lower_bound: int
     exclusive_upper_bound: int
 

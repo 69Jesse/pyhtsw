@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, ClassVar, Self, final
 
 from ...base_object import BaseObject
 from ...container import Container
+from ...registry import ConditionMeta
 from ...utils.log import log
 
 if TYPE_CHECKING:
@@ -17,6 +18,8 @@ __all__ = ('Condition',)
 
 
 class Condition(BaseObject):
+    htsw_meta: ClassVar[ConditionMeta] = ConditionMeta()
+
     inverted: bool = False
     __clone_extra__: ClassVar[tuple[str, ...]] = ('inverted',)
 

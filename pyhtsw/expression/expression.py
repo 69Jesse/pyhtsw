@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from collections.abc import Callable, Generator
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, ClassVar, final
 
 from ..base_object import BaseObject
 from ..container import Container, get_current_container
+from ..registry import ActionMeta
 from ..utils.log import log
 
 if TYPE_CHECKING:
@@ -36,6 +37,8 @@ def _stat_refs() -> tuple[type['Stat'], type['Checkable'], type['TemporaryStat']
 
 
 class Expression(BaseObject):
+    htsw_meta: ClassVar[ActionMeta] = ActionMeta()
+
     def into_executable_expressions(self) -> Generator['Expression']:
         yield self
 

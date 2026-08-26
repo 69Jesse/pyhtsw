@@ -84,52 +84,36 @@ for importable, kwargs in (
         raise AssertionError(f'{importable.__name__} accepted a fractional coordinate')
 
 
-# pyhtsw keys limits by expression class; map back to htsw's type names.
-HTSW_NAMES = {
-    'ConditionalExpression': 'CONDITIONAL',
-    'ChangePlayerGroupExpression': 'SET_GROUP',
-    'KillPlayerExpression': 'KILL',
-    'FullHealExpression': 'HEAL',
-    'DisplayTitleExpression': 'TITLE',
-    'DisplayActionBarExpression': 'ACTION_BAR',
-    'ResetInventoryExpression': 'RESET_INVENTORY',
-    'ParkourCheckpointExpression': 'PARKOUR_CHECKPOINT',
-    'GiveItemExpression': 'GIVE_ITEM',
-    'RemoveItemExpression': 'REMOVE_ITEM',
-    'ChatExpression': 'MESSAGE',
-    'ApplyPotionEffectExpression': 'APPLY_POTION_EFFECT',
-    'ClearPotionEffectsExpression': 'CLEAR_POTION_EFFECTS',
-    'GiveExperienceLevelsExpression': 'GIVE_EXPERIENCE_LEVELS',
-    'BinaryExpression': 'CHANGE_VAR',
-    'TeleportPlayerExpression': 'TELEPORT',
-    'FailParkourExpression': 'FAIL_PARKOUR',
-    'PlaySoundExpression': 'PLAY_SOUND',
-    'SetCompassTargetExpression': 'SET_COMPASS_TARGET',
-    'SetGamemodeExpression': 'SET_GAMEMODE',
-    'RandomExpression': 'RANDOM',
-    'TriggerFunctionExpression': 'FUNCTION',
-    'ApplyInventoryLayoutExpression': 'APPLY_INVENTORY_LAYOUT',
-    'EnchantHeldItemExpression': 'ENCHANT_HELD_ITEM',
-    'PauseExecutionExpression': 'PAUSE',
-    'SetPlayerTeamExpression': 'SET_TEAM',
-    'DisplayMenuExpression': 'SET_MENU',
-    'DropItemExpression': 'DROP_ITEM',
-    'ChangeVelocityExpression': 'SET_VELOCITY',
-    'LaunchToTargetExpression': 'LAUNCH',
-    'SetPlayerWeatherExpression': 'SET_PLAYER_WEATHER',
-    'SetPlayerTimeExpression': 'SET_PLAYER_TIME',
-    'ToggleNametagDisplayExpression': 'TOGGLE_NAMETAG_DISPLAY',
-    'ExitFunctionExpression': 'EXIT',
-    'CancelEventExpression': 'CANCEL_EVENT',
-    'CloseMenuExpression': 'CLOSE_MENU',
-    'ConsumeItemExpression': 'USE_HELD_ITEM',
-    'SendToLobbyExpression': 'SEND_TO_LOBBY',
-    'PlayerMaxHealthPlaceholder': 'CHANGE_MAX_HEALTH',
-    'PlayerHealthPlaceholder': 'CHANGE_HEALTH',
-    'PlayerHungerPlaceholder': 'CHANGE_HUNGER',
-}
+from pyhtsw.registry import (  # noqa: E402
+    iter_action_types,
+    iter_condition_types,
+    iter_placeholder_types,
+)
 
-ours = {HTSW_NAMES[cls.__name__]: limit for cls, limit in get_limits().items()}
+
+def registered_limits(classes) -> dict[str, int]:
+    limits: dict[str, int] = {}
+    for cls in classes:
+        meta = cls.__dict__.get('htsw_meta')
+        if meta is None or meta.limit is None:
+            continue
+        assert meta.htsw_name is not None, (
+            f'{cls.__name__} has a limit but no htsw_name'
+        )
+        previous = limits.setdefault(meta.htsw_name, meta.limit)
+        assert previous == meta.limit, (
+            f'{meta.htsw_name}: conflicting limits {previous} and {meta.limit}'
+        )
+    return limits
+
+
+ours = registered_limits({*iter_action_types(), *iter_placeholder_types()})
+assert set(get_limits()) == {
+    cls
+    for cls in {*iter_action_types(), *iter_placeholder_types()}
+    if cls.__dict__.get('htsw_meta') is not None
+    and cls.__dict__['htsw_meta'].limit is not None
+}
 theirs = CONTRACT['actionLimits']
 
 missing = set(theirs) - set(ours)
@@ -174,7 +158,6 @@ from pyhtsw.actions.is_doing_parkour import IsDoingParkourCondition  # noqa: E40
 from pyhtsw.limits import (  # noqa: E402
     COMPARISON_LIMIT,
     get_condition_limit,
-    get_condition_limits,
 )
 
 condition_limits = CONTRACT['conditionLimits']
@@ -193,4 +176,10 @@ COMPARISON_TYPES = {
     'COMPARE_HUNGER',
     'COMPARE_PLACEHOLDER',
 }
-assert len(get_condition_limits()) >= len(set(condition_limits) - COMPARISON_TYPES)
+cond_ours = registered_limits(iter_condition_types())
+cond_theirs = {
+    name: limit
+    for name, limit in condition_limits.items()
+    if name not in COMPARISON_TYPES
+}
+assert cond_ours == cond_theirs, set(cond_ours.items()) ^ set(cond_theirs.items())

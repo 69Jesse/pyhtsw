@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 
@@ -12,6 +14,14 @@ __all__ = (
 
 @final
 class GiveExperienceLevelsExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='GIVE_EXPERIENCE_LEVELS',
+        limit=5,
+        effects=Effects.of(writes=(Resource.EXPERIENCE,)),
+        display_name='Give Experience Levels',
+        forbidden_events=('Player Quit',),
+    )
+
     levels: int
 
     def __init__(self, levels: int) -> None:

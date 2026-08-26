@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.schedule import Resource
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_GAMEMODES
@@ -10,6 +12,12 @@ __all__ = ('RequiredGamemode',)
 
 @final
 class RequiredGamemode(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_GAMEMODE',
+        limit=20,
+        reads=frozenset((Resource.GAMEMODE,)),
+    )
+
     gamemode: ALL_GAMEMODES
 
     def __init__(

@@ -3,6 +3,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
 
 from ...config import INDENT
 from ...container import Container
@@ -24,6 +25,12 @@ class ConditionalMode(Enum):
 
 @final
 class ConditionalExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='CONDITIONAL',
+        limit=25,
+        display_name='Conditional',
+    )
+
     conditions: list['Condition']
     mode: ConditionalMode
 

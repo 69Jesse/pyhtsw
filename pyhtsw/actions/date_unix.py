@@ -2,6 +2,9 @@ import re
 import time
 from typing import final
 
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
+
 from ..execute.backend_type import BackendType, JavaLong
 from ..internal_type import InternalType
 from ..placeholders import PlaceholderCheckable
@@ -20,6 +23,10 @@ class DateUnixPlaceholder(
     pattern=re.compile(re.escape('%date.unix%')),
     pattern_factory=lambda _: DateUnix,
 ):
+    htsw_meta = ActionMeta(
+        effects=Effects.of(reads=(Resource.VOLATILE,), writes=(Resource.VOLATILE,)),
+    )
+
     def __init__(self) -> None:
         super().__init__(
             placeholder='%date.unix%',
@@ -39,6 +46,10 @@ class DateUnixMSPlaceholder(
     pattern=re.compile(re.escape('%date.unix.ms%')),
     pattern_factory=lambda _: DateUnixMS,
 ):
+    htsw_meta = ActionMeta(
+        effects=Effects.of(reads=(Resource.VOLATILE,), writes=(Resource.VOLATILE,)),
+    )
+
     def __init__(self) -> None:
         super().__init__(
             placeholder='%date.unix.ms%',

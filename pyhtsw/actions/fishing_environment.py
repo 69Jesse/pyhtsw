@@ -1,6 +1,7 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
 
 from ..expression.condition.condition import Condition
 from ..types import FISHING_ENVIRONMENTS
@@ -10,6 +11,14 @@ __all__ = ('FishingEnvironment',)
 
 @final
 class FishingEnvironment(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='FISHING_ENVIRONMENT',
+        limit=20,
+        reads=frozenset(()),
+        display_name='Fishing Environment',
+        scoped_events=('Fish Caught',),
+    )
+
     environment: FISHING_ENVIRONMENTS
 
     def __init__(

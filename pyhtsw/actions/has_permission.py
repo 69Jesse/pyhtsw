@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.schedule import Resource
 
 from ..expression.condition.condition import Condition
 from ..types import ALL_PERMISSIONS
@@ -10,6 +12,12 @@ __all__ = ('HasPermission',)
 
 @final
 class HasPermission(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='REQUIRE_PERMISSION',
+        limit=20,
+        reads=frozenset((Resource.GROUP,)),
+    )
+
     permission: ALL_PERMISSIONS
 
     def __init__(

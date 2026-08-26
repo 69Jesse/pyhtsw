@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from .group import Group
@@ -13,6 +15,17 @@ __all__ = (
 
 @final
 class ChangePlayerGroupExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='SET_GROUP',
+        limit=1,
+        effects=Effects.of(writes=(Resource.GROUP,)),
+        display_name="Change Player's Group",
+        forbidden_events=(
+            'Group Change',
+            'Player Quit',
+        ),
+    )
+
     group: Group
     demotion_protection: bool
 

@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Stream
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
 
@@ -18,6 +20,14 @@ __all__ = (
 
 @final
 class ChatExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='MESSAGE',
+        limit=20,
+        effects=Effects.of(stream=Stream.TEXT),
+        display_name='Send a Chat Message',
+        forbidden_events=('Player Quit',),
+    )
+
     line: str
 
     def __init__(self, line: str) -> None:

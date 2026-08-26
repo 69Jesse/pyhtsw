@@ -1,6 +1,7 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
 
 from ..expression.condition.condition import Condition
 from ..types import PORTAL_TYPES
@@ -10,6 +11,14 @@ __all__ = ('PortalType',)
 
 @final
 class PortalType(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='PORTAL_TYPE',
+        limit=20,
+        reads=frozenset(()),
+        display_name='Portal Type',
+        scoped_events=('Player Enter Portal',),
+    )
+
     portal: PORTAL_TYPES
 
     def __init__(

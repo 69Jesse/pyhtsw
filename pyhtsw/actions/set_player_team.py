@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..expression.expression import Expression
 from .team import Team
@@ -13,6 +15,14 @@ __all__ = (
 
 @final
 class SetPlayerTeamExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='SET_TEAM',
+        limit=1,
+        effects=Effects.of(writes=(Resource.TEAM,)),
+        display_name='Set Player Team',
+        forbidden_events=('Player Quit',),
+    )
+
     team: Team
 
     def __init__(self, team: Team) -> None:

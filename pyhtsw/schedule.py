@@ -1,5 +1,5 @@
 from bisect import insort
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
@@ -69,308 +69,18 @@ class Effects:
     # Nothing may cross this expression in either direction.
     control: bool
 
+    @classmethod
+    def of(
+        cls,
+        *,
+        reads: 'Iterable[ResourceKey]' = (),
+        writes: 'Iterable[ResourceKey]' = (),
+        stream: Stream | None = None,
+    ) -> 'Effects':
+        return cls(frozenset(reads), frozenset(writes), stream, False)
+
 
 BARRIER = Effects(frozenset(), frozenset(), None, True)
-
-
-_ACTION_EFFECTS: dict[type, tuple[frozenset, frozenset, Stream | None]] | None = None
-_CONTROL_TYPES: tuple[type, ...] | None = None
-_PLACEHOLDER_RESOURCES: dict[type, tuple[frozenset, frozenset]] | None = None
-_CONDITION_READS: dict[type, frozenset] | None = None
-
-
-def _r(*resources: Resource) -> frozenset:
-    return frozenset(resources)
-
-
-def get_action_effects() -> dict[type, tuple[frozenset, frozenset, Stream | None]]:
-    """(reads, writes, stream) per action type. Stats and placeholders named by
-    an action's own fields are picked up generically on top of this table; what
-    is declared here is the state an action touches *implicitly*."""
-    global _ACTION_EFFECTS
-    if _ACTION_EFFECTS is not None:
-        return _ACTION_EFFECTS
-
-    from .actions.apply_inventory_layout import ApplyInventoryLayoutExpression
-    from .actions.apply_potion_effect import ApplyPotionEffectExpression
-    from .actions.change_player_group import ChangePlayerGroupExpression
-    from .actions.change_velocity import ChangeVelocityExpression
-    from .actions.chat import ChatExpression
-    from .actions.clear_potion_effects import ClearPotionEffectsExpression
-    from .actions.close_menu import CloseMenuExpression
-    from .actions.consume_item import ConsumeItemExpression
-    from .actions.display_action_bar import DisplayActionBarExpression
-    from .actions.display_menu import DisplayMenuExpression
-    from .actions.display_title import DisplayTitleExpression
-    from .actions.drop_item import DropItemExpression
-    from .actions.enchant_held_item import EnchantHeldItemExpression
-    from .actions.fail_parkour import FailParkourExpression
-    from .actions.full_heal import FullHealExpression
-    from .actions.give_experience_levels import GiveExperienceLevelsExpression
-    from .actions.give_item import GiveItemExpression
-    from .actions.go_to_house_spawn import GoToHouseSpawnExpression
-    from .actions.kill_player import KillPlayerExpression
-    from .actions.launch_to_target import LaunchToTargetExpression
-    from .actions.parkour_checkpoint import ParkourCheckpointExpression
-    from .actions.play_sound import PlaySoundExpression
-    from .actions.random import RandomExpression
-    from .actions.remove_item import RemoveItemExpression
-    from .actions.reset_inventory import ResetInventoryExpression
-    from .actions.set_compass_target import SetCompassTargetExpression
-    from .actions.set_gamemode import SetGamemodeExpression
-    from .actions.set_player_team import SetPlayerTeamExpression
-    from .actions.set_player_time import SetPlayerTimeExpression
-    from .actions.set_player_weather import SetPlayerWeatherExpression
-    from .actions.teleport_player import TeleportPlayerExpression
-    from .actions.toggle_nametag_display import ToggleNametagDisplayExpression
-
-    empty = frozenset()
-    _ACTION_EFFECTS = {
-        ChatExpression: (empty, empty, Stream.TEXT),
-        DisplayTitleExpression: (empty, empty, Stream.TEXT),
-        DisplayActionBarExpression: (empty, empty, Stream.TEXT),
-        # Announces the failure to the player and resets them to the start.
-        FailParkourExpression: (
-            empty,
-            _r(Resource.PARKOUR, Resource.POSITION),
-            Stream.TEXT,
-        ),
-        # Emitted at the player's feet, so it observes a teleport before it.
-        PlaySoundExpression: (_r(Resource.POSITION), empty, Stream.SOUND),
-        TeleportPlayerExpression: (_r(Resource.POSITION), _r(Resource.POSITION), None),
-        GoToHouseSpawnExpression: (empty, _r(Resource.POSITION), None),
-        ChangeVelocityExpression: (empty, _r(Resource.VELOCITY), None),
-        LaunchToTargetExpression: (_r(Resource.POSITION), _r(Resource.VELOCITY), None),
-        FullHealExpression: (empty, _r(Resource.HEALTH, Resource.HUNGER), None),
-        KillPlayerExpression: (
-            empty,
-            _r(
-                Resource.HEALTH,
-                Resource.HUNGER,
-                Resource.POSITION,
-                Resource.INVENTORY,
-                Resource.POTIONS,
-                Resource.EXPERIENCE,
-            ),
-            None,
-        ),
-        ApplyPotionEffectExpression: (empty, _r(Resource.POTIONS), None),
-        ClearPotionEffectsExpression: (empty, _r(Resource.POTIONS), None),
-        GiveExperienceLevelsExpression: (empty, _r(Resource.EXPERIENCE), None),
-        GiveItemExpression: (_r(Resource.INVENTORY), _r(Resource.INVENTORY), None),
-        RemoveItemExpression: (_r(Resource.INVENTORY), _r(Resource.INVENTORY), None),
-        ConsumeItemExpression: (_r(Resource.INVENTORY), _r(Resource.INVENTORY), None),
-        EnchantHeldItemExpression: (
-            _r(Resource.INVENTORY),
-            _r(Resource.INVENTORY),
-            None,
-        ),
-        ResetInventoryExpression: (empty, _r(Resource.INVENTORY), None),
-        ApplyInventoryLayoutExpression: (empty, _r(Resource.INVENTORY), None),
-        DropItemExpression: (
-            _r(Resource.POSITION, Resource.INVENTORY),
-            _r(Resource.WORLD, Resource.INVENTORY),
-            None,
-        ),
-        SetCompassTargetExpression: (empty, _r(Resource.COMPASS), None),
-        SetGamemodeExpression: (empty, _r(Resource.GAMEMODE), None),
-        SetPlayerTeamExpression: (empty, _r(Resource.TEAM), None),
-        ChangePlayerGroupExpression: (empty, _r(Resource.GROUP), None),
-        SetPlayerTimeExpression: (empty, _r(Resource.TIME), None),
-        SetPlayerWeatherExpression: (empty, _r(Resource.WEATHER), None),
-        ToggleNametagDisplayExpression: (empty, _r(Resource.NAMETAG), None),
-        ParkourCheckpointExpression: (
-            _r(Resource.POSITION),
-            _r(Resource.PARKOUR),
-            None,
-        ),
-        DisplayMenuExpression: (empty, _r(Resource.MENU), None),
-        CloseMenuExpression: (empty, _r(Resource.MENU), None),
-        # Picking a branch consumes a random draw, so two of them keep their
-        # order for the same reason two `%random.int%` reads do. Its branches are
-        # summarised on top of this.
-        RandomExpression: (_r(Resource.VOLATILE), _r(Resource.VOLATILE), None),
-    }
-    return _ACTION_EFFECTS
-
-
-def get_control_types() -> tuple[type, ...]:
-    """Types nothing may be moved across. Pauses split the tick (another
-    player's function can run in between); the rest either leave the function or
-    hand control to code this pass cannot see."""
-    global _CONTROL_TYPES
-    if _CONTROL_TYPES is not None:
-        return _CONTROL_TYPES
-
-    from .actions.cancel_event import CancelEventExpression
-    from .actions.exit_function import ExitFunctionExpression
-    from .actions.pause_execution import PauseExecutionExpression
-    from .actions.send_to_lobby import SendToLobbyExpression
-    from .actions.trigger_function import TriggerFunctionExpression
-    from .execute.expressions.execution_expression import ExecutionExpression
-
-    _CONTROL_TYPES = (
-        PauseExecutionExpression,
-        ExitFunctionExpression,
-        CancelEventExpression,
-        SendToLobbyExpression,
-        TriggerFunctionExpression,
-        ExecutionExpression,
-    )
-    return _CONTROL_TYPES
-
-
-def get_placeholder_resources() -> dict[type, tuple[frozenset, frozenset]]:
-    """(reads, writes) for every placeholder. A placeholder type missing from
-    this table makes its expression a barrier, so a newly added one is safe by
-    default rather than silently movable."""
-    global _PLACEHOLDER_RESOURCES
-    if _PLACEHOLDER_RESOURCES is not None:
-        return _PLACEHOLDER_RESOURCES
-
-    from .actions.date_unix import DateUnixMSPlaceholder, DateUnixPlaceholder
-    from .actions.group_color import GroupColorPlaceholder
-    from .actions.group_name import GroupNamePlaceholder
-    from .actions.group_priority import GroupPriorityPlaceholder
-    from .actions.group_tag import GroupTagPlaceholder
-    from .actions.house_cookies import HouseCookiesPlaceholder
-    from .actions.house_guests import HouseGuestsPlaceholder
-    from .actions.house_players import HousePlayersPlaceholder
-    from .actions.house_visiting_rules import HouseVisitingRulesPlaceholder
-    from .actions.player_block_x import PlayerBlockXPlaceholder
-    from .actions.player_block_y import PlayerBlockYPlaceholder
-    from .actions.player_block_z import PlayerBlockZPlaceholder
-    from .actions.player_experience import PlayerExperiencePlaceholder
-    from .actions.player_gamemode import PlayerGamemodePlaceholder
-    from .actions.player_health import PlayerHealthPlaceholder
-    from .actions.player_hunger import PlayerHungerPlaceholder
-    from .actions.player_level import PlayerLevelPlaceholder
-    from .actions.player_max_health import PlayerMaxHealthPlaceholder
-    from .actions.player_name import PlayerNamePlaceholder
-    from .actions.player_ping import PlayerPingPlaceholder
-    from .actions.player_position_pitch import PlayerPositionPitchPlaceholder
-    from .actions.player_position_x import PlayerPositionXPlaceholder
-    from .actions.player_position_y import PlayerPositionYPlaceholder
-    from .actions.player_position_yaw import PlayerPositionYawPlaceholder
-    from .actions.player_position_z import PlayerPositionZPlaceholder
-    from .actions.player_protocol import PlayerProtocolPlaceholder
-    from .actions.player_version import PlayerVersionPlaceholder
-    from .actions.random_decimal import RandomDecimalPlaceholder
-    from .actions.random_whole import RandomWholePlaceholder
-    from .actions.server_name import ServerNamePlaceholder
-    from .actions.server_short_name import ServerShortNamePlaceholder
-    from .actions.team_color import TeamColorPlaceholder
-    from .actions.team_name import TeamNamePlaceholder
-    from .actions.team_players import TeamPlayersPlaceholder
-    from .actions.team_tag import TeamTagPlaceholder
-
-    empty = frozenset()
-
-    def read(resource: Resource) -> tuple[frozenset, frozenset]:
-        return (_r(resource), empty)
-
-    def volatile() -> tuple[frozenset, frozenset]:
-        return (_r(Resource.VOLATILE), _r(Resource.VOLATILE))
-
-    def pure() -> tuple[frozenset, frozenset]:
-        return (empty, empty)
-
-    _PLACEHOLDER_RESOURCES = {
-        PlayerHealthPlaceholder: read(Resource.HEALTH),
-        PlayerMaxHealthPlaceholder: read(Resource.MAX_HEALTH),
-        PlayerHungerPlaceholder: read(Resource.HUNGER),
-        PlayerPositionXPlaceholder: read(Resource.POSITION),
-        PlayerPositionYPlaceholder: read(Resource.POSITION),
-        PlayerPositionZPlaceholder: read(Resource.POSITION),
-        PlayerPositionYawPlaceholder: read(Resource.POSITION),
-        PlayerPositionPitchPlaceholder: read(Resource.POSITION),
-        PlayerBlockXPlaceholder: read(Resource.POSITION),
-        PlayerBlockYPlaceholder: read(Resource.POSITION),
-        PlayerBlockZPlaceholder: read(Resource.POSITION),
-        PlayerExperiencePlaceholder: read(Resource.EXPERIENCE),
-        PlayerLevelPlaceholder: read(Resource.EXPERIENCE),
-        PlayerGamemodePlaceholder: read(Resource.GAMEMODE),
-        GroupNamePlaceholder: read(Resource.GROUP),
-        GroupColorPlaceholder: read(Resource.GROUP),
-        GroupTagPlaceholder: read(Resource.GROUP),
-        GroupPriorityPlaceholder: read(Resource.GROUP),
-        TeamNamePlaceholder: read(Resource.TEAM),
-        TeamColorPlaceholder: read(Resource.TEAM),
-        TeamTagPlaceholder: read(Resource.TEAM),
-        TeamPlayersPlaceholder: read(Resource.TEAM),
-        RandomWholePlaceholder: volatile(),
-        RandomDecimalPlaceholder: volatile(),
-        DateUnixPlaceholder: volatile(),
-        DateUnixMSPlaceholder: volatile(),
-        # Constant for the duration of a tick, and nothing here writes them.
-        PlayerNamePlaceholder: pure(),
-        PlayerPingPlaceholder: pure(),
-        PlayerVersionPlaceholder: pure(),
-        PlayerProtocolPlaceholder: pure(),
-        ServerNamePlaceholder: pure(),
-        ServerShortNamePlaceholder: pure(),
-        HouseCookiesPlaceholder: pure(),
-        HouseGuestsPlaceholder: pure(),
-        HousePlayersPlaceholder: pure(),
-        HouseVisitingRulesPlaceholder: pure(),
-    }
-    return _PLACEHOLDER_RESOURCES
-
-
-def get_condition_reads() -> dict[type, frozenset]:
-    """What each condition type inspects beyond the stats it names. A condition
-    type missing from this table makes its whole conditional a barrier."""
-    global _CONDITION_READS
-    if _CONDITION_READS is not None:
-        return _CONDITION_READS
-
-    from .actions.block_type import BlockType
-    from .actions.can_pvp import CanPVPCondition
-    from .actions.damage_amount import DamageAmountCondition
-    from .actions.damage_cause import DamageCause
-    from .actions.doing_parkour import DoingParkourCondition
-    from .actions.fishing_environment import FishingEnvironment
-    from .actions.has_item import HasItem
-    from .actions.has_permission import HasPermission
-    from .actions.has_potion_effect import HasPotionEffect
-    from .actions.is_doing_parkour import IsDoingParkourCondition
-    from .actions.is_flying import IsFlyingCondition
-    from .actions.is_item import IsItem
-    from .actions.is_sneaking import IsSneakingCondition
-    from .actions.player_flying import PlayerFlyingCondition
-    from .actions.player_sneaking import PlayerSneakingCondition
-    from .actions.portal_type import PortalType
-    from .actions.required_gamemode import RequiredGamemode
-    from .actions.required_group import RequiredGroup
-    from .actions.required_team import RequiredTeam
-    from .actions.within_region import WithinRegion
-    from .expression.condition.comparison_condition import ComparisonCondition
-
-    empty = frozenset()
-    _CONDITION_READS = {
-        ComparisonCondition: empty,  # its operands are picked up generically
-        WithinRegion: _r(Resource.POSITION),
-        HasItem: _r(Resource.INVENTORY),
-        IsItem: _r(Resource.INVENTORY),
-        HasPotionEffect: _r(Resource.POTIONS),
-        HasPermission: _r(Resource.GROUP),
-        RequiredGroup: _r(Resource.GROUP),
-        RequiredTeam: _r(Resource.TEAM),
-        RequiredGamemode: _r(Resource.GAMEMODE),
-        IsFlyingCondition: _r(Resource.GAMEMODE),
-        PlayerFlyingCondition: _r(Resource.GAMEMODE),
-        DoingParkourCondition: _r(Resource.PARKOUR),
-        IsDoingParkourCondition: _r(Resource.PARKOUR),
-        IsSneakingCondition: empty,
-        PlayerSneakingCondition: empty,
-        CanPVPCondition: empty,
-        DamageCause: empty,
-        DamageAmountCondition: empty,
-        FishingEnvironment: empty,
-        PortalType: empty,
-        BlockType: empty,
-    }
-    return _CONDITION_READS
 
 
 class _Collector:
@@ -412,15 +122,14 @@ class _Collector:
             (self.writes if write else self.reads).add(key)
             return
         if isinstance(value, PlaceholderCheckable):
-            entry = get_placeholder_resources().get(type(value))
+            entry = type(value).htsw_meta.effects
             if entry is None:
                 self.ok = False
                 return
-            reads, writes = entry
-            self.reads.update(reads)
-            self.writes.update(writes)
+            self.reads.update(entry.reads)
+            self.writes.update(entry.writes)
             if write:
-                self.writes.update(reads)
+                self.writes.update(entry.reads)
             return
         if isinstance(value, Checkable):
             self.ok = False
@@ -457,7 +166,7 @@ class _Collector:
             self.checkable(value)
 
     def condition(self, condition: 'Condition') -> None:
-        reads = get_condition_reads().get(type(condition))
+        reads = type(condition).htsw_meta.reads
         if reads is None:
             self.ok = False
             return
@@ -478,7 +187,7 @@ def effects_of(expression: 'Expression') -> Effects:
     from .expression.condition.conditional_expression import ConditionalExpression
     from .expression.unset_expression import UnsetExpression
 
-    if isinstance(expression, get_control_types()):
+    if type(expression).htsw_meta.control:
         return BARRIER
 
     collector = _Collector()
@@ -507,14 +216,14 @@ def effects_of(expression: 'Expression') -> Effects:
         collector.reads.update(reads)
         collector.writes.update(writes)
     else:
-        entry = get_action_effects().get(type(expression))
+        entry = type(expression).htsw_meta.effects
         nested = expression.nested_expressions_refs()
         if entry is None and not nested:
             return BARRIER
         if entry is not None:
-            reads, writes, stream = entry
-            collector.reads.update(reads)
-            collector.writes.update(writes)
+            collector.reads.update(entry.reads)
+            collector.writes.update(entry.writes)
+            stream = entry.stream
             collector.expression_fields(expression, treat_all_as_reads=True)
         if nested:
             summary = _summarize_bodies(expression)

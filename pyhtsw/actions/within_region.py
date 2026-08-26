@@ -1,6 +1,8 @@
 from typing import ClassVar, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ConditionMeta
+from pyhtsw.schedule import Resource
 
 from ..expression.condition.condition import Condition
 from .region import Region
@@ -18,6 +20,12 @@ def _region_name(region: 'Region | str') -> str:
 
 @final
 class WithinRegion(Condition):
+    htsw_meta = ConditionMeta(
+        htsw_name='IS_IN_REGION',
+        limit=20,
+        reads=frozenset((Resource.POSITION,)),
+    )
+
     name: str
     __clone_map__: ClassVar[dict[str, str]] = {'region': 'name'}
 

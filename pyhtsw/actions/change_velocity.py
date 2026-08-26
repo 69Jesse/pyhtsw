@@ -1,6 +1,8 @@
 from typing import Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.registry import ActionMeta
+from pyhtsw.schedule import Effects, Resource
 
 from ..checkable import Checkable
 from ..expression.expression import Expression
@@ -14,6 +16,14 @@ __all__ = (
 
 @final
 class ChangeVelocityExpression(Expression):
+    htsw_meta = ActionMeta(
+        htsw_name='SET_VELOCITY',
+        limit=5,
+        effects=Effects.of(writes=(Resource.VELOCITY,)),
+        display_name='Change Velocity',
+        forbidden_events=('Player Quit',),
+    )
+
     x: Checkable | NumericHousingType
     y: Checkable | NumericHousingType
     z: Checkable | NumericHousingType

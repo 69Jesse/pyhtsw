@@ -20,22 +20,22 @@ actions would have fit in the slot.
 
 ```python
 # Wasteful: a function nobody else triggers.
-@create_function('Open Bank')
+@function('Open Bank')
 def open_bank() -> None:
     display_menu(BANK_MENU)
-    play_sound('Click')
+    play_sound('random.click')
 
 
-@menu.on(item=BANK_ICON, slot=20)
+@menu.add_element(BANK_ICON, slot=20)
 def _bank() -> None:
     trigger_function(open_bank)
 
 
 # Inline: the same behaviour, one fewer function.
-@menu.on(item=BANK_ICON, slot=20)
+@menu.add_element(BANK_ICON, slot=20)
 def _bank() -> None:
     display_menu(BANK_MENU)
-    play_sound('Click')
+    play_sound('random.click')
 ```
 
 Sharing in Python is not sharing in Housing. A plain helper called from ten
@@ -45,7 +45,7 @@ factoring a common body out is free:
 ```python
 def open_menu(menu: 'Menu | str') -> None:
     display_menu(menu)
-    play_sound('Click')
+    play_sound('random.click')
 ```
 
 Reach for a real function when the actions have to be genuinely *one* thing:
@@ -67,7 +67,7 @@ other people's trades.
 So an item's own action list should be the part that never has to change:
 
 ```python
-@create_function('Teleport To Crown', icon=Item('compass'))
+@function('Teleport To Crown', icon=Item('compass'))
 def teleport_to_crown() -> None:
     ...
 

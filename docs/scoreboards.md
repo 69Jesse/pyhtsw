@@ -6,7 +6,7 @@ and the font renderer's extra bold pixel opens a visible hole between two
 letters. `fix_scoreboard_line` rewrites a line so that never happens.
 
 ```python
-from pyhtsw.ext import fix_scoreboard_line, number_lengths
+from pyhtsw.text import fix_scoreboard_line, number_lengths
 
 fix_scoreboard_line('&1&l123456789012345')
 # '&1&l1234567890&1&l12345'

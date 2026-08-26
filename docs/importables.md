@@ -4,30 +4,34 @@ Importables are the entities HTSW imports: functions, events, items, regions,
 menus, NPCs, teams, groups and commands. See htsw's
 `language/src/importjson/schemaSpec.ts` for the underlying import.json schema.
 
-**Every kind is declared the same way: a `create_*` factory.** The ones that own
-a single action list (`create_function`, `create_command`, `create_event`) are
-decorators; the rest are plain calls. Each returns a **value** — a `Function`,
-`Menu`, `Region`, `Item`, ... — that you pass to actions, and that answers for
-its own declaration:
+**The class declares, the string refers.** The kinds that own a single action
+list (`@function`, `@command`, `@event`) are decorators; the rest are declared
+by their constructors. Each declaration is a **value** — a `Function`, `Menu`,
+`Region`, `Item`, ... — that you pass to actions, and that answers for its own
+declaration:
 
 ```python
-shop = create_menu('Magic Shop', 6)
+shop = Menu('Magic Shop', 6)
 
 shop.name   # 'Magic Shop'
 shop.size   # 6
 ```
 
-Every field of a declaration reads back off the value, and every field except
-`name` can be set on it afterwards. `value.importable` is the declaration
-itself, for the rare case you want the raw `import.json` entry.
+Anything that already exists in the house without a declaration is referred to
+by its plain name string — `set_player_team('Red')`, `trigger_function('greet')`,
+`WithinRegion('Hand Placed')`. Declaring the same kind and name twice raises.
+
+Every field of a declaration reads back off the value, and can be set on it
+afterwards. `value.importable` is the declaration itself, for the rare case you
+want the raw `import.json` entry.
 
 ## Functions
 
 ```python
-from pyhtsw import create_function, chat
+from pyhtsw import Item, chat, function
 
 
-@create_function('Tick', repeat_ticks=20, icon=Clock)
+@function('Tick', repeat_ticks=20, icon=Item('clock'))
 def tick() -> None:
     chat('one second passed')
 ```
@@ -47,24 +51,24 @@ instead; an item's behaviour should always be a function. See
 ## Events
 
 ```python
-from pyhtsw import create_event, chat
+from pyhtsw import event, chat
 
 
-@create_event('Player Join')
+@event('player_join')
 def on_join() -> None:
     chat('&aSomeone joined!')
 ```
 
-`create_event` returns an `Event` value, the way `create_function` returns a
+`@event` returns an `Event` value, the way `@function` returns a
 `Function`. Housing fires it, so — like a `Command` — it cannot be triggered
 from HTSL; the value is there to name the event and to be re-exported.
 
-The event name is typed to the 18 htsw events (`Player Join`, `Player Quit`,
-`Player Death`, `Player Kill`, `Player Respawn`, `Group Change`,
-`PvP State Change`, `Fish Caught`, `Player Enter Portal`, `Player Damage`,
-`Player Block Break`, `Start Parkour`, `Complete Parkour`, `Player Drop Item`,
-`Player Pick Up Item`, `Player Change Held Item`, `Player Toggle Sneak`,
-`Player Toggle Flight`).
+The event name is typed to the 18 htsw events (`player_join`, `player_quit`,
+`player_death`, `player_kill`, `player_respawn`, `group_change`,
+`pvp_state_change`, `fish_caught`, `player_enter_portal`, `player_damage`,
+`player_block_break`, `start_parkour`, `complete_parkour`, `player_drop_item`,
+`player_pick_up_item`, `player_change_held_item`, `player_toggle_sneak`,
+`player_toggle_flight`).
 
 ## Items, Regions, NPCs, Menus
 
@@ -76,25 +80,25 @@ Each takes its handlers as keyword arguments, or as decorators afterwards:
 
 | Importable | Decorators | Keyword shorthands |
 |---|---|---|
-| `Item` | `@item.left_click`, `@item.right_click`, `@item.click` | `on_left_click=`, `on_right_click=`, `on_click=` |
+| `Item` | `@item.on_left_click`, `@item.on_right_click`, `@item.on_click` | `on_left_click=`, `on_right_click=`, `on_click=` |
 | `Region` | `@region.on_enter`, `@region.on_exit` | `on_enter=`, `on_exit=` |
-| `NPC` | `@npc.left_click`, `@npc.right_click`, `@npc.click` | `on_left_click=`, `on_right_click=`, `on_click=` |
-| `Menu` | `@menu.on(item=, slot=)` | — |
+| `NPC` | `@npc.on_left_click`, `@npc.on_right_click`, `@npc.on_click` | `on_left_click=`, `on_right_click=`, `on_click=` |
+| `Menu` | `@menu.add_element(item, slot=)` | — |
 
 ```python
-from pyhtsw import chat, create_item
+from pyhtsw import Item, chat
 
 
 # Decorator form
-wand = create_item('blaze_rod', name='&dWand')
+wand = Item('blaze_rod', name='&dWand')
 
 
-@wand.left_click
+@wand.on_left_click
 def cast() -> None:
     chat('zap')
 
 
-@wand.right_click
+@wand.on_right_click
 def block() -> None:
     chat('block')
 ```
@@ -105,7 +109,7 @@ def cast() -> None:
     chat('zap')
 
 
-wand = create_item('blaze_rod', name='&dWand', on_left_click=cast)
+wand = Item('blaze_rod', name='&dWand', on_left_click=cast)
 ```
 
 Because these are ordinary calls, any of them can be built in a loop, and a
@@ -114,18 +118,18 @@ instead of a default-argument dance.
 
 ### Item
 
-`Item(...)` builds a value; `create_item(...)` builds one **and** declares it as
-an `items[]` entry, so actions reference it by name and htsw lists it in the
+`Item(...)` builds a value; `importable_name=` declares it as an `items[]`
+entry up front, so actions reference it by name and htsw lists it in the
 Project view. An item given a click handler declares itself either way. See
 [Items](./items.md) for the full field list and how names are derived.
 
 ```python
-from pyhtsw import chat, create_item, give_item
+from pyhtsw import Item, chat, give_item
 
-wand = create_item('blaze_rod', name='&dWand', importable_name='Wand')
+wand = Item('blaze_rod', name='&dWand', importable_name='Wand')
 
 
-@wand.click
+@wand.on_click
 def cast() -> None:
     chat('zap')
 
@@ -141,10 +145,10 @@ give_item(wand)
 ### Region
 
 ```python
-from pyhtsw import chat, create_region
+from pyhtsw import Region, chat
 
 
-spawn = create_region('Spawn Zone', ((0, 60, 0), (16, 80, 16)))
+spawn = Region('Spawn Zone', ((0, 60, 0), (16, 80, 16)))
 
 
 @spawn.on_enter
@@ -167,7 +171,7 @@ def left() -> None:
   what a loop wants.
 
 ```python
-pads = [create_region(f'Pad {n}') for n in range(3)]
+pads = [Region(f'Pad {n}') for n in range(3)]
 for n, pad in enumerate(pads):
     pad.corners((n, 60, 0), (n + 1, 61, 1))
 ```
@@ -185,29 +189,29 @@ with IfAll(WithinRegion('Hand Placed')):
 ### NPC
 
 ```python
-from pyhtsw import NPC, Item, chat, create_npc
+from pyhtsw import NPC, Item, chat
 
 
 helmet = Item('diamond_helmet')
 
-guide = create_npc(
+guide = NPC(
     '&bVillage Guide',
     (10, 65, 10),
-    skin='Steve',
+    skin='steve',
     look_at_players=True,
     hide_name_tag=False,
     equipment=NPC.Equipment(helmet=helmet),
 )
 
 
-@guide.right_click
+@guide.on_right_click
 def talk() -> None:
     chat('Welcome, traveler.')
 ```
 
 - `name` is the NPC's displayed name (formatting codes allowed).
 - `pos` is `(x, y, z)`.
-- `skin` is one of `'Steve'`, `'Alex'`, `'Players Skin'`.
+- `skin` is one of `'steve'`, `'alex'`, `'players_skin'`.
 - `left_click_redirect=True` makes a left click run the right-click actions.
 - `NPC.Equipment(helmet=, chestplate=, leggings=, boots=, hand=)` — each an
   `Item`.
@@ -222,7 +226,7 @@ for enemy in ENEMIES:
     def strike(enemy=enemy) -> None:
         chat(f'You strike the {enemy.name}!')
 
-    create_npc(enemy.name, enemy.pos, skin='Steve', on_click=strike)
+    NPC(enemy.name, enemy.pos, skin='steve', on_click=strike)
 ```
 
 #### on_click
@@ -235,29 +239,28 @@ that just *responds to being clicked* costs two settings that have to agree.
 the redirect on.
 
 ```python
-create_npc('&aShopkeeper', (8, 65, 8), on_click=lambda: display_menu(SHOP))
+NPC('&aShopkeeper', (8, 65, 8), on_click=lambda: display_menu(SHOP))
 ```
 
 It is mutually exclusive with `on_left_click`, `on_right_click` and
-`left_click_redirect` — the overloads make passing both a type error, and it is
-rejected at runtime too, in whichever order they are applied. Reach for the pair
-when the two buttons genuinely do different things, and `on_click` when they
-don't.
+`left_click_redirect` — combining them is rejected, in whichever order they are
+applied. Reach for the pair when the two buttons genuinely do different things,
+and `on_click` when they don't.
 
 ### Menu
 
 ```python
-from pyhtsw import Item, chat, close_menu, create_item, create_menu
+from pyhtsw import Item, Menu, close_menu
 
 
 filler = Item('gray_stained_glass_pane', name=' ')
-confirm = create_item('lime_dye', name='&aConfirm')
+confirm = Item('lime_dye', name='&aConfirm')
 
-shop = create_menu('Magic Shop', 6)
+shop = Menu('Magic Shop', 6)
 shop.fill(filler, xy_check=lambda x, y: (x + y) % 2 == 0)
 
 
-@shop.on(item=confirm, x=5, y=4)
+@shop.add_element(confirm, x=5, y=4)
 def buy() -> None:
     close_menu()
 ```
@@ -265,8 +268,8 @@ def buy() -> None:
 - `name` is the menu's displayed title. Formatting codes are **not** supported
   here; they render literally (`&aShop` shows as the text `&aShop`).
 - `size` is typed `Literal[1, 2, 3, 4, 5, 6]` (rows). Menus are 9 columns wide.
-- `menu.on(item=, slot=, x=, y=, xy_check=)` adds a clickable slot;
-  `menu.add_element(...)` is the same method under its original name.
+- `menu.add_element(item, slot=, x=, y=, xy_check=)` adds a clickable slot; the
+  item is positional, the placement keyword-only.
   - `slot` is the **flat** index Housing itself uses, `0`–`53`, shorthand for
     `x=slot // 9, y=slot % 9`. It also takes a sequence of indices. Pass either
     `slot=` or `x=`/`y=`, never both.
@@ -289,18 +292,18 @@ A menu built from data — one page per shop category, one per reward tier — i
 just the same call in a loop:
 
 ```python
-from pyhtsw import Menu, create_menu, give_item
+from pyhtsw import Menu, give_item
 
 
 def build_page(category) -> Menu:
-    menu = create_menu(f'Shop > {category.name}', 6)
+    menu = Menu(f'Shop > {category.name}', 6)
     menu.fill(BLACK, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 0)
     menu.fill(GRAY, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 1)
     menu.place(INFO_ITEM, slot=4)
 
     for slot, entry in zip(SLOTS, category.items, strict=True):
 
-        @menu.on(item=entry.item, slot=slot)
+        @menu.add_element(entry.item, slot=slot)
         def _buy(entry=entry) -> None:
             give_item(entry.item)
 
@@ -316,26 +319,27 @@ handler, or building one menu per function call, removes even that.
 
 ## Teams and Groups
 
-Teams and groups hold no actions, so `create_team` / `create_group` are the
-whole surface. Each returns the same `Team` / `Group` value the actions already
-take, so a declared team is used exactly like an undeclared one.
+Teams and groups hold no actions, so the constructor is the whole surface. Each
+declares a `Team` / `Group` value the actions take directly, and the actions
+also take a plain name string, so a declared team is used exactly like an
+undeclared one that already exists in the house.
 
 ```python
-from pyhtsw import create_team, create_group, set_player_team, change_player_group
+from pyhtsw import Team, Group, set_player_team, change_player_group
 
 
-Red = create_team('Red', tag='RED', color='Dark Red', friendly_fire=False)
+Red = Team('Red', tag='RED', color='dark_red', friendly_fire=False)
 
-VIP = create_group(
+VIP = Group(
     'VIP',
     tag='VIP',
     tag_shown_in_chat=True,
-    color='Gold',
+    color='gold',
     priority=5,
-    allow=['Fly', 'Build', 'Use Chests', '/tp'],
-    deny=['Ban', 'Kick'],
-    chat_speed='Slow 1s',
-    default_gamemode='ADVENTURE',
+    allow=['fly', 'build', 'use_chests', 'tp'],
+    deny=['ban', 'kick'],
+    chat_speed='slow_1s',
+    default_gamemode='adventure',
 )
 
 set_player_team(Red)
@@ -344,47 +348,46 @@ Red.stat('kills').value += 1
 ```
 
 - `tag` may contain only letters, digits and spaces.
-- `color` is one of Housing's 14 named colours (`'Dark Blue'` … `'Yellow'`).
+- `color` is one of Housing's 14 named colours (`'dark_blue'` … `'yellow'`).
 - `priority` is `0`–`20`.
 - `allow=` / `deny=` are sequences of Housing's 51 permission names, typed as a
   `Literal` so a typo is a type error. A permission left out of both is
   **absent** from `import.json`, which is not the same as denying it. Naming one
   in both raises.
-- `permissions={'Fly': True, 'Ban': False}` is the raw 1:1 form, accepted
+- `permissions={'fly': True, 'ban': False}` is the raw 1:1 form, accepted
   alongside `allow`/`deny` as an escape hatch.
 
 As with every kind, each declared field reads back off the value itself —
-`VIP.priority`, `VIP.color`, `Red.friendly_fire`. Teams and groups add one thing
-the others do not need: a bare `Team(name)` / `Group(name)` is a **reference**,
-not a declaration, because Housing ships teams and groups that exist without
-one. A reference compares equal to the declared value and resolves the same
-fields. A field left out of the declaration reads as `None`; `permissions` comes
-back as a read-only view. Reading a name that was never declared in the current
-container raises, rather than answering `None` for a group that does not exist
-here:
+`VIP.priority`, `VIP.color`, `Red.friendly_fire`. A field left out of the
+declaration reads as `None`; `permissions` comes back as a read-only view.
+Housing ships teams and groups that exist without a declaration; those are
+referenced by their plain name string, everywhere a `Team` / `Group` value is
+accepted:
 
 ```python
-Group('VIP').priority        # 5
-create_group('Plain').tag    # None
-Group('Ghost').priority      # RuntimeError: ... was never declared ...
+VIP.priority                          # 5
+Group('Plain').tag                    # None
+set_player_team('Red')                # the string names it, declared or not
+TeamStat('kills', team='Red')
+HasTeam('Red')
 ```
 
 ## Commands
 
 A command owns a single action list, so it is a decorator like
-`@create_function`.
+`@function`.
 
 ```python
-from pyhtsw import create_command, chat, teleport_player, Location
+from pyhtsw import command, chat, teleport_player, Location
 
 
-@create_command('warp', mode='Self', required_priority=0, listed=True)
+@command('warp', mode='self', required_priority=0, listed=True)
 def warp() -> None:
     teleport_player(Location.custom(0, 100, 0))
     chat('&aWarped!')
 ```
 
-- `mode` is `'Self'` or `'Targeted'`.
+- `mode` is `'self'` or `'targeted'`.
 - `required_priority` is `0`–`20`.
 - `listed` controls whether the command shows in the in-game list.
 

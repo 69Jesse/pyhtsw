@@ -87,7 +87,7 @@ script file). See [Exporting](./exporting.md).
 
 ## Cross-module references
 
-`@create_function` / `@create_event` bodies run **lazily at export**, not when the
+`@function` / `@event` bodies run **lazily at export**, not when the
 module is imported. So a function in one module can reference a function defined
 in another regardless of import order. If two feature modules genuinely import
 each other, put the sibling import at the *bottom* of the module (after the

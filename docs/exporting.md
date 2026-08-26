@@ -52,16 +52,16 @@ schema.
 
 ## Top-level actions
 
-Actions written outside any importable (not inside a `@create_function`,
-`@create_event`, item handler, etc.) get wrapped into a single function named
+Actions written outside any importable (not inside a `@function`,
+`@event`, item handler, etc.) get wrapped into a single function named
 after the project, and PyHTSW logs a warning. Put them inside an importable to
 silence it:
 
 ```python
-from pyhtsw import create_function, chat
+from pyhtsw import function, chat
 
 
-@create_function('Setup')
+@function('Setup')
 def setup() -> None:
     chat('hello')  # belongs to the Setup function, no warning
 ```

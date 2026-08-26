@@ -104,9 +104,9 @@ If a run depends on ordering PyHTSW cannot see — an in-game side effect it doe
 not model, or a stat something outside PyHTSW writes — pin it:
 
 ```python
-from pyhtsw import strict_order
+from pyhtsw import StrictOrder
 
-with strict_order():
+with StrictOrder():
     do_this()
     then_this()
 ```

@@ -41,14 +41,14 @@ freely. Menus may too.
 | `consume_item` | only in items |
 | `close_menu` | only in menus |
 | `kill_player`, `send_to_lobby` | never in any event |
-| ~30 player-affecting actions | not in `Player Quit` |
-| `change_player_group` | not in `Group Change` |
+| ~30 player-affecting actions | not in `player_quit` |
+| `change_player_group` | not in `group_change` |
 
-Cancellable events are `Player Death`, `Fish Caught`, `Player Damage`,
-`Player Drop Item`, `Player Pick Up Item`, `Player Change Held Item`,
-`Player Toggle Sneak` and `Player Toggle Flight`.
+Cancellable events are `player_death`, `fish_caught`, `player_damage`,
+`player_drop_item`, `player_pick_up_item`, `player_change_held_item`,
+`player_toggle_sneak` and `player_toggle_flight`.
 
-`Player Quit` still accepts variable writes; what it refuses is everything that
+`player_quit` still accepts variable writes; what it refuses is everything that
 acts on a player who is already gone — titles, chat, teleports, items, sounds,
 health, inventory.
 
@@ -59,12 +59,12 @@ read:
 
 | Condition | Event |
 |---|---|
-| `DamageAmount`, `DamageCause` | `Player Damage` |
-| `CanPVP` | `PvP State Change` |
-| `FishingEnvironment` | `Fish Caught` |
-| `PortalType` | `Player Enter Portal` |
-| `BlockType` | `Player Block Break` |
-| `IsItem` | `Player Drop Item`, `Player Pick Up Item`, `Player Change Held Item` |
+| `DamageAmount`, `DamageCause` | `player_damage` |
+| `CanPVP` | `pvp_state_change` |
+| `FishingEnvironment` | `fish_caught` |
+| `PortalType` | `player_enter_portal` |
+| `BlockType` | `player_block_break` |
+| `IsItem` | `player_drop_item`, `player_pick_up_item`, `player_change_held_item` |
 
 ## Turning it off
 

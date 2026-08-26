@@ -10,10 +10,10 @@ both for you — you never edit them by hand.
 
 ```python
 import pyhtsw
-from pyhtsw import create_function, chat
+from pyhtsw import function, chat
 
 
-@create_function('Welcome')
+@function('Welcome')
 def welcome() -> None:
     chat('&aWelcome to my house!')
 ```

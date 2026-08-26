@@ -12,7 +12,7 @@ from pyhtsw import PlayerStat, GlobalStat, TeamStat, TemporaryStat
 coins = PlayerStat('coins')
 jackpot = GlobalStat('jackpot')
 score = TeamStat('score')
-tmp = TemporaryStat('tmp')
+tmp = TemporaryStat()
 ```
 
 - `PlayerStat` — per-player.

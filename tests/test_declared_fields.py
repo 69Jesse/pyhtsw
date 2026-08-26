@@ -177,3 +177,30 @@ with Container() as container:
     except AttributeError:
         raised = True
     assert raised, 'expected permissions to reject assignment'
+
+
+with Container() as container:
+    first = create_item(
+        'blaze_rod',
+        name='&aRecord',
+        importable_name='Record1',
+        on_right_click=lambda: chat('one'),
+    )
+    second = create_item(
+        'blaze_rod',
+        name='&aRecord',
+        importable_name='Record2',
+        on_right_click=lambda: chat('two'),
+    )
+
+    names = [i.identifier() for i in container.importables if i.kind == 'items']
+    assert names == ['Record1', 'Record2'], names
+    assert first.importable.name == 'Record1'
+    assert second.importable.name == 'Record2'
+    # An explicit name never aliases a byte-identical twin - that is the whole
+    # point of asking for one.
+    assert first.importable is not second.importable
+
+    # Without a name, an interactive item derives one from its display name.
+    derived = create_item('stick', name='&eTorch', on_click=lambda: chat('lit'))
+    assert derived.importable.name == 'Torch', derived.importable.name

@@ -806,19 +806,13 @@ def create_item(
     so actions and other importables can reference it by that name."""
     item = Item(
         key,
+        importable_name=importable_name,
         on_click=on_click,
         on_left_click=on_left_click,
         on_right_click=on_right_click,
         **fields,
     )
+    # An interactive item, or one given a name, already registered in __init__.
     if item.__htsw_importable__ is None:
-        item._declare(importable_name)
-    elif importable_name is not None:
-        from ..container import get_current_container
-
-        get_current_container().rename_importable(
-            item.__htsw_importable__,
-            importable_name,
-        )
-        item._importable_name = importable_name
+        item._declare()
     return item

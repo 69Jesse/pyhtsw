@@ -6,7 +6,11 @@ from pyhtsw.actions.flow import IfAll, IfAny, exit_function, trigger_function
 from pyhtsw.declarations.function import Function, function
 from pyhtsw.declarations.item import Item
 from pyhtsw.expression.condition.condition import Condition
-from pyhtsw.ext.look_vector import approximate_look_vector
+from pyhtsw.ext.look_vector import (
+    DIRECTION_SCALE,
+    approximate_look_vector,
+    emit_direction_squared,
+)
 from pyhtsw.placeholders.player import PlayerPositionX, PlayerPositionY, PlayerPositionZ
 from pyhtsw.stats.global_stat import GlobalStat
 from pyhtsw.stats.temporary_stat import TemporaryStat
@@ -142,6 +146,7 @@ def create_raycast(
     hits = make_global('hits', double=False)
     length = make_global('length', double=True)
     headshot = make_global('headshot', double=False)
+    dir2 = make_global('dir2', double=True)
 
     @function(name, icon=icon)
     def raycast_function() -> None:
@@ -180,9 +185,9 @@ def create_raycast(
         t1.value *= look_z
         ray_dist.value += t1
 
-        # perp2 = |offset|² - ray_dist²: `look` is a unit vector, so this is
-        # |offset × look|² by Pythagoras at less than half the cross product's
-        # cost. The offsets are dead after the dot product, so square in place.
+        # perp2 = |offset|² - ray_dist²/|look|²: Pythagoras at less than half
+        # the cross product's cost. The offsets are dead after the dot product,
+        # so square in place.
         offset_x.value *= offset_x
         offset_y.value *= offset_y
         offset_z.value *= offset_z
@@ -191,6 +196,8 @@ def create_raycast(
         perp2.value += offset_z
         t1.value = ray_dist
         t1.value *= t1
+        t1.value *= DIRECTION_SCALE
+        t1.value /= dir2
         perp2.value -= t1
 
         # Hit test: close enough to the ray AND in front of the caster.
@@ -265,6 +272,12 @@ def create_raycast(
             assign_to_x=look_x,
             assign_to_y=look_y,
             assign_to_z=look_z,
+        )
+
+        emit_direction_squared(
+            dir2,
+            TemporaryStat().as_double(),
+            (look_x, look_y, look_z),
         )
 
         # Ray origin at the caster's eyes.

@@ -7,7 +7,11 @@ from pyhtsw.checkable import Checkable
 from pyhtsw.declarations.function import Function, function
 from pyhtsw.declarations.item import Item
 from pyhtsw.expression.condition.condition import Condition
-from pyhtsw.ext.look_vector import approximate_look_vector
+from pyhtsw.ext.look_vector import (
+    DIRECTION_SCALE,
+    approximate_look_vector,
+    emit_direction_squared,
+)
 from pyhtsw.placeholders.player import PlayerPositionX, PlayerPositionY, PlayerPositionZ
 from pyhtsw.stats.player_stat import PlayerStat
 from pyhtsw.stats.temporary_stat import TemporaryStat
@@ -231,7 +235,9 @@ def create_position_raycast(
     origin / direction:
         `(x, y, z)` triples. Default to the caster's eyes (`eye_height` above
         their feet) and their look vector, which makes the helper serve a
-        projectile just as well as a look ray.
+        projectile just as well as a look ray. Hit tests hold for any
+        `direction`, but `distance` and `max_distance` are measured in units of
+        its length, so pass a unit vector for them to be in blocks.
     max_distance:
         Targets past this are ignored (None = no cap). This is the same
         comparison that tracks the closest hit, so it is free.
@@ -370,6 +376,17 @@ def create_position_raycast(
                     stat.value *= half
                     extent_stats[axis, half] = stat
 
+        # The projection identity below needs |direction|^2, and the look
+        # vector is only unit-length to the placeholder's three decimals.
+        direction_squared: TemporaryStat | None = None
+        if sphere_indexes:
+            direction_squared = TemporaryStat().as_double()
+            emit_direction_squared(
+                direction_squared,
+                TemporaryStat().as_double(),
+                look,
+            )
+
         projections: list[dict[tuple[object, ...], TemporaryStat]] = [{}, {}, {}]
         squares: list[dict[tuple[object, ...], TemporaryStat]] = [{}, {}, {}]
         lows: dict[tuple[int, tuple[object, ...], float], TemporaryStat] = {}
@@ -471,9 +488,13 @@ def create_position_raycast(
             checks: list[Condition]
             if isinstance(target.shape, Sphere):
                 emit_sum(radial, squares, square_pair, square_pairs, keys)
-                # |offset|^2 - along^2 <= r^2, rearranged to avoid a subtraction.
+                assert direction_squared is not None
+                # |offset|^2 - along^2/|dir|^2 <= r^2, rearranged to avoid a
+                # subtraction.
                 limit.value = along
                 limit.value *= along
+                limit.value *= DIRECTION_SCALE
+                limit.value /= direction_squared
                 limit.value += target.shape.radius * target.shape.radius
                 checks = [radial <= limit]
             else:

@@ -1,3 +1,5 @@
+import math
+
 from pyhtsw import (
     ExecutionContext,
     ExecutionPlayer,
@@ -350,3 +352,37 @@ with ExecutionContext(players=['caster']):
 assert rc.function.__htsw_importable__.icon == Item('bow'), (
     rc.function.__htsw_importable__.icon
 )
+
+
+# === Oblique angles at long range, as in test_position_raycast: perp2 divides
+# the squared projection by |look|², so a dead-centre target registers at every
+# yaw rather than only where sin is exact. ===
+for _yaw, _pitch in (
+    (0.0, 0.0),
+    (20.0, 0.0),
+    (37.0, 0.0),
+    (45.0, 30.0),
+    (90.0, 0.0),
+    (-125.0, -20.0),
+):
+    for _distance in (3.0, 8.0, 12.0, 20.0, 40.0, 60.0):
+        _yr, _pr = math.radians(_yaw), math.radians(_pitch)
+        _direction = (
+            -math.sin(_yr) * math.cos(_pr),
+            -math.sin(_pr),
+            math.cos(_yr) * math.cos(_pr),
+        )
+        _caster = ExecutionPlayer('caster')
+        _target = ExecutionPlayer('target')
+        with ExecutionContext(players=[_caster, _target]) as ctx:
+            ctx.current_player = _caster
+            place(_caster, 0.0, 0.0, 0.0, yaw=_yaw, pitch=_pitch)
+            place(
+                _target,
+                _direction[0] * _distance,
+                _direction[1] * _distance + 1.62 - TORSO_TO_EYE,
+                _direction[2] * _distance,
+            )
+            rc = create_raycast('Oblique', max_distance=None)
+            rc.trigger()
+        assert registered_hits(ctx) == 1, (_yaw, _pitch, _distance)

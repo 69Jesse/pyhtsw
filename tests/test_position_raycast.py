@@ -1,3 +1,5 @@
+import math
+
 from pyhtsw import (
     Container,
     ExecutionContext,
@@ -325,3 +327,59 @@ with Container():
 assert ray.function.__htsw_importable__.icon == Item('bow'), (
     ray.function.__htsw_importable__.icon
 )
+
+
+# === Oblique angles at long range. The projection identity needs |direction|²,
+# and the look vector is only unit-length to three decimals; before that was
+# divided out, a radius-1 sphere stopped registering past ~7 blocks at every
+# yaw where sin is not exact. Aim dead centre and demand a hit at both shapes
+# out to the default 64-block cap. ===
+_ANGLES = (
+    (0.0, 0.0),
+    (80.0, 25.0),
+    (-100.0, -25.0),
+    (37.0, 0.0),
+    (90.0, 0.0),
+    (-125.0, 0.0),
+    (37.0, 25.0),
+    (0.0, -40.0),
+    (45.0, 45.0),
+    (13.0, -7.0),
+)
+
+for _shape, _label in ((Sphere(1.0), 'Sphere(1.0)'), (Box(2.0), 'Box(2.0)')):
+    for _yaw, _pitch in _ANGLES:
+        for _distance in (5.0, 10.0, 20.0, 40.0, 64.0):
+            _yr, _pr = math.radians(_yaw), math.radians(_pitch)
+            _direction = (
+                -math.sin(_yr) * math.cos(_pr),
+                -math.sin(_pr),
+                math.cos(_yr) * math.cos(_pr),
+            )
+            _centre = tuple(
+                (0.5, 1.62, 0.5)[_k] + _direction[_k] * _distance for _k in range(3)
+            )
+            with ExecutionContext() as ctx:
+                stand(ctx, yaw=_yaw, pitch=_pitch)
+                ray = create_position_raycast(
+                    'Oblique',
+                    [RayTarget(*_centre)],
+                    shape=_shape,
+                    max_distance=None,
+                )
+                ray.trigger()
+            assert int(ctx.get_raw(ray.index)) == 0, (
+                _label,
+                _yaw,
+                _pitch,
+                _distance,
+                ctx.get_raw(ray.index),
+            )
+            _got = float(ctx.get_raw(ray.distance))
+            assert abs(_got - _distance) < 0.1, (
+                _label,
+                _yaw,
+                _pitch,
+                _distance,
+                _got,
+            )

@@ -8,7 +8,7 @@ __all__ = ('NamedCondition',)
 
 class NamedCondition(Condition):
     name: str
-    # Subclasses (PlayerSneaking, ...) hardcode their name with a no-arg
+    # Subclasses (IsSneakingCondition, ...) hardcode their name with a no-arg
     # __init__, so it has to survive as an extra rather than a field.
     __clone_extra__: ClassVar[tuple[str, ...]] = ('name',)
 

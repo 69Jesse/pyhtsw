@@ -240,27 +240,19 @@ from pyhtsw.conditions.inventory import HasItem as HasItem
 from pyhtsw.conditions.inventory import IsItem as IsItem
 from pyhtsw.conditions.player import CanPVP as CanPVP
 from pyhtsw.conditions.player import CanPVPCondition as CanPVPCondition
-from pyhtsw.conditions.player import DoingParkour as DoingParkour
-from pyhtsw.conditions.player import DoingParkourCondition as DoingParkourCondition
+from pyhtsw.conditions.player import HasGroup as HasGroup
 from pyhtsw.conditions.player import HasPermission as HasPermission
 from pyhtsw.conditions.player import HasPotionEffect as HasPotionEffect
+from pyhtsw.conditions.player import HasTeam as HasTeam
 from pyhtsw.conditions.player import IsDoingParkour as IsDoingParkour
 from pyhtsw.conditions.player import (
     IsDoingParkourCondition as IsDoingParkourCondition,
 )
 from pyhtsw.conditions.player import IsFlying as IsFlying
 from pyhtsw.conditions.player import IsFlyingCondition as IsFlyingCondition
+from pyhtsw.conditions.player import IsGamemode as IsGamemode
 from pyhtsw.conditions.player import IsSneaking as IsSneaking
 from pyhtsw.conditions.player import IsSneakingCondition as IsSneakingCondition
-from pyhtsw.conditions.player import PlayerFlying as PlayerFlying
-from pyhtsw.conditions.player import PlayerFlyingCondition as PlayerFlyingCondition
-from pyhtsw.conditions.player import PlayerSneaking as PlayerSneaking
-from pyhtsw.conditions.player import (
-    PlayerSneakingCondition as PlayerSneakingCondition,
-)
-from pyhtsw.conditions.player import RequiredGamemode as RequiredGamemode
-from pyhtsw.conditions.player import RequiredGroup as RequiredGroup
-from pyhtsw.conditions.player import RequiredTeam as RequiredTeam
 from pyhtsw.conditions.player import WithinRegion as WithinRegion
 from pyhtsw.config import cleanup_stale_files as cleanup_stale_files
 from pyhtsw.config import disable_global_export as disable_global_export

@@ -1,29 +1,29 @@
 from pyhtsw import (
     Container,
+    HasGroup,
+    HasTeam,
     IfAll,
-    PlayerSneaking,
+    IsSneaking,
     PlayerStat,
-    RequiredGroup,
-    RequiredTeam,
     WithinRegion,
     chat,
 )
 
 # Inverting a named condition does not mutate the original singleton.
-assert PlayerSneaking.inverted is False
-inverted = ~PlayerSneaking
+assert IsSneaking.inverted is False
+inverted = ~IsSneaking
 assert inverted.inverted is True
-assert PlayerSneaking.inverted is False  # original untouched
-assert inverted is not PlayerSneaking
+assert IsSneaking.inverted is False  # original untouched
+assert inverted is not IsSneaking
 
 # Double invert round-trips to a non-inverted clone.
-assert (~~PlayerSneaking).inverted is False
+assert (~~IsSneaking).inverted is False
 
 # The original and its inversion render distinctly in the same program.
 with Container() as container:
-    with IfAll(PlayerSneaking):
+    with IfAll(IsSneaking):
         chat('sneaking')
-    with IfAll(~PlayerSneaking):
+    with IfAll(~IsSneaking):
         chat('not sneaking')
 
 assert container.into_htsl() == (
@@ -33,7 +33,7 @@ assert container.into_htsl() == (
 
 # After all of the above, the singleton is still usable as non-inverted.
 with Container() as container:
-    with IfAll(PlayerSneaking):
+    with IfAll(IsSneaking):
         chat('still works')
 
 assert container.into_htsl() == ('if and (isSneaking) {\n    chat "still works"\n}'), (
@@ -54,8 +54,8 @@ assert neg is not cond
 # Conditions backed by plain value objects (Group / Team / Region) clone too —
 # their cloned_raw must not assume the value object implements `cloned()`.
 for condition in (
-    RequiredGroup('Helper'),
-    RequiredTeam('red'),
+    HasGroup('Helper'),
+    HasTeam('red'),
     WithinRegion('spawn'),
 ):
     assert condition.inverted is False
@@ -69,7 +69,7 @@ for condition in (
 
 # They render with the inversion marker in real HTSL.
 with Container() as container:
-    with IfAll(~RequiredGroup('Helper', include_higher_groups=True)):
+    with IfAll(~HasGroup('Helper', include_higher_groups=True)):
         chat('not helper+')
 
 assert container.into_htsl() == (

@@ -13,21 +13,15 @@ from pyhtsw.types import ALL_GAMEMODES, ALL_PERMISSIONS, ALL_POTION_EFFECTS
 __all__ = (
     'IsFlyingCondition',
     'IsFlying',
-    'PlayerFlyingCondition',
-    'PlayerFlying',
     'IsSneakingCondition',
     'IsSneaking',
-    'PlayerSneakingCondition',
-    'PlayerSneaking',
     'IsDoingParkourCondition',
     'IsDoingParkour',
-    'DoingParkourCondition',
-    'DoingParkour',
     'CanPVPCondition',
     'CanPVP',
-    'RequiredGamemode',
-    'RequiredGroup',
-    'RequiredTeam',
+    'IsGamemode',
+    'HasGroup',
+    'HasTeam',
     'HasPermission',
     'WithinRegion',
     'HasPotionEffect',
@@ -48,19 +42,6 @@ class IsFlyingCondition(NamedCondition):
 IsFlying = IsFlyingCondition()
 
 
-class PlayerFlyingCondition(NamedCondition):
-    htsw_meta = ConditionMeta(
-        htsw_name='IS_FLYING',
-        reads=frozenset((Resource.GAMEMODE,)),
-    )
-
-    def __init__(self) -> None:
-        super().__init__('isFlying')
-
-
-PlayerFlying = PlayerFlyingCondition()
-
-
 class IsSneakingCondition(NamedCondition):
     htsw_meta = ConditionMeta(
         htsw_name='IS_SNEAKING',
@@ -75,19 +56,6 @@ class IsSneakingCondition(NamedCondition):
 IsSneaking = IsSneakingCondition()
 
 
-class PlayerSneakingCondition(NamedCondition):
-    htsw_meta = ConditionMeta(
-        htsw_name='IS_SNEAKING',
-        reads=frozenset(()),
-    )
-
-    def __init__(self) -> None:
-        super().__init__('isSneaking')
-
-
-PlayerSneaking = PlayerSneakingCondition()
-
-
 class IsDoingParkourCondition(NamedCondition):
     htsw_meta = ConditionMeta(
         htsw_name='IS_DOING_PARKOUR',
@@ -100,20 +68,6 @@ class IsDoingParkourCondition(NamedCondition):
 
 
 IsDoingParkour = IsDoingParkourCondition()
-
-
-class DoingParkourCondition(NamedCondition):
-    htsw_meta = ConditionMeta(
-        htsw_name='IS_DOING_PARKOUR',
-        limit=1,
-        reads=frozenset((Resource.PARKOUR,)),
-    )
-
-    def __init__(self) -> None:
-        super().__init__('doingParkour')
-
-
-DoingParkour = DoingParkourCondition()
 
 
 class CanPVPCondition(NamedCondition):
@@ -133,7 +87,7 @@ CanPVP = CanPVPCondition()
 
 
 @final
-class RequiredGamemode(Condition):
+class IsGamemode(Condition):
     htsw_meta = ConditionMeta(
         htsw_name='REQUIRE_GAMEMODE',
         limit=20,
@@ -167,7 +121,7 @@ class RequiredGamemode(Condition):
 
 
 @final
-class RequiredGroup(Condition):
+class HasGroup(Condition):
     htsw_meta = ConditionMeta(
         htsw_name='REQUIRE_GROUP',
         limit=20,
@@ -206,7 +160,7 @@ class RequiredGroup(Condition):
 
 
 @final
-class RequiredTeam(Condition):
+class HasTeam(Condition):
     htsw_meta = ConditionMeta(
         htsw_name='REQUIRE_TEAM',
         limit=20,

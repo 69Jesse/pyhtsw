@@ -81,7 +81,7 @@ def create_group(
     default_gamemode: ALL_DEFAULT_GAMEMODES | None = None,
 ) -> Group:
     """Declare a group importable and return the `Group` that
-    `change_player_group` and `RequiredGroup` already take."""
+    `change_player_group` and `HasGroup` already take."""
     group = Group(name)
     group.__htsw_importable__ = register_importable(
         GroupImportable(

@@ -190,6 +190,7 @@ class DropItemExpression(Expression):
     ) -> None:
         self.item = item
         self.location = ensure_location(location)
+        self.coordinates = self.location.render()[1]
         self.drop_naturally = drop_naturally
         self.disable_item_merging = disable_item_merging
         self.prioritize_player = prioritize_player
@@ -199,12 +200,10 @@ class DropItemExpression(Expression):
 
     def into_htsl(self) -> str:
         name = item_action_reference(self.item)
-        keyword, coordinates = self.location.render()
-        if coordinates is None:
-            coordinates = '~ ~ ~'
+        coordinates = self.coordinates if self.coordinates is not None else '~ ~ ~'
         return (
             f'dropItem {self.inline_quoted(name)}'
-            f' {self.inline_quoted(keyword)} {self.inline_quoted(coordinates)}'
+            f' {self.inline_quoted(type(self.location).keyword)} {self.inline_quoted(coordinates)}'
             f' {self.inline(self.drop_naturally)} {self.inline(self.disable_item_merging)}'
             f' {self.inline(self.prioritize_player)} {self.inline(self.fallback_to_inventory)}'
             f' {self.inline(self.despawn_duration_ticks)} {self.inline(self.pickup_delay_ticks)}'

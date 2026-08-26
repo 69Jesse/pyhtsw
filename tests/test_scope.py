@@ -91,7 +91,7 @@ with expect_exception(ScopeError):
         @event('player_join')
         def _lobby_in_event() -> None:
             with IfAll(flag == 1):
-                send_to_lobby('Housing')
+                send_to_lobby('housing')
 
 
 with expect_exception(ScopeError):

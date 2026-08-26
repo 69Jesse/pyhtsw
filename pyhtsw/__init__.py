@@ -74,7 +74,6 @@ from pyhtsw.actions.inventory import (
 from pyhtsw.actions.inventory import (
     GiveItemExpression as GiveItemExpression,
 )
-from pyhtsw.actions.inventory import Layout as Layout
 from pyhtsw.actions.inventory import (
     RemoveItemExpression as RemoveItemExpression,
 )

@@ -42,9 +42,9 @@ with Container() as helper_container:
 
 for name, guard, event_name in (
     ('exit', exit_function, None),
-    ('lobby', lambda: send_to_lobby('Housing'), None),
+    ('lobby', lambda: send_to_lobby('housing'), None),
     ('cancel', cancel_event, 'player_damage'),
-    ('pause', lambda: pause_execution(1), None),
+    ('pause', lambda: pause_execution(ticks=1), None),
     ('trigger', lambda: trigger_function(helper), None),
 ):
     htsl = emit(guard, event_name)

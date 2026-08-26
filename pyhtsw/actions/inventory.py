@@ -18,7 +18,6 @@ from pyhtsw.generated.enums import EnchantmentName
 from pyhtsw.location import Location, ensure_location
 
 __all__ = (
-    'Layout',
     'GiveItemExpression',
     'give_item',
     'RemoveItemExpression',
@@ -34,18 +33,6 @@ __all__ = (
     'ResetInventoryExpression',
     'reset_inventory',
 )
-
-
-class Layout:
-    name: str
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Layout):
-            return NotImplemented
-        return self.name == other.name
 
 
 @final
@@ -110,6 +97,7 @@ class GiveItemExpression(Expression):
 
 def give_item(
     item: Item,
+    *,
     allow_multiple: bool = False,
     inventory_slot: InventorySlot = 'first_slot',
     replace_existing_item: bool = False,
@@ -345,18 +333,18 @@ class ApplyInventoryLayoutExpression(Expression):
         forbidden_events=('player_quit',),
     )
 
-    layout: Layout
+    layout: str
 
-    def __init__(self, layout: Layout) -> None:
+    def __init__(self, layout: str) -> None:
         self.layout = layout
 
     def into_htsl(self) -> str:
-        return f'applyLayout {self.inline_quoted(self.layout.name)}'
+        return f'applyLayout {self.inline_quoted(self.layout)}'
 
     def cloned(
         self,
         *,
-        layout: Layout | Missing = MISSING,
+        layout: str | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -366,8 +354,7 @@ class ApplyInventoryLayoutExpression(Expression):
         )
 
 
-def apply_inventory_layout(layout: Layout | str) -> None:
-    layout = layout if isinstance(layout, Layout) else Layout(layout)
+def apply_inventory_layout(layout: str) -> None:
     ApplyInventoryLayoutExpression(layout=layout).write()
 
 

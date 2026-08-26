@@ -65,7 +65,8 @@ class ChatExpression(Expression):
         )
 
 
-def chat(line: str) -> None:
+def chat(line: Checkable | str) -> None:
+    line = str(line) if isinstance(line, Checkable) else line
     ChatExpression(line=line).write()
 
 
@@ -145,6 +146,7 @@ class DisplayTitleExpression(Expression):
 def display_title(
     title: Checkable | str | None = None,
     subtitle: Checkable | str | None = None,
+    *,
     fadein: int = 1,
     stay: int = 5,
     fadeout: int = 1,

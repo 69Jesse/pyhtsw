@@ -68,7 +68,7 @@ assert conditionals(htsl_of(flips_its_own_check)) == 2, htsl_of(flips_its_own_ch
 # reach, including whether it still holds.
 def barrier_body() -> None:
     with IfAll(x > 5):
-        pause_execution(1)
+        pause_execution(ticks=1)
     with IfAll(x > 5):
         z.value += 1
 

@@ -15,7 +15,7 @@ from pyhtsw.stats.temporary_stat import TemporaryStat
 with Container() as container:
     x = PlayerStat('x').as_long()
     x.value = 1
-    pause_execution(1)
+    pause_execution(ticks=1)
     trigger_function('hello')
     x.value = 2
 
@@ -27,7 +27,7 @@ assert container.into_htsl() == expected, container.into_htsl()
 with Container() as container:
     x = PlayerStat('x').as_long()
     x.value = 1
-    pause_execution(1)
+    pause_execution(ticks=1)
     x.value = 2
 
 expected = 'var "x" = 1 true\npause 1\nvar "x" = 2 true'
@@ -50,7 +50,7 @@ with Container() as container:
     x = PlayerStat('x').as_long()
     x.value = 1
     with Random:
-        pause_execution(1)
+        pause_execution(ticks=1)
     x.value = 2
 
 expected = 'var "x" = 1 true\nrandom {\n    pause 1\n}\nvar "x" = 2 true'
@@ -91,7 +91,7 @@ with Container() as container:
     x = PlayerStat('x').as_long()
     x.value = 1
     x.value = 2
-    pause_execution(1)
+    pause_execution(ticks=1)
 
 assert container.into_htsl() == 'var "x" = 2 true\npause 1', container.into_htsl()
 
@@ -102,7 +102,7 @@ assert container.into_htsl() == 'var "x" = 2 true\npause 1', container.into_htsl
 with Container() as container:
     x = PlayerStat('x').as_long()
     x.value = 1
-    pause_execution(1)
+    pause_execution(ticks=1)
     x += 5
     x.value = 2
 
@@ -116,7 +116,7 @@ with Container() as container:
     x = PlayerStat('x').as_long()
     y = PlayerStat('y').as_long()
     x.value = 0
-    pause_execution(1)
+    pause_execution(ticks=1)
     x += y
 
 expected = 'var "x" = 0 true\npause 1\nvar "x" += "%var.player/y 0%L" true'

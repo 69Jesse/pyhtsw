@@ -9,7 +9,7 @@ from pyhtsw.declarations.group import Group
 from pyhtsw.declarations.team import Team
 from pyhtsw.expression.expression import Expression
 from pyhtsw.expression.housing_type import NumericHousingType
-from pyhtsw.generated.enums import Gamemode, PotionEffect
+from pyhtsw.generated.enums import Gamemode, Lobby, PotionEffect
 from pyhtsw.location import Location, ensure_location
 
 __all__ = (
@@ -263,6 +263,7 @@ class ApplyPotionEffectExpression(Expression):
 def apply_potion_effect(
     potion: PotionEffect,
     duration: int = 60,
+    *,
     level: int = 1,
     override_existing_effects: bool = False,
     show_potion_icon: bool = False,
@@ -582,7 +583,11 @@ class ChangePlayerGroupExpression(Expression):
         )
 
 
-def change_player_group(group: 'Group | str', demotion_protection: bool = True) -> None:
+def change_player_group(
+    group: 'Group | str',
+    *,
+    demotion_protection: bool = True,
+) -> None:
     ChangePlayerGroupExpression(
         group=group,
         demotion_protection=demotion_protection,
@@ -644,7 +649,8 @@ class FailParkourExpression(Expression):
         )
 
 
-def fail_parkour(reason: str = 'Failed!') -> None:
+def fail_parkour(reason: Checkable | str = 'Failed!') -> None:
+    reason = str(reason) if isinstance(reason, Checkable) else reason
     FailParkourExpression(reason=reason).write()
 
 
@@ -658,9 +664,9 @@ class SendToLobbyExpression(Expression):
         forbidden_in_events=True,
     )
 
-    lobby: str
+    lobby: Lobby
 
-    def __init__(self, lobby: str) -> None:
+    def __init__(self, lobby: Lobby) -> None:
         self.lobby = lobby
 
     def into_htsl(self) -> str:
@@ -669,7 +675,7 @@ class SendToLobbyExpression(Expression):
     def cloned(
         self,
         *,
-        lobby: str | Missing = MISSING,
+        lobby: Lobby | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -679,5 +685,5 @@ class SendToLobbyExpression(Expression):
         )
 
 
-def send_to_lobby(lobby: str) -> None:
+def send_to_lobby(lobby: Lobby) -> None:
     SendToLobbyExpression(lobby=lobby).write()

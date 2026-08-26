@@ -6,7 +6,7 @@ from pyhtsw.placeholders.player import PlayerPositionPitch, PlayerPositionYaw
 
 disable_global_export()
 
-TOLERANCE = 0.03
+TOLERANCE = 0.002
 
 
 def assert_look_close(yaw: float, pitch: float) -> None:

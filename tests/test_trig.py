@@ -38,14 +38,14 @@ for _ in range(24):
     angle = random.uniform(-720.0, 720.0)
     got_sin = run_one(lambda s, o: approximate_sin(s['a'], assign_to=o), {'a': angle})
     got_cos = run_one(lambda s, o: approximate_cos(s['a'], assign_to=o), {'a': angle})
-    assert abs(got_sin - math.sin(math.radians(angle))) < 0.01, (angle, got_sin)
-    assert abs(got_cos - math.cos(math.radians(angle))) < 0.01, (angle, got_cos)
+    assert abs(got_sin - math.sin(math.radians(angle))) < 0.001, (angle, got_sin)
+    assert abs(got_cos - math.cos(math.radians(angle))) < 0.001, (angle, got_cos)
 
 for angle in (0.0, 90.0, -90.0, 180.0, 270.0, 360.0, -540.0):
     got_sin = run_one(lambda s, o: approximate_sin(s['a'], assign_to=o), {'a': angle})
     got_cos = run_one(lambda s, o: approximate_cos(s['a'], assign_to=o), {'a': angle})
-    assert abs(got_sin - math.sin(math.radians(angle))) < 0.01, (angle, got_sin)
-    assert abs(got_cos - math.cos(math.radians(angle))) < 0.01, (angle, got_cos)
+    assert abs(got_sin - math.sin(math.radians(angle))) < 0.001, (angle, got_sin)
+    assert abs(got_cos - math.cos(math.radians(angle))) < 0.001, (angle, got_cos)
 
 
 for angle in (-89.0, -60.0, -30.0, 0.0, 10.0, 45.0, 75.0, 89.0, 120.0, 200.0, -400.0):
@@ -165,11 +165,11 @@ def counts_of(build) -> tuple[int, int]:
     return (conditionals, actions - 25)
 
 
-assert counts_of(lambda s, o: approximate_sin(s['a'], assign_to=o)) == (1, 24)
-assert counts_of(lambda s, o: approximate_cos(s['a'], assign_to=o)) == (1, 24)
+assert counts_of(lambda s, o: approximate_sin(s['a'], assign_to=o)) == (2, 26)
+assert counts_of(lambda s, o: approximate_cos(s['a'], assign_to=o)) == (2, 26)
 assert counts_of(
     lambda s, o: approximate_sin(s['a'], assign_to=o, certain_x_in_range=90),
-) == (1, 8)
+) == (1, 10)
 assert counts_of(lambda s, o: approximate_tan(s['a'], assign_to=o)) == (1, 21)
 assert counts_of(lambda s, o: approximate_exp(s['x'], assign_to=o)) == (1, 20)
 assert counts_of(lambda s, o: approximate_atan2(s['y'], s['x'], assign_to=o)) == (3, 55)

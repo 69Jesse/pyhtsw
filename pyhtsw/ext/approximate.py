@@ -204,6 +204,21 @@ def _reduce_angle(
     return fold_sign
 
 
+# Minimax fits over the reduced [-90, 90) range, in degrees.
+# sin(x) = x * (A + B*x^2 + C*x^4) / _SIN_SCALE; the scale keeps every
+# intermediate far from the placeholder's three decimals.
+_SIN_SCALE = 1_000_000_000.0
+_SIN_A = 17448000.213290326
+_SIN_B = -880.8136722798321
+_SIN_C = 0.012169698773723734
+
+# cos(x) = (A + B*x^2 + C*x^4) / (D + x^2)
+_COS_A = 91025.95572311213
+_COS_B = -12.866201646667765
+_COS_C = 0.00020104974466956767
+_COS_D = 91025.40830303791
+
+
 @overload
 def approximate_sin_cos(
     x: Checkable,
@@ -263,29 +278,27 @@ def approximate_sin_cos(
         reduce=certain_x_in_range != 90,
     )
 
+    temp1 = _double(0)
+
     assign_to_sin.value = x_or_temp1
     x_or_temp1.value *= x_or_temp1
-    temp0.value = 32400.0
-    temp0.value += x_or_temp1
-    if cos_sign == 1:
-        assign_to_cos.value = 32400.0
-    else:
-        assign_to_cos.value = -32400.0
-    x_or_temp1.value *= 4.0
-    if cos_sign == 1:
-        assign_to_cos.value -= x_or_temp1
-    else:
-        assign_to_cos.value += x_or_temp1
-    assign_to_cos.value /= temp0.value
-    x_or_temp1.value *= assign_to_sin
-    x_or_temp1.value /= 5508000.0
 
-    if sin_sign == 1:
-        assign_to_sin.value *= 0.017
-        assign_to_sin.value -= x_or_temp1
-    else:
-        assign_to_sin.value *= -0.017
-        assign_to_sin.value += x_or_temp1
+    temp0.value = _COS_D
+    temp0.value += x_or_temp1
+    assign_to_cos.value = x_or_temp1
+    assign_to_cos.value *= _COS_C * cos_sign
+    assign_to_cos.value += _COS_B * cos_sign
+    assign_to_cos.value *= x_or_temp1
+    assign_to_cos.value += _COS_A * cos_sign
+    assign_to_cos.value /= temp0
+
+    temp1.value = x_or_temp1
+    temp1.value *= _SIN_C * sin_sign
+    temp1.value += _SIN_B * sin_sign
+    temp1.value *= x_or_temp1
+    temp1.value += _SIN_A * sin_sign
+    assign_to_sin.value *= temp1
+    assign_to_sin.value /= _SIN_SCALE
 
     if fold_sign is not None:
         assign_to_sin.value *= fold_sign
@@ -300,22 +313,21 @@ def approximate_sin(
     certain_x_in_range: Literal[90, 180] | None = None,
     sign: Literal[1, -1] = 1,
 ) -> None:
-    """sin(x degrees) alone: 7 actions past the shared range reduction."""
+    """sin(x degrees) alone: 9 actions past the shared range reduction."""
     x = x.as_double()
     r = _reduction_input(x, can_modify_x)
     fold_sign = _reduce_angle(x, r, reduce=certain_x_in_range != 90)
 
+    temp0 = _double(0)
     assign_to.value = r
     r.value *= r
-    r.value *= 4.0
-    r.value *= assign_to
-    r.value /= 5508000.0
-    if sign == 1:
-        assign_to.value *= 0.017
-        assign_to.value -= r
-    else:
-        assign_to.value *= -0.017
-        assign_to.value += r
+    temp0.value = r
+    temp0.value *= _SIN_C * sign
+    temp0.value += _SIN_B * sign
+    temp0.value *= r
+    temp0.value += _SIN_A * sign
+    assign_to.value *= temp0
+    assign_to.value /= _SIN_SCALE
     if fold_sign is not None:
         assign_to.value *= fold_sign
 
@@ -328,21 +340,20 @@ def approximate_cos(
     certain_x_in_range: Literal[90, 180] | None = None,
     sign: Literal[1, -1] = 1,
 ) -> None:
-    """cos(x degrees) alone: 7 actions past the shared range reduction."""
+    """cos(x degrees) alone: 9 actions past the shared range reduction."""
     x = x.as_double()
     r = _reduction_input(x, can_modify_x)
     fold_sign = _reduce_angle(x, r, reduce=certain_x_in_range != 90)
 
     temp0 = _double(3)
     r.value *= r
-    temp0.value = 32400.0
+    temp0.value = _COS_D
     temp0.value += r
-    assign_to.value = 32400.0 if sign == 1 else -32400.0
-    r.value *= 4.0
-    if sign == 1:
-        assign_to.value -= r
-    else:
-        assign_to.value += r
+    assign_to.value = r
+    assign_to.value *= _COS_C * sign
+    assign_to.value += _COS_B * sign
+    assign_to.value *= r
+    assign_to.value += _COS_A * sign
     assign_to.value /= temp0
     if fold_sign is not None:
         assign_to.value *= fold_sign
@@ -358,7 +369,7 @@ def approximate_tan(
     """tan(x degrees) as one direct rational whose denominator carries the
     +-90 poles (coefficients by VariousCacti; max relative error ~6e-4).
     tan has period 180, so the fold needs no parity sign - 21 actions, no
-    conditionals, against 33 for the sin/cos ratio. At exactly +-90 the
+    conditionals, against 36 for the sin/cos ratio. At exactly +-90 the
     denominator is 0 and the division no-ops, leaving a bounded value.
     """
     x = x.as_double()

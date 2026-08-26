@@ -416,6 +416,7 @@ from .location import InvokersLocation as InvokersLocation
 from .location import Location as Location
 from .misc.skull_data import SKULL_DATA as SKULL_DATA
 from .misc.skull_data import SkullData as SkullData
+from .scope import ScopeError as ScopeError
 from .stats.global_stat import GlobalStat as GlobalStat
 from .stats.player_stat import PlayerStat as PlayerStat
 from .stats.stat import Stat as Stat

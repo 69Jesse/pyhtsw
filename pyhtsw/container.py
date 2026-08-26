@@ -98,12 +98,14 @@ class Container:
 
     is_finalized: bool
     ignore_action_limits: bool
+    ignore_scope: bool
     allow_nested_expressions: bool
 
     def __init__(
         self,
         *,
         ignore_action_limits: bool = False,
+        ignore_scope: bool = False,
         allow_nested_expressions: bool = False,
     ) -> None:
         from .block import GlobalBlock
@@ -122,6 +124,7 @@ class Container:
         self.is_finalized = False
         self.allow_nested_expressions = allow_nested_expressions
         self.ignore_action_limits = ignore_action_limits
+        self.ignore_scope = ignore_scope
 
     def has_importable(self, kind: str, name: str) -> bool:
         return (kind, name) in self.importable_keys
@@ -162,6 +165,13 @@ class Container:
             'or shorten the list. Pass ignore_action_limits=True to the Container '
             'to skip this check.',
         )
+
+    def _raise_scope_violations(self) -> None:
+        from .scope import check_scopes, raise_scope_violations
+
+        if self.ignore_scope:
+            return
+        raise_scope_violations(check_scopes(self.blocks, self.importables))
 
     def register_importable(self, importable: 'Importable') -> None:
         key = (importable.kind, importable.identifier())
@@ -314,7 +324,7 @@ class Container:
 
             ids: dict[int, None] = {}
             # Computed expressions passed directly as a field (e.g. an action
-            # argument) only become a sentinel when into_htsl stringifies them —
+            # argument) only become a sentinel when into_htsl stringifies them â€”
             # register them now so they share this statement's materialize batch.
             # BinaryExpression/CompoundExpression handle their own operands via
             # the flatten path, so we never materialize their fields here.
@@ -535,6 +545,7 @@ class Container:
         for index, block in enumerate(self.blocks):
             block.finalize(self, index)
         self._raise_action_limit_violations()
+        self._raise_scope_violations()
         # Last: overflow functions carved out above own expressions too, and
         # every item has to be named before anything renders one.
         self.item_plan = plan_items(self.blocks, self.importables)

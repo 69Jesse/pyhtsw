@@ -19,7 +19,9 @@ fill = [PlayerStat(f'g{i}').as_long() for i in range(25)]
 
 
 def htsl_of(body: Callable[[], None], name: str = 'flags') -> str:
-    with Container() as container:
+    # Optimizer-only: one case puts `exit` at the top level of a block, which
+    # htsw scopes to conditionals, so the scope pass has to stay out of the way.
+    with Container(ignore_scope=True) as container:
         create_function(name)(body)
     return next(
         block.into_htsl() for block in container.blocks if block.get_name() == name

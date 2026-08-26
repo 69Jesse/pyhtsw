@@ -9,5 +9,6 @@
 - [Locations](./locations.md)
 - [Expressions](./expressions.md)
 - [Scoreboards](./scoreboards.md)
+- [Scope](./scope.md)
 - [Optimizer](./optimizer.md)
 - [Simulator](./simulator.md)

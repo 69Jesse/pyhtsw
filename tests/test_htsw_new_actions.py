@@ -56,7 +56,9 @@ with Container():
 assert raised, 'expected a TypeError for a stat playerTime'
 
 
-with Container() as conditions:
+# Rendering-only: PortalType and DamageAmount are each scoped to a different
+# event, so no real container could hold both.
+with Container(ignore_scope=True) as conditions:
     with IfAll(
         HasPermission('Fly'),
         HasPermission('Item: Mailbox'),

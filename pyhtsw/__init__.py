@@ -195,6 +195,7 @@ from .actions.no_fallback_values import NoFallbackValues as NoFallbackValues
 from .actions.no_optimization import NoOptimization as NoOptimization
 from .actions.no_type_casting import NoTypeCasting as NoTypeCasting
 from .actions.npc import NPC as NPC
+from .actions.npc import create_npc as create_npc
 from .actions.parkour_checkpoint import (
     ParkourCheckpointExpression as ParkourCheckpointExpression,
 )

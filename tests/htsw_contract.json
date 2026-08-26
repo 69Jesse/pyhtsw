@@ -1,9 +1,13 @@
 {
-  "contractVersion": 1,
+  "contractVersion": 2,
   "topLevel": {
     "houseUuid": {
       "required": false,
       "kind": "string"
+    },
+    "dangerouslyDeleteEverythingNotInThisFile": {
+      "required": false,
+      "kind": "boolean"
     },
     "include": {
       "required": false,
@@ -57,6 +61,10 @@
         "kind": "ref",
         "ref": "htslPath"
       },
+      "description": {
+        "required": false,
+        "kind": "string"
+      },
       "repeatTicks": {
         "required": false,
         "kind": "number",
@@ -106,7 +114,7 @@
         "kind": "string"
       },
       "bounds": {
-        "required": false,
+        "required": true,
         "kind": "ref",
         "ref": "bounds"
       },
@@ -503,8 +511,4477 @@
       "Item: Leaderboard",
       "Item: Trash Can",
       "Item: Biome Stick"
+    ],
+    "gamemodes": [
+      "Adventure",
+      "Survival",
+      "Creative"
+    ],
+    "locations": [
+      "House Spawn Location",
+      "Invokers Location",
+      "Current Location",
+      "Custom Coordinates"
+    ],
+    "potionEffects": [
+      "Speed",
+      "Slowness",
+      "Haste",
+      "Mining Fatigue",
+      "Strength",
+      "Instant Health",
+      "Instant Damage",
+      "Jump Boost",
+      "Nausea",
+      "Regeneration",
+      "Resistance",
+      "Fire Resistance",
+      "Water Breathing",
+      "Invisibility",
+      "Blindness",
+      "Night Vision",
+      "Hunger",
+      "Weakness",
+      "Poison",
+      "Wither",
+      "Health Boost",
+      "Absorption"
+    ],
+    "lobbies": [
+      "Main Lobby",
+      "Tournament Hall",
+      "Blitz SG",
+      "The TNT Games",
+      "Mega Walls",
+      "Arcade Games",
+      "Cops and Crims",
+      "UHC Champions",
+      "Warlords",
+      "Smash Heroes",
+      "Housing",
+      "SkyWars",
+      "Speed UHC",
+      "Classic Games",
+      "Prototype",
+      "Bed Wars",
+      "Murder Mystery",
+      "Build Battle",
+      "Duels",
+      "Wool Games"
+    ],
+    "enchantments": [
+      "Protection",
+      "Fire Protection",
+      "Feather Falling",
+      "Blast Protection",
+      "Projectile Projection",
+      "Respiration",
+      "Aqua Affinity",
+      "Thorns",
+      "Depth Strider",
+      "Sharpness",
+      "Smite",
+      "Bane Of Arthropods",
+      "Knockback",
+      "Fire Aspect",
+      "Looting",
+      "Efficiency",
+      "Silk Touch",
+      "Unbreaking",
+      "Fortune",
+      "Power",
+      "Punch",
+      "Flame",
+      "Infinity",
+      "Luck Of The Sea",
+      "Lure"
+    ],
+    "damageCauses": [
+      "Entity Attack",
+      "Projectile",
+      "Suffocation",
+      "Fall",
+      "Lava",
+      "Fire",
+      "Fire Tick",
+      "Drowning",
+      "Starvation",
+      "Poison",
+      "Thorns"
+    ],
+    "fishingEnvironments": [
+      "Water",
+      "Lava"
+    ],
+    "portalTypes": [
+      "Nether Portal",
+      "End Portal"
+    ],
+    "inventorySlots": [
+      "First Available Slot",
+      "Hand Slot",
+      "Helmet",
+      "Chestplate",
+      "Leggings",
+      "Boots"
+    ],
+    "itemProperties": [
+      "Item Type",
+      "Metadata"
+    ],
+    "itemLocations": [
+      "Hand",
+      "Armor",
+      "Hotbar",
+      "Inventory",
+      "Cursor",
+      "Crafting Grid",
+      "Anywhere"
+    ],
+    "itemAmounts": [
+      "Any Amount",
+      "Equal or Greater Amount"
+    ],
+    "operations": [
+      "Set",
+      "Increment",
+      "Decrement",
+      "Multiply",
+      "Divide"
+    ],
+    "varOperations": [
+      "Unset",
+      "Bitwise AND",
+      "Bitwise OR",
+      "Bitwise XOR",
+      "Left Shift",
+      "Arithmetic Right Shift",
+      "Logical Right Shift"
+    ],
+    "comparisons": [
+      "Equal",
+      "Less Than",
+      "Less Than or Equal",
+      "Greater Than",
+      "Greater Than or Equal"
     ]
   },
+  "sounds": [
+    {
+      "name": "Ambience Cave",
+      "path": "ambient.cave.cave"
+    },
+    {
+      "name": "Ambience Rain",
+      "path": "ambient.weather.rain"
+    },
+    {
+      "name": "Ambience Thunder",
+      "path": "ambient.weather.thunder"
+    },
+    {
+      "name": "Anvil Break",
+      "path": "random.anvil_break"
+    },
+    {
+      "name": "Anvil Land",
+      "path": "random.anvil_land"
+    },
+    {
+      "name": "Anvil Use",
+      "path": "random.anvil_use"
+    },
+    {
+      "name": "Arrow Hit",
+      "path": "random.bowhit"
+    },
+    {
+      "name": "Burp",
+      "path": "random.burp"
+    },
+    {
+      "name": "Chest Close",
+      "path": "random.chestclosed"
+    },
+    {
+      "name": "Chest Open",
+      "path": "random.chestopen"
+    },
+    {
+      "name": "Click",
+      "path": "random.click"
+    },
+    {
+      "name": "Door Close",
+      "path": "random.door_close"
+    },
+    {
+      "name": "Door Open",
+      "path": "random.door_open"
+    },
+    {
+      "name": "Drink",
+      "path": "random.drink"
+    },
+    {
+      "name": "Eat",
+      "path": "random.eat"
+    },
+    {
+      "name": "Explode",
+      "path": "random.explode"
+    },
+    {
+      "name": "Fall Big",
+      "path": "game.player.hurt.fall.big"
+    },
+    {
+      "name": "Fall Small",
+      "path": "game.player.hurt.fall.small"
+    },
+    {
+      "name": "Fizz",
+      "path": "random.fizz"
+    },
+    {
+      "name": "Fuse",
+      "path": "game.tnt.primed"
+    },
+    {
+      "name": "Glass",
+      "path": "dig.glass"
+    },
+    {
+      "name": "Hurt Flesh",
+      "path": "game.player.hurt"
+    },
+    {
+      "name": "Item Break",
+      "path": "random.break"
+    },
+    {
+      "name": "Item Pickup",
+      "path": "random.pop"
+    },
+    {
+      "name": "Lava Pop",
+      "path": "liquid.lavapop"
+    },
+    {
+      "name": "Level Up",
+      "path": "random.levelup"
+    },
+    {
+      "name": "Note Bass",
+      "path": "note.bass"
+    },
+    {
+      "name": "Note Piano",
+      "path": "note.harp"
+    },
+    {
+      "name": "Note Bass Drum",
+      "path": "note.bd"
+    },
+    {
+      "name": "Note Sticks",
+      "path": "note.hat"
+    },
+    {
+      "name": "Note Bass Guitar",
+      "path": "note.bassattack"
+    },
+    {
+      "name": "Note Snare Drum",
+      "path": "note.snare"
+    },
+    {
+      "name": "Note Pling",
+      "path": "note.pling"
+    },
+    {
+      "name": "Orb Pickup",
+      "path": "random.orb"
+    },
+    {
+      "name": "Shoot Arrow",
+      "path": "random.bow"
+    },
+    {
+      "name": "Splash",
+      "path": "game.player.swim.splash"
+    },
+    {
+      "name": "Swim",
+      "path": "game.player.swim"
+    },
+    {
+      "name": "Wood Click",
+      "path": "random.wood_click"
+    },
+    {
+      "name": "Bat Death",
+      "path": "mob.bat.death"
+    },
+    {
+      "name": "Bat Hurt",
+      "path": "mob.bat.hurt"
+    },
+    {
+      "name": "Bat Idle",
+      "path": "mob.bat.idle"
+    },
+    {
+      "name": "Bat Loop",
+      "path": "mob.bat.loop"
+    },
+    {
+      "name": "Bat Takeoff",
+      "path": "mob.bat.takeoff"
+    },
+    {
+      "name": "Blaze Breath",
+      "path": "mob.blaze.breathe"
+    },
+    {
+      "name": "Blaze Death",
+      "path": "mob.blaze.death"
+    },
+    {
+      "name": "Blaze Hit",
+      "path": "mob.blaze.hit"
+    },
+    {
+      "name": "Cat Hiss",
+      "path": "mob.cat.hiss"
+    },
+    {
+      "name": "Cat Hit",
+      "path": "mob.cat.hitt"
+    },
+    {
+      "name": "Cat Meow",
+      "path": "mob.cat.meow"
+    },
+    {
+      "name": "Cat Purr",
+      "path": "mob.cat.purr"
+    },
+    {
+      "name": "Cat Purreow",
+      "path": "mob.cat.purreow"
+    },
+    {
+      "name": "Chicken Idle",
+      "path": "mob.chicken.say"
+    },
+    {
+      "name": "Chicken Hurt",
+      "path": "mob.chicken.hurt"
+    },
+    {
+      "name": "Chicken Egg Pop",
+      "path": "mob.chicken.plop"
+    },
+    {
+      "name": "Chicken Walk",
+      "path": "mob.chicken.step"
+    },
+    {
+      "name": "Cow Idle",
+      "path": "mob.cow.say"
+    },
+    {
+      "name": "Cow Hurt",
+      "path": "mob.cow.hurt"
+    },
+    {
+      "name": "Cow Walk",
+      "path": "mob.cow.step"
+    },
+    {
+      "name": "Creeper Hiss",
+      "path": "mob.creeper.say"
+    },
+    {
+      "name": "Creeper Death",
+      "path": "mob.creeper.death"
+    },
+    {
+      "name": "Enderdragon Death",
+      "path": "mob.enderdragon.end"
+    },
+    {
+      "name": "Enderdragon Growl",
+      "path": "mob.enderdragon.growl"
+    },
+    {
+      "name": "Enderdragon Hit",
+      "path": "mob.enderdragon.hit"
+    },
+    {
+      "name": "Enderdragon Wings",
+      "path": "mob.enderdragon.wings"
+    },
+    {
+      "name": "Enderman Death",
+      "path": "mob.endermen.death"
+    },
+    {
+      "name": "Enderman Hit",
+      "path": "mob.endermen.hit"
+    },
+    {
+      "name": "Enderman Idle",
+      "path": "mob.endermen.idle"
+    },
+    {
+      "name": "Enderman Teleport",
+      "path": "mob.endermen.portal"
+    },
+    {
+      "name": "Enderman Scream",
+      "path": "mob.endermen.scream"
+    },
+    {
+      "name": "Enderman Stare",
+      "path": "mob.endermen.stare"
+    },
+    {
+      "name": "Ghast Scream",
+      "path": "mob.ghast.scream"
+    },
+    {
+      "name": "Ghast Scream2",
+      "path": "mob.ghast.affectionate_scream"
+    },
+    {
+      "name": "Ghast Charge",
+      "path": "mob.ghast.charge"
+    },
+    {
+      "name": "Ghast Death",
+      "path": "mob.ghast.death"
+    },
+    {
+      "name": "Ghast Fireball",
+      "path": "mob.ghast.fireball"
+    },
+    {
+      "name": "Ghast Moan",
+      "path": "mob.ghast.moan"
+    },
+    {
+      "name": "Guardian Hit",
+      "path": "mob.guardian.hit"
+    },
+    {
+      "name": "Guardian Idle",
+      "path": "mob.guardian.idle"
+    },
+    {
+      "name": "Guardian Death",
+      "path": "mob.guardian.death"
+    },
+    {
+      "name": "Guardian Elder Hit",
+      "path": "mob.guardian.elder.hit"
+    },
+    {
+      "name": "Guardian Elder Idle",
+      "path": "mob.guardian.elder.idle"
+    },
+    {
+      "name": "Guardian Elder Death",
+      "path": "mob.guardian.elder.death"
+    },
+    {
+      "name": "Guardian Land Hit",
+      "path": "mob.guardian.land.hit"
+    },
+    {
+      "name": "Guardian Land Idle",
+      "path": "mob.guardian.land.idle"
+    },
+    {
+      "name": "Guardian Land Death",
+      "path": "mob.guardian.land.death"
+    },
+    {
+      "name": "Guardian Curse",
+      "path": "mob.guardian.curse"
+    },
+    {
+      "name": "Guardian Attack",
+      "path": "mob.guardian.attack"
+    },
+    {
+      "name": "Guardian Flop",
+      "path": "mob.guardian.flop"
+    },
+    {
+      "name": "Irongolem Death",
+      "path": "mob.irongolem.death"
+    },
+    {
+      "name": "Irongolem Hit",
+      "path": "mob.irongolem.hit"
+    },
+    {
+      "name": "Irongolem Throw",
+      "path": "mob.irongolem.throw"
+    },
+    {
+      "name": "Irongolem Walk",
+      "path": "mob.irongolem.walk"
+    },
+    {
+      "name": "Magmacube Walk",
+      "path": "mob.magmacube.small"
+    },
+    {
+      "name": "Magmacube Walk2",
+      "path": "mob.magmacube.big"
+    },
+    {
+      "name": "Magmacube Jump",
+      "path": "mob.magmacube.jump"
+    },
+    {
+      "name": "Pig Idle",
+      "path": "mob.pig.say"
+    },
+    {
+      "name": "Pig Death",
+      "path": "mob.pig.death"
+    },
+    {
+      "name": "Pig Walk",
+      "path": "mob.pig.step"
+    },
+    {
+      "name": "Rabbit Ambient",
+      "path": "mob.rabbit.idle"
+    },
+    {
+      "name": "Rabbit Death",
+      "path": "mob.rabbit.death"
+    },
+    {
+      "name": "Rabbit Hurt",
+      "path": "mob.rabbit.hurt"
+    },
+    {
+      "name": "Rabbit Jump",
+      "path": "mob.rabbit.hop"
+    },
+    {
+      "name": "Sheep Idle",
+      "path": "mob.sheep.say"
+    },
+    {
+      "name": "Sheep Shear",
+      "path": "mob.sheep.shear"
+    },
+    {
+      "name": "Sheep Walk",
+      "path": "mob.sheep.step"
+    },
+    {
+      "name": "Silverfish Hit",
+      "path": "mob.silverfish.hit"
+    },
+    {
+      "name": "Silverfish Kill",
+      "path": "mob.silverfish.kill"
+    },
+    {
+      "name": "Silverfish Idle",
+      "path": "mob.silverfish.say"
+    },
+    {
+      "name": "Silverfish Walk",
+      "path": "mob.silverfish.step"
+    },
+    {
+      "name": "Skeleton Idle",
+      "path": "mob.skeleton.say"
+    },
+    {
+      "name": "Skeleton Death",
+      "path": "mob.skeleton.death"
+    },
+    {
+      "name": "Skeleton Hurt",
+      "path": "mob.skeleton.hurt"
+    },
+    {
+      "name": "Skeleton Walk",
+      "path": "mob.skeleton.step"
+    },
+    {
+      "name": "Slime Attack",
+      "path": "mob.slime.attack"
+    },
+    {
+      "name": "Slime Walk",
+      "path": "mob.slime.small"
+    },
+    {
+      "name": "Slime Walk2",
+      "path": "mob.slime.big"
+    },
+    {
+      "name": "Spider Idle",
+      "path": "mob.spider.say"
+    },
+    {
+      "name": "Spider Death",
+      "path": "mob.spider.death"
+    },
+    {
+      "name": "Spider Walk",
+      "path": "mob.spider.step"
+    },
+    {
+      "name": "Wither Death",
+      "path": "mob.wither.death"
+    },
+    {
+      "name": "Wither Hurt",
+      "path": "mob.wither.hurt"
+    },
+    {
+      "name": "Wither Idle",
+      "path": "mob.wither.idle"
+    },
+    {
+      "name": "Wither Shoot",
+      "path": "mob.wither.shoot"
+    },
+    {
+      "name": "Wither Spawn",
+      "path": "mob.wither.spawn"
+    },
+    {
+      "name": "Wolf Bark",
+      "path": "mob.wolf.bark"
+    },
+    {
+      "name": "Wolf Death",
+      "path": "mob.wolf.death"
+    },
+    {
+      "name": "Wolf Growl",
+      "path": "mob.wolf.growl"
+    },
+    {
+      "name": "Wolf Howl",
+      "path": "mob.wolf.howl"
+    },
+    {
+      "name": "Wolf Hurt",
+      "path": "mob.wolf.hurt"
+    },
+    {
+      "name": "Wolf Pant",
+      "path": "mob.wolf.panting"
+    },
+    {
+      "name": "Wolf Shake",
+      "path": "mob.wolf.shake"
+    },
+    {
+      "name": "Wolf Walk",
+      "path": "mob.wolf.step"
+    },
+    {
+      "name": "Wolf Whine",
+      "path": "mob.wolf.whine"
+    },
+    {
+      "name": "Zombie Metal",
+      "path": "mob.zombie.metal"
+    },
+    {
+      "name": "Zombie Wood",
+      "path": "mob.zombie.wood"
+    },
+    {
+      "name": "Zombie Woodbreak",
+      "path": "mob.zombie.woodbreak"
+    },
+    {
+      "name": "Zombie Idle",
+      "path": "mob.zombie.say"
+    },
+    {
+      "name": "Zombie Death",
+      "path": "mob.zombie.death"
+    },
+    {
+      "name": "Zombie Hurt",
+      "path": "mob.zombie.hurt"
+    },
+    {
+      "name": "Zombie Infect",
+      "path": "mob.zombie.infect"
+    },
+    {
+      "name": "Zombie Unfect",
+      "path": "mob.zombie.unfect"
+    },
+    {
+      "name": "Zombie Remedy",
+      "path": "mob.zombie.remedy"
+    },
+    {
+      "name": "Zombie Walk",
+      "path": "mob.zombie.step"
+    },
+    {
+      "name": "Zombie Pig Idle",
+      "path": "mob.zombiepig.zpig"
+    },
+    {
+      "name": "Zombie Pig Angry",
+      "path": "mob.zombiepig.zpigangry"
+    },
+    {
+      "name": "Zombie Pig Death",
+      "path": "mob.zombiepig.zpigdeath"
+    },
+    {
+      "name": "Zombie Pig Hurt",
+      "path": "mob.zombiepig.zpighurt"
+    },
+    {
+      "name": "Firework Blast",
+      "path": "fireworks.blast"
+    },
+    {
+      "name": "Firework Blast2",
+      "path": "fireworks.blast_far"
+    },
+    {
+      "name": "Firework Large Blast",
+      "path": "fireworks.largeBlast"
+    },
+    {
+      "name": "Firework Large Blast2",
+      "path": "fireworks.largeBlast_far"
+    },
+    {
+      "name": "Firework Twinkle",
+      "path": "fireworks.twinkle"
+    },
+    {
+      "name": "Firework Twinkle2",
+      "path": "fireworks.twinkle_far"
+    },
+    {
+      "name": "Firework Launch",
+      "path": "fireworks.launch"
+    },
+    {
+      "name": "Fireworks Blast",
+      "path": "fireworks.blast"
+    },
+    {
+      "name": "Fireworks Blast2",
+      "path": "fireworks.blast_far"
+    },
+    {
+      "name": "Fireworks Large Blast",
+      "path": "fireworks.largeBlast"
+    },
+    {
+      "name": "Fireworks Large Blast2",
+      "path": "fireworks.largeBlast_far"
+    },
+    {
+      "name": "Fireworks Twinkle",
+      "path": "fireworks.twinkle"
+    },
+    {
+      "name": "Fireworks Twinkle2",
+      "path": "fireworks.twinkle_far"
+    },
+    {
+      "name": "Fireworks Launch",
+      "path": "fireworks.launch"
+    },
+    {
+      "name": "Successful Hit",
+      "path": "random.successful_hit"
+    },
+    {
+      "name": "Horse Angry",
+      "path": "mob.horse.angry"
+    },
+    {
+      "name": "Horse Armor",
+      "path": "mob.horse.armor"
+    },
+    {
+      "name": "Horse Breathe",
+      "path": "mob.horse.breathe"
+    },
+    {
+      "name": "Horse Death",
+      "path": "mob.horse.death"
+    },
+    {
+      "name": "Horse Gallop",
+      "path": "mob.horse.gallop"
+    },
+    {
+      "name": "Horse Hit",
+      "path": "mob.horse.hit"
+    },
+    {
+      "name": "Horse Idle",
+      "path": "mob.horse.idle"
+    },
+    {
+      "name": "Horse Jump",
+      "path": "mob.horse.jump"
+    },
+    {
+      "name": "Horse Land",
+      "path": "mob.horse.land"
+    },
+    {
+      "name": "Horse Saddle",
+      "path": "mob.horse.leather"
+    },
+    {
+      "name": "Horse Soft",
+      "path": "mob.horse.soft"
+    },
+    {
+      "name": "Horse Wood",
+      "path": "mob.horse.wood"
+    },
+    {
+      "name": "Donkey Angry",
+      "path": "mob.horse.donkey.angry"
+    },
+    {
+      "name": "Donkey Death",
+      "path": "mob.horse.donkey.death"
+    },
+    {
+      "name": "Donkey Hit",
+      "path": "mob.horse.donkey.hit"
+    },
+    {
+      "name": "Donkey Idle",
+      "path": "mob.horse.donkey.idle"
+    },
+    {
+      "name": "Horse Skeleton Death",
+      "path": "mob.horse.skeleton.death"
+    },
+    {
+      "name": "Horse Skeleton Hit",
+      "path": "mob.horse.skeleton.hit"
+    },
+    {
+      "name": "Horse Skeleton Idle",
+      "path": "mob.horse.skeleton.idle"
+    },
+    {
+      "name": "Horse Zombie Death",
+      "path": "mob.horse.zombie.death"
+    },
+    {
+      "name": "Horse Zombie Hit",
+      "path": "mob.horse.zombie.hit"
+    },
+    {
+      "name": "Horse Zombie Idle",
+      "path": "mob.horse.zombie.idle"
+    },
+    {
+      "name": "Villager Death",
+      "path": "mob.villager.death"
+    },
+    {
+      "name": "Villager Haggle",
+      "path": "mob.villager.haggle"
+    },
+    {
+      "name": "Villager Hit",
+      "path": "mob.villager.hit"
+    },
+    {
+      "name": "Villager Idle",
+      "path": "mob.villager.idle"
+    },
+    {
+      "name": "Villager No",
+      "path": "mob.villager.no"
+    },
+    {
+      "name": "Villager Yes",
+      "path": "mob.villager.yes"
+    },
+    {
+      "name": "Block Sand Place",
+      "path": "block.sand.place"
+    },
+    {
+      "name": "Entity Armor Stand Hit",
+      "path": "entity.armor_stand.hit"
+    },
+    {
+      "name": "Entity Cow Milk",
+      "path": "entity.cow.milk"
+    },
+    {
+      "name": "Block Soul Sand Fall",
+      "path": "block.soul_sand.fall"
+    },
+    {
+      "name": "Block Dispenser Fail",
+      "path": "block.dispenser.fail"
+    },
+    {
+      "name": "Entity Arrow Hit",
+      "path": "entity.arrow.hit"
+    },
+    {
+      "name": "Music Creative",
+      "path": "music.creative"
+    },
+    {
+      "name": "Entity Zombie Destroy Egg",
+      "path": "entity.zombie.destroy_egg"
+    },
+    {
+      "name": "Entity Bat Loop",
+      "path": "entity.bat.loop"
+    },
+    {
+      "name": "Item Flintandsteel Use",
+      "path": "item.flintandsteel.use"
+    },
+    {
+      "name": "Entity Ender Dragon Growl",
+      "path": "entity.ender_dragon.growl"
+    },
+    {
+      "name": "Entity Skeleton Shoot",
+      "path": "entity.skeleton.shoot"
+    },
+    {
+      "name": "Block Nether Bricks Break",
+      "path": "block.nether_bricks.break"
+    },
+    {
+      "name": "Entity Wolf Pant",
+      "path": "entity.wolf.pant"
+    },
+    {
+      "name": "Entity Squid Ambient",
+      "path": "entity.squid.ambient"
+    },
+    {
+      "name": "Entity Player Hurt Drown",
+      "path": "entity.player.hurt_drown"
+    },
+    {
+      "name": "Block Metal Step",
+      "path": "block.metal.step"
+    },
+    {
+      "name": "Entity Sheep Hurt",
+      "path": "entity.sheep.hurt"
+    },
+    {
+      "name": "Block Gravel Break",
+      "path": "block.gravel.break"
+    },
+    {
+      "name": "Entity Firework Rocket Shoot",
+      "path": "entity.firework_rocket.shoot"
+    },
+    {
+      "name": "Block Note Block Bass",
+      "path": "block.note_block.bass"
+    },
+    {
+      "name": "Entity Donkey Jump",
+      "path": "entity.donkey.jump"
+    },
+    {
+      "name": "Entity Generic Burn",
+      "path": "entity.generic.burn"
+    },
+    {
+      "name": "Block Portal Travel",
+      "path": "block.portal.travel"
+    },
+    {
+      "name": "Block Nether Bricks Step",
+      "path": "block.nether_bricks.step"
+    },
+    {
+      "name": "Block Soul Sand Step",
+      "path": "block.soul_sand.step"
+    },
+    {
+      "name": "Entity Squid Death",
+      "path": "entity.squid.death"
+    },
+    {
+      "name": "Music Overworld Bamboo Jungle",
+      "path": "music.overworld.bamboo_jungle"
+    },
+    {
+      "name": "Entity Zombie Hurt",
+      "path": "entity.zombie.hurt"
+    },
+    {
+      "name": "Block Soul Sand Break",
+      "path": "block.soul_sand.break"
+    },
+    {
+      "name": "Block Stone Button Click Off",
+      "path": "block.stone_button.click_off"
+    },
+    {
+      "name": "Entity Firework Rocket Twinkle Far",
+      "path": "entity.firework_rocket.twinkle_far"
+    },
+    {
+      "name": "Block Nether Bricks Fall",
+      "path": "block.nether_bricks.fall"
+    },
+    {
+      "name": "Entity Skeleton Death",
+      "path": "entity.skeleton.death"
+    },
+    {
+      "name": "Entity Player Hurt",
+      "path": "entity.player.hurt"
+    },
+    {
+      "name": "Block Sponge Fall",
+      "path": "block.sponge.fall"
+    },
+    {
+      "name": "Block Wet Sponge Break",
+      "path": "block.wet_sponge.break"
+    },
+    {
+      "name": "Entity Hostile Small Fall",
+      "path": "entity.hostile.small_fall"
+    },
+    {
+      "name": "Block Anvil Destroy",
+      "path": "block.anvil.destroy"
+    },
+    {
+      "name": "Entity Cow Death",
+      "path": "entity.cow.death"
+    },
+    {
+      "name": "Entity Player Breath",
+      "path": "entity.player.breath"
+    },
+    {
+      "name": "Music Disc Cat",
+      "path": "music_disc.cat"
+    },
+    {
+      "name": "Block Nether Bricks Place",
+      "path": "block.nether_bricks.place"
+    },
+    {
+      "name": "Block Sand Hit",
+      "path": "block.sand.hit"
+    },
+    {
+      "name": "Music Menu",
+      "path": "music.menu"
+    },
+    {
+      "name": "Block Wood Place",
+      "path": "block.wood.place"
+    },
+    {
+      "name": "Block Sand Break",
+      "path": "block.sand.break"
+    },
+    {
+      "name": "Block Wood Break",
+      "path": "block.wood.break"
+    },
+    {
+      "name": "Entity Elder Guardian Death",
+      "path": "entity.elder_guardian.death"
+    },
+    {
+      "name": "Block Tripwire Click On",
+      "path": "block.tripwire.click_on"
+    },
+    {
+      "name": "Block Wood Fall",
+      "path": "block.wood.fall"
+    },
+    {
+      "name": "Block Wool Hit",
+      "path": "block.wool.hit"
+    },
+    {
+      "name": "Entity Ender Dragon Hurt",
+      "path": "entity.ender_dragon.hurt"
+    },
+    {
+      "name": "Ui Button Click",
+      "path": "ui.button.click"
+    },
+    {
+      "name": "Entity Experience Bottle Throw",
+      "path": "entity.experience_bottle.throw"
+    },
+    {
+      "name": "Entity Endermite Hurt",
+      "path": "entity.endermite.hurt"
+    },
+    {
+      "name": "Entity Endermite Death",
+      "path": "entity.endermite.death"
+    },
+    {
+      "name": "Entity Firework Rocket Launch",
+      "path": "entity.firework_rocket.launch"
+    },
+    {
+      "name": "Block Wood Step",
+      "path": "block.wood.step"
+    },
+    {
+      "name": "Block Stone Break",
+      "path": "block.stone.break"
+    },
+    {
+      "name": "Entity Wither Shoot",
+      "path": "entity.wither.shoot"
+    },
+    {
+      "name": "Entity Chicken Egg",
+      "path": "entity.chicken.egg"
+    },
+    {
+      "name": "Entity Pig Saddle",
+      "path": "entity.pig.saddle"
+    },
+    {
+      "name": "Entity Wolf Whine",
+      "path": "entity.wolf.whine"
+    },
+    {
+      "name": "Entity Snow Golem Shoot",
+      "path": "entity.snow_golem.shoot"
+    },
+    {
+      "name": "Entity Skeleton Step",
+      "path": "entity.skeleton.step"
+    },
+    {
+      "name": "Entity Hostile Splash",
+      "path": "entity.hostile.splash"
+    },
+    {
+      "name": "Music Overworld Old Growth Taiga",
+      "path": "music.overworld.old_growth_taiga"
+    },
+    {
+      "name": "Block Wet Sponge Place",
+      "path": "block.wet_sponge.place"
+    },
+    {
+      "name": "Block Sponge Step",
+      "path": "block.sponge.step"
+    },
+    {
+      "name": "Entity Wither Death",
+      "path": "entity.wither.death"
+    },
+    {
+      "name": "Entity Ghast Scream",
+      "path": "entity.ghast.scream"
+    },
+    {
+      "name": "Ambient Cave",
+      "path": "ambient.cave"
+    },
+    {
+      "name": "Entity Generic Drink",
+      "path": "entity.generic.drink"
+    },
+    {
+      "name": "Entity Hostile Death",
+      "path": "entity.hostile.death"
+    },
+    {
+      "name": "Block Spawner Hit",
+      "path": "block.spawner.hit"
+    },
+    {
+      "name": "Entity Mule Eat",
+      "path": "entity.mule.eat"
+    },
+    {
+      "name": "Entity Ocelot Ambient",
+      "path": "entity.ocelot.ambient"
+    },
+    {
+      "name": "Entity Magma Cube Death",
+      "path": "entity.magma_cube.death"
+    },
+    {
+      "name": "Entity Chicken Step",
+      "path": "entity.chicken.step"
+    },
+    {
+      "name": "Entity Cow Step",
+      "path": "entity.cow.step"
+    },
+    {
+      "name": "Item Hoe Till",
+      "path": "item.hoe.till"
+    },
+    {
+      "name": "Entity Slime Death Small",
+      "path": "entity.slime.death_small"
+    },
+    {
+      "name": "Block Moss Break",
+      "path": "block.moss.break"
+    },
+    {
+      "name": "Entity Snowball Throw",
+      "path": "entity.snowball.throw"
+    },
+    {
+      "name": "Entity Skeleton Horse Death",
+      "path": "entity.skeleton_horse.death"
+    },
+    {
+      "name": "Entity Wither Spawn",
+      "path": "entity.wither.spawn"
+    },
+    {
+      "name": "Music End",
+      "path": "music.end"
+    },
+    {
+      "name": "Entity Wolf Howl",
+      "path": "entity.wolf.howl"
+    },
+    {
+      "name": "Entity Snow Golem Death",
+      "path": "entity.snow_golem.death"
+    },
+    {
+      "name": "Block Note Block Bell",
+      "path": "block.note_block.bell"
+    },
+    {
+      "name": "Block Anvil Land",
+      "path": "block.anvil.land"
+    },
+    {
+      "name": "Entity Pig Step",
+      "path": "entity.pig.step"
+    },
+    {
+      "name": "Block Ladder Place",
+      "path": "block.ladder.place"
+    },
+    {
+      "name": "Block Glass Break",
+      "path": "block.glass.break"
+    },
+    {
+      "name": "Entity Generic Small Fall",
+      "path": "entity.generic.small_fall"
+    },
+    {
+      "name": "Block Metal Fall",
+      "path": "block.metal.fall"
+    },
+    {
+      "name": "Music Disc 5",
+      "path": "music_disc.5"
+    },
+    {
+      "name": "Block Iron Door Open",
+      "path": "block.iron_door.open"
+    },
+    {
+      "name": "Entity Iron Golem Damage",
+      "path": "entity.iron_golem.damage"
+    },
+    {
+      "name": "Entity Skeleton Horse Ambient Water",
+      "path": "entity.skeleton_horse.ambient_water"
+    },
+    {
+      "name": "Entity Elder Guardian Flop",
+      "path": "entity.elder_guardian.flop"
+    },
+    {
+      "name": "Entity Villager Trade",
+      "path": "entity.villager.trade"
+    },
+    {
+      "name": "Entity Wither Hurt",
+      "path": "entity.wither.hurt"
+    },
+    {
+      "name": "Entity Donkey Death",
+      "path": "entity.donkey.death"
+    },
+    {
+      "name": "Block Spawner Step",
+      "path": "block.spawner.step"
+    },
+    {
+      "name": "Entity Elder Guardian Curse",
+      "path": "entity.elder_guardian.curse"
+    },
+    {
+      "name": "Block Furnace Fire Crackle",
+      "path": "block.furnace.fire_crackle"
+    },
+    {
+      "name": "Entity Zombified Piglin Angry",
+      "path": "entity.zombified_piglin.angry"
+    },
+    {
+      "name": "Block Anvil Hit",
+      "path": "block.anvil.hit"
+    },
+    {
+      "name": "Entity Guardian Ambient",
+      "path": "entity.guardian.ambient"
+    },
+    {
+      "name": "Entity Spider Death",
+      "path": "entity.spider.death"
+    },
+    {
+      "name": "Entity Minecart Inside Underwater",
+      "path": "entity.minecart.inside.underwater"
+    },
+    {
+      "name": "Entity Horse Saddle",
+      "path": "entity.horse.saddle"
+    },
+    {
+      "name": "Block Ladder Break",
+      "path": "block.ladder.break"
+    },
+    {
+      "name": "Block Chest Open",
+      "path": "block.chest.open"
+    },
+    {
+      "name": "Entity Villager Death",
+      "path": "entity.villager.death"
+    },
+    {
+      "name": "Block Glass Place",
+      "path": "block.glass.place"
+    },
+    {
+      "name": "Block Soul Sand Place",
+      "path": "block.soul_sand.place"
+    },
+    {
+      "name": "Entity Magma Cube Jump",
+      "path": "entity.magma_cube.jump"
+    },
+    {
+      "name": "Entity Firework Rocket Blast",
+      "path": "entity.firework_rocket.blast"
+    },
+    {
+      "name": "Block Tripwire Click Off",
+      "path": "block.tripwire.click_off"
+    },
+    {
+      "name": "Entity Elder Guardian Death Land",
+      "path": "entity.elder_guardian.death_land"
+    },
+    {
+      "name": "Music Overworld Forest",
+      "path": "music.overworld.forest"
+    },
+    {
+      "name": "Entity Guardian Flop",
+      "path": "entity.guardian.flop"
+    },
+    {
+      "name": "Entity Lightning Bolt Thunder",
+      "path": "entity.lightning_bolt.thunder"
+    },
+    {
+      "name": "Block Wooden Door Close",
+      "path": "block.wooden_door.close"
+    },
+    {
+      "name": "Entity Zombie Attack Wooden Door",
+      "path": "entity.zombie.attack_wooden_door"
+    },
+    {
+      "name": "Entity Generic Death",
+      "path": "entity.generic.death"
+    },
+    {
+      "name": "Item Firecharge Use",
+      "path": "item.firecharge.use"
+    },
+    {
+      "name": "Block Anvil Fall",
+      "path": "block.anvil.fall"
+    },
+    {
+      "name": "Entity Pig Ambient",
+      "path": "entity.pig.ambient"
+    },
+    {
+      "name": "Entity Horse Gallop",
+      "path": "entity.horse.gallop"
+    },
+    {
+      "name": "Entity Horse Armor",
+      "path": "entity.horse.armor"
+    },
+    {
+      "name": "Block Cobweb Fall",
+      "path": "block.cobweb.fall"
+    },
+    {
+      "name": "Block Growing Plant Crop",
+      "path": "block.growing_plant.crop"
+    },
+    {
+      "name": "Entity Mule Jump",
+      "path": "entity.mule.jump"
+    },
+    {
+      "name": "Music Disc Strad",
+      "path": "music_disc.strad"
+    },
+    {
+      "name": "Entity Horse Hurt",
+      "path": "entity.horse.hurt"
+    },
+    {
+      "name": "Entity Firework Rocket Blast Far",
+      "path": "entity.firework_rocket.blast_far"
+    },
+    {
+      "name": "Block Wart Block Step",
+      "path": "block.wart_block.step"
+    },
+    {
+      "name": "Block Stone Hit",
+      "path": "block.stone.hit"
+    },
+    {
+      "name": "Block Fire Extinguish",
+      "path": "block.fire.extinguish"
+    },
+    {
+      "name": "Block Stone Button Click On",
+      "path": "block.stone_button.click_on"
+    },
+    {
+      "name": "Block Note Block Chime",
+      "path": "block.note_block.chime"
+    },
+    {
+      "name": "Entity Mooshroom Shear",
+      "path": "entity.mooshroom.shear"
+    },
+    {
+      "name": "Entity Generic Explode",
+      "path": "entity.generic.explode"
+    },
+    {
+      "name": "Entity Firework Rocket Large Blast Far",
+      "path": "entity.firework_rocket.large_blast_far"
+    },
+    {
+      "name": "Entity Blaze Burn",
+      "path": "entity.blaze.burn"
+    },
+    {
+      "name": "Entity Endermite Step",
+      "path": "entity.endermite.step"
+    },
+    {
+      "name": "Block Piston Extend",
+      "path": "block.piston.extend"
+    },
+    {
+      "name": "Entity Mooshroom Milk",
+      "path": "entity.mooshroom.milk"
+    },
+    {
+      "name": "Entity Mule Ambient",
+      "path": "entity.mule.ambient"
+    },
+    {
+      "name": "Block Glass Fall",
+      "path": "block.glass.fall"
+    },
+    {
+      "name": "Block Note Block Hat",
+      "path": "block.note_block.hat"
+    },
+    {
+      "name": "Block Iron Trapdoor Open",
+      "path": "block.iron_trapdoor.open"
+    },
+    {
+      "name": "Entity Zombie Horse Hurt",
+      "path": "entity.zombie_horse.hurt"
+    },
+    {
+      "name": "Entity Horse Step Wood",
+      "path": "entity.horse.step_wood"
+    },
+    {
+      "name": "Entity Cat Hiss",
+      "path": "entity.cat.hiss"
+    },
+    {
+      "name": "Entity Elder Guardian Ambient Land",
+      "path": "entity.elder_guardian.ambient_land"
+    },
+    {
+      "name": "Entity Donkey Eat",
+      "path": "entity.donkey.eat"
+    },
+    {
+      "name": "Entity Donkey Angry",
+      "path": "entity.donkey.angry"
+    },
+    {
+      "name": "Entity Cat Purr",
+      "path": "entity.cat.purr"
+    },
+    {
+      "name": "Entity Ender Dragon Flap",
+      "path": "entity.ender_dragon.flap"
+    },
+    {
+      "name": "Entity Ender Dragon Death",
+      "path": "entity.ender_dragon.death"
+    },
+    {
+      "name": "Block Anvil Use",
+      "path": "block.anvil.use"
+    },
+    {
+      "name": "Entity Zombie Step",
+      "path": "entity.zombie.step"
+    },
+    {
+      "name": "Block Netherrack Hit",
+      "path": "block.netherrack.hit"
+    },
+    {
+      "name": "Block Cobweb Step",
+      "path": "block.cobweb.step"
+    },
+    {
+      "name": "Entity Wolf Step",
+      "path": "entity.wolf.step"
+    },
+    {
+      "name": "Entity Sheep Step",
+      "path": "entity.sheep.step"
+    },
+    {
+      "name": "Entity Skeleton Horse Ambient",
+      "path": "entity.skeleton_horse.ambient"
+    },
+    {
+      "name": "Block Anvil Step",
+      "path": "block.anvil.step"
+    },
+    {
+      "name": "Block Sponge Break",
+      "path": "block.sponge.break"
+    },
+    {
+      "name": "Block Stone Pressure Plate Click On",
+      "path": "block.stone_pressure_plate.click_on"
+    },
+    {
+      "name": "Entity Horse Death",
+      "path": "entity.horse.death"
+    },
+    {
+      "name": "Entity Arrow Shoot",
+      "path": "entity.arrow.shoot"
+    },
+    {
+      "name": "Entity Mooshroom Convert",
+      "path": "entity.mooshroom.convert"
+    },
+    {
+      "name": "Entity Sheep Shear",
+      "path": "entity.sheep.shear"
+    },
+    {
+      "name": "Block Note Block Guitar",
+      "path": "block.note_block.guitar"
+    },
+    {
+      "name": "Entity Generic Big Fall",
+      "path": "entity.generic.big_fall"
+    },
+    {
+      "name": "Block Lava Pop",
+      "path": "block.lava.pop"
+    },
+    {
+      "name": "Entity Cat Death",
+      "path": "entity.cat.death"
+    },
+    {
+      "name": "Block Glass Step",
+      "path": "block.glass.step"
+    },
+    {
+      "name": "Entity Spider Step",
+      "path": "entity.spider.step"
+    },
+    {
+      "name": "Entity Wolf Growl",
+      "path": "entity.wolf.growl"
+    },
+    {
+      "name": "Entity Enderman Ambient",
+      "path": "entity.enderman.ambient"
+    },
+    {
+      "name": "Block Snow Break",
+      "path": "block.snow.break"
+    },
+    {
+      "name": "Entity Cat Hurt",
+      "path": "entity.cat.hurt"
+    },
+    {
+      "name": "Entity Player Levelup",
+      "path": "entity.player.levelup"
+    },
+    {
+      "name": "Block Stem Fall",
+      "path": "block.stem.fall"
+    },
+    {
+      "name": "Entity Elder Guardian Hurt",
+      "path": "entity.elder_guardian.hurt"
+    },
+    {
+      "name": "Entity Ghast Hurt",
+      "path": "entity.ghast.hurt"
+    },
+    {
+      "name": "Entity Iron Golem Hurt",
+      "path": "entity.iron_golem.hurt"
+    },
+    {
+      "name": "Block Sponge Place",
+      "path": "block.sponge.place"
+    },
+    {
+      "name": "Entity Skeleton Horse Step Water",
+      "path": "entity.skeleton_horse.step_water"
+    },
+    {
+      "name": "Entity Slime Jump",
+      "path": "entity.slime.jump"
+    },
+    {
+      "name": "Entity Zombie Villager Hurt",
+      "path": "entity.zombie_villager.hurt"
+    },
+    {
+      "name": "Music Overworld Stony Peaks",
+      "path": "music.overworld.stony_peaks"
+    },
+    {
+      "name": "Block Iron Trapdoor Close",
+      "path": "block.iron_trapdoor.close"
+    },
+    {
+      "name": "Entity Guardian Death Land",
+      "path": "entity.guardian.death_land"
+    },
+    {
+      "name": "Entity Wither Break Block",
+      "path": "entity.wither.break_block"
+    },
+    {
+      "name": "Entity Splash Potion Break",
+      "path": "entity.splash_potion.break"
+    },
+    {
+      "name": "Block Lava Ambient",
+      "path": "block.lava.ambient"
+    },
+    {
+      "name": "Entity Ghast Death",
+      "path": "entity.ghast.death"
+    },
+    {
+      "name": "Block Note Block Harp",
+      "path": "block.note_block.harp"
+    },
+    {
+      "name": "Entity Minecart Inside",
+      "path": "entity.minecart.inside"
+    },
+    {
+      "name": "Entity Generic Hurt",
+      "path": "entity.generic.hurt"
+    },
+    {
+      "name": "Entity Rabbit Hurt",
+      "path": "entity.rabbit.hurt"
+    },
+    {
+      "name": "Entity Slime Attack",
+      "path": "entity.slime.attack"
+    },
+    {
+      "name": "Entity Ocelot Hurt",
+      "path": "entity.ocelot.hurt"
+    },
+    {
+      "name": "Entity Ocelot Death",
+      "path": "entity.ocelot.death"
+    },
+    {
+      "name": "Entity Creeper Hurt",
+      "path": "entity.creeper.hurt"
+    },
+    {
+      "name": "Music Overworld Jagged Peaks",
+      "path": "music.overworld.jagged_peaks"
+    },
+    {
+      "name": "Entity Skeleton Horse Gallop Water",
+      "path": "entity.skeleton_horse.gallop_water"
+    },
+    {
+      "name": "Entity Villager Hurt",
+      "path": "entity.villager.hurt"
+    },
+    {
+      "name": "Entity Witch Death",
+      "path": "entity.witch.death"
+    },
+    {
+      "name": "Block Gravel Hit",
+      "path": "block.gravel.hit"
+    },
+    {
+      "name": "Music Overworld Swamp",
+      "path": "music.overworld.swamp"
+    },
+    {
+      "name": "Block Glass Hit",
+      "path": "block.glass.hit"
+    },
+    {
+      "name": "Item Crop Plant",
+      "path": "item.crop.plant"
+    },
+    {
+      "name": "Music Overworld Flower Forest",
+      "path": "music.overworld.flower_forest"
+    },
+    {
+      "name": "Entity Guardian Hurt Land",
+      "path": "entity.guardian.hurt_land"
+    },
+    {
+      "name": "Block Wooden Button Click Off",
+      "path": "block.wooden_button.click_off"
+    },
+    {
+      "name": "Block Stem Step",
+      "path": "block.stem.step"
+    },
+    {
+      "name": "Entity Player Hurt Freeze",
+      "path": "entity.player.hurt_freeze"
+    },
+    {
+      "name": "Entity Mule Angry",
+      "path": "entity.mule.angry"
+    },
+    {
+      "name": "Entity Experience Orb Pickup",
+      "path": "entity.experience_orb.pickup"
+    },
+    {
+      "name": "Entity Silverfish Ambient",
+      "path": "entity.silverfish.ambient"
+    },
+    {
+      "name": "Block Stem Hit",
+      "path": "block.stem.hit"
+    },
+    {
+      "name": "Block Snow Place",
+      "path": "block.snow.place"
+    },
+    {
+      "name": "Entity Mooshroom Suspicious Milk",
+      "path": "entity.mooshroom.suspicious_milk"
+    },
+    {
+      "name": "Entity Fishing Bobber Throw",
+      "path": "entity.fishing_bobber.throw"
+    },
+    {
+      "name": "Block Wooden Pressure Plate Click On",
+      "path": "block.wooden_pressure_plate.click_on"
+    },
+    {
+      "name": "Music Overworld Desert",
+      "path": "music.overworld.desert"
+    },
+    {
+      "name": "Music Overworld Badlands",
+      "path": "music.overworld.badlands"
+    },
+    {
+      "name": "Entity Bat Takeoff",
+      "path": "entity.bat.takeoff"
+    },
+    {
+      "name": "Entity Splash Potion Throw",
+      "path": "entity.splash_potion.throw"
+    },
+    {
+      "name": "Entity Magma Cube Squish",
+      "path": "entity.magma_cube.squish"
+    },
+    {
+      "name": "Entity Snow Golem Hurt",
+      "path": "entity.snow_golem.hurt"
+    },
+    {
+      "name": "Entity Blaze Shoot",
+      "path": "entity.blaze.shoot"
+    },
+    {
+      "name": "Entity Donkey Chest",
+      "path": "entity.donkey.chest"
+    },
+    {
+      "name": "Block Nether Ore Place",
+      "path": "block.nether_ore.place"
+    },
+    {
+      "name": "Entity Skeleton Ambient",
+      "path": "entity.skeleton.ambient"
+    },
+    {
+      "name": "Entity Enderman Teleport",
+      "path": "entity.enderman.teleport"
+    },
+    {
+      "name": "Entity Zombie Villager Death",
+      "path": "entity.zombie_villager.death"
+    },
+    {
+      "name": "Block Snow Hit",
+      "path": "block.snow.hit"
+    },
+    {
+      "name": "Block Fence Gate Close",
+      "path": "block.fence_gate.close"
+    },
+    {
+      "name": "Block Gravel Fall",
+      "path": "block.gravel.fall"
+    },
+    {
+      "name": "Block Comparator Click",
+      "path": "block.comparator.click"
+    },
+    {
+      "name": "Block Stone Fall",
+      "path": "block.stone.fall"
+    },
+    {
+      "name": "Entity Cow Hurt",
+      "path": "entity.cow.hurt"
+    },
+    {
+      "name": "Entity Zombie Ambient",
+      "path": "entity.zombie.ambient"
+    },
+    {
+      "name": "Entity Elder Guardian Hurt Land",
+      "path": "entity.elder_guardian.hurt_land"
+    },
+    {
+      "name": "Entity Ender Dragon Ambient",
+      "path": "entity.ender_dragon.ambient"
+    },
+    {
+      "name": "Music Overworld Grove",
+      "path": "music.overworld.grove"
+    },
+    {
+      "name": "Block Wool Step",
+      "path": "block.wool.step"
+    },
+    {
+      "name": "Entity Blaze Death",
+      "path": "entity.blaze.death"
+    },
+    {
+      "name": "Block Wet Sponge Step",
+      "path": "block.wet_sponge.step"
+    },
+    {
+      "name": "Block Soul Sand Hit",
+      "path": "block.soul_sand.hit"
+    },
+    {
+      "name": "Block Wooden Pressure Plate Click Off",
+      "path": "block.wooden_pressure_plate.click_off"
+    },
+    {
+      "name": "Entity Zombie Villager Cure",
+      "path": "entity.zombie_villager.cure"
+    },
+    {
+      "name": "Entity Armor Stand Place",
+      "path": "entity.armor_stand.place"
+    },
+    {
+      "name": "Entity Endermite Ambient",
+      "path": "entity.endermite.ambient"
+    },
+    {
+      "name": "Block Sponge Absorb",
+      "path": "block.sponge.absorb"
+    },
+    {
+      "name": "Entity Elder Guardian Ambient",
+      "path": "entity.elder_guardian.ambient"
+    },
+    {
+      "name": "Block Netherrack Fall",
+      "path": "block.netherrack.fall"
+    },
+    {
+      "name": "Music Credits",
+      "path": "music.credits"
+    },
+    {
+      "name": "Entity Hostile Hurt",
+      "path": "entity.hostile.hurt"
+    },
+    {
+      "name": "Music Game",
+      "path": "music.game"
+    },
+    {
+      "name": "Block Wart Block Place",
+      "path": "block.wart_block.place"
+    },
+    {
+      "name": "Entity Silverfish Death",
+      "path": "entity.silverfish.death"
+    },
+    {
+      "name": "Entity Wolf Hurt",
+      "path": "entity.wolf.hurt"
+    },
+    {
+      "name": "Block Wool Fall",
+      "path": "block.wool.fall"
+    },
+    {
+      "name": "Entity Sheep Death",
+      "path": "entity.sheep.death"
+    },
+    {
+      "name": "Entity Villager Yes",
+      "path": "entity.villager.yes"
+    },
+    {
+      "name": "Entity Creeper Death",
+      "path": "entity.creeper.death"
+    },
+    {
+      "name": "Block Chest Close",
+      "path": "block.chest.close"
+    },
+    {
+      "name": "Block Iron Door Close",
+      "path": "block.iron_door.close"
+    },
+    {
+      "name": "Block Stem Place",
+      "path": "block.stem.place"
+    },
+    {
+      "name": "Splash2",
+      "path": "game.neutral.swim.splash"
+    },
+    {
+      "name": "Entity Cow Ambient",
+      "path": "entity.cow.ambient"
+    },
+    {
+      "name": "Block Spawner Break",
+      "path": "block.spawner.break"
+    },
+    {
+      "name": "Block Note Block Flute",
+      "path": "block.note_block.flute"
+    },
+    {
+      "name": "Entity Zombie Villager Step",
+      "path": "entity.zombie_villager.step"
+    },
+    {
+      "name": "Entity Magma Cube Hurt Small",
+      "path": "entity.magma_cube.hurt_small"
+    },
+    {
+      "name": "Entity Magma Cube Squish Small",
+      "path": "entity.magma_cube.squish_small"
+    },
+    {
+      "name": "Block Stem Break",
+      "path": "block.stem.break"
+    },
+    {
+      "name": "Entity Witch Drink",
+      "path": "entity.witch.drink"
+    },
+    {
+      "name": "Entity Silverfish Step",
+      "path": "entity.silverfish.step"
+    },
+    {
+      "name": "Entity Ghast Shoot",
+      "path": "entity.ghast.shoot"
+    },
+    {
+      "name": "Entity Snow Golem Ambient",
+      "path": "entity.snow_golem.ambient"
+    },
+    {
+      "name": "Block Stone Pressure Plate Click Off",
+      "path": "block.stone_pressure_plate.click_off"
+    },
+    {
+      "name": "Entity Zombie Infect",
+      "path": "entity.zombie.infect"
+    },
+    {
+      "name": "Entity Player Big Fall",
+      "path": "entity.player.big_fall"
+    },
+    {
+      "name": "Block Note Block Xylophone",
+      "path": "block.note_block.xylophone"
+    },
+    {
+      "name": "Block Wet Sponge Hit",
+      "path": "block.wet_sponge.hit"
+    },
+    {
+      "name": "Block Cobweb Break",
+      "path": "block.cobweb.break"
+    },
+    {
+      "name": "Block Wooden Door Open",
+      "path": "block.wooden_door.open"
+    },
+    {
+      "name": "Entity Item Pickup",
+      "path": "entity.item.pickup"
+    },
+    {
+      "name": "Block Wet Sponge Fall",
+      "path": "block.wet_sponge.fall"
+    },
+    {
+      "name": "Entity Donkey Hurt",
+      "path": "entity.donkey.hurt"
+    },
+    {
+      "name": "Entity Squid Hurt",
+      "path": "entity.squid.hurt"
+    },
+    {
+      "name": "Block Nether Ore Break",
+      "path": "block.nether_ore.break"
+    },
+    {
+      "name": "Entity Snow Golem Shear",
+      "path": "entity.snow_golem.shear"
+    },
+    {
+      "name": "Block Netherrack Step",
+      "path": "block.netherrack.step"
+    },
+    {
+      "name": "Entity Ender Eye Launch",
+      "path": "entity.ender_eye.launch"
+    },
+    {
+      "name": "Block Stone Step",
+      "path": "block.stone.step"
+    },
+    {
+      "name": "Entity Bat Ambient",
+      "path": "entity.bat.ambient"
+    },
+    {
+      "name": "Block Note Block Basedrum",
+      "path": "block.note_block.basedrum"
+    },
+    {
+      "name": "Block Dispenser Dispense",
+      "path": "block.dispenser.dispense"
+    },
+    {
+      "name": "Item Nether Wart Plant",
+      "path": "item.nether_wart.plant"
+    },
+    {
+      "name": "Entity Chicken Hurt",
+      "path": "entity.chicken.hurt"
+    },
+    {
+      "name": "Block Metal Pressure Plate Click Off",
+      "path": "block.metal_pressure_plate.click_off"
+    },
+    {
+      "name": "Music Overworld Meadow",
+      "path": "music.overworld.meadow"
+    },
+    {
+      "name": "Entity Tnt Primed",
+      "path": "entity.tnt.primed"
+    },
+    {
+      "name": "Entity Skeleton Horse Hurt",
+      "path": "entity.skeleton_horse.hurt"
+    },
+    {
+      "name": "Entity Mule Chest",
+      "path": "entity.mule.chest"
+    },
+    {
+      "name": "Block Sand Step",
+      "path": "block.sand.step"
+    },
+    {
+      "name": "Music Overworld Sparse Jungle",
+      "path": "music.overworld.sparse_jungle"
+    },
+    {
+      "name": "Entity Slime Jump Small",
+      "path": "entity.slime.jump_small"
+    },
+    {
+      "name": "Block Portal Ambient",
+      "path": "block.portal.ambient"
+    },
+    {
+      "name": "Entity Player Teleport",
+      "path": "entity.player.teleport"
+    },
+    {
+      "name": "Entity Zombified Piglin Death",
+      "path": "entity.zombified_piglin.death"
+    },
+    {
+      "name": "Block Metal Pressure Plate Click On",
+      "path": "block.metal_pressure_plate.click_on"
+    },
+    {
+      "name": "Entity Enderman Scream",
+      "path": "entity.enderman.scream"
+    },
+    {
+      "name": "Entity Generic Eat",
+      "path": "entity.generic.eat"
+    },
+    {
+      "name": "Entity Guardian Ambient Land",
+      "path": "entity.guardian.ambient_land"
+    },
+    {
+      "name": "Entity Egg Throw",
+      "path": "entity.egg.throw"
+    },
+    {
+      "name": "Block Cobweb Place",
+      "path": "block.cobweb.place"
+    },
+    {
+      "name": "Entity Witch Celebrate",
+      "path": "entity.witch.celebrate"
+    },
+    {
+      "name": "Entity Zombie Villager Ambient",
+      "path": "entity.zombie_villager.ambient"
+    },
+    {
+      "name": "Entity Lingering Potion Throw",
+      "path": "entity.lingering_potion.throw"
+    },
+    {
+      "name": "Block Grass Break",
+      "path": "block.grass.break"
+    },
+    {
+      "name": "Entity Chicken Ambient",
+      "path": "entity.chicken.ambient"
+    },
+    {
+      "name": "Block Vine Hit",
+      "path": "block.vine.hit"
+    },
+    {
+      "name": "Entity Firework Rocket Twinkle",
+      "path": "entity.firework_rocket.twinkle"
+    },
+    {
+      "name": "Block Sand Fall",
+      "path": "block.sand.fall"
+    },
+    {
+      "name": "Entity Zombified Piglin Ambient",
+      "path": "entity.zombified_piglin.ambient"
+    },
+    {
+      "name": "Music Disc Blocks",
+      "path": "music_disc.blocks"
+    },
+    {
+      "name": "Entity Mooshroom Eat",
+      "path": "entity.mooshroom.eat"
+    },
+    {
+      "name": "Block Anvil Place",
+      "path": "block.anvil.place"
+    },
+    {
+      "name": "Entity Player Small Fall",
+      "path": "entity.player.small_fall"
+    },
+    {
+      "name": "Entity Horse Eat",
+      "path": "entity.horse.eat"
+    },
+    {
+      "name": "Block Water Ambient",
+      "path": "block.water.ambient"
+    },
+    {
+      "name": "Entity Spider Ambient",
+      "path": "entity.spider.ambient"
+    },
+    {
+      "name": "Block Vine Fall",
+      "path": "block.vine.fall"
+    },
+    {
+      "name": "Music Disc Wait",
+      "path": "music_disc.wait"
+    },
+    {
+      "name": "Entity Guardian Death",
+      "path": "entity.guardian.death"
+    },
+    {
+      "name": "Block Sponge Hit",
+      "path": "block.sponge.hit"
+    },
+    {
+      "name": "Block Anvil Break",
+      "path": "block.anvil.break"
+    },
+    {
+      "name": "Block Spawner Place",
+      "path": "block.spawner.place"
+    },
+    {
+      "name": "Block Gravel Step",
+      "path": "block.gravel.step"
+    },
+    {
+      "name": "Block Portal Trigger",
+      "path": "block.portal.trigger"
+    },
+    {
+      "name": "Block Snow Fall",
+      "path": "block.snow.fall"
+    },
+    {
+      "name": "Entity Spider Hurt",
+      "path": "entity.spider.hurt"
+    },
+    {
+      "name": "Entity Zombie Converted To Drowned",
+      "path": "entity.zombie.converted_to_drowned"
+    },
+    {
+      "name": "Entity Pig Death",
+      "path": "entity.pig.death"
+    },
+    {
+      "name": "Entity Witch Hurt",
+      "path": "entity.witch.hurt"
+    },
+    {
+      "name": "Item Ink Sac Use",
+      "path": "item.ink_sac.use"
+    },
+    {
+      "name": "Entity Ender Eye Death",
+      "path": "entity.ender_eye.death"
+    },
+    {
+      "name": "Block Wooden Button Click On",
+      "path": "block.wooden_button.click_on"
+    },
+    {
+      "name": "Block Nether Wood Break",
+      "path": "block.nether_wood.break"
+    },
+    {
+      "name": "Block Piston Contract",
+      "path": "block.piston.contract"
+    },
+    {
+      "name": "Block Wart Block Fall",
+      "path": "block.wart_block.fall"
+    },
+    {
+      "name": "Entity Firework Rocket Large Blast",
+      "path": "entity.firework_rocket.large_blast"
+    },
+    {
+      "name": "Entity Squid Squirt",
+      "path": "entity.squid.squirt"
+    },
+    {
+      "name": "Entity Magma Cube Death Small",
+      "path": "entity.magma_cube.death_small"
+    },
+    {
+      "name": "Block Wart Block Break",
+      "path": "block.wart_block.break"
+    },
+    {
+      "name": "Entity Magma Cube Hurt",
+      "path": "entity.magma_cube.hurt"
+    },
+    {
+      "name": "Block Vine Step",
+      "path": "block.vine.step"
+    },
+    {
+      "name": "Entity Fishing Bobber Splash",
+      "path": "entity.fishing_bobber.splash"
+    },
+    {
+      "name": "Block Grass Hit",
+      "path": "block.grass.hit"
+    },
+    {
+      "name": "Entity Creeper Primed",
+      "path": "entity.creeper.primed"
+    },
+    {
+      "name": "Entity Generic Extinguish Fire",
+      "path": "entity.generic.extinguish_fire"
+    },
+    {
+      "name": "Music Disc Chirp",
+      "path": "music_disc.chirp"
+    },
+    {
+      "name": "Entity Slime Squish Small",
+      "path": "entity.slime.squish_small"
+    },
+    {
+      "name": "Block Snow Step",
+      "path": "block.snow.step"
+    },
+    {
+      "name": "Block Ladder Hit",
+      "path": "block.ladder.hit"
+    },
+    {
+      "name": "Block Grass Place",
+      "path": "block.grass.place"
+    },
+    {
+      "name": "Entity Slime Death",
+      "path": "entity.slime.death"
+    },
+    {
+      "name": "Entity Villager No",
+      "path": "entity.villager.no"
+    },
+    {
+      "name": "Entity Horse Step",
+      "path": "entity.horse.step"
+    },
+    {
+      "name": "Entity Enderman Hurt",
+      "path": "entity.enderman.hurt"
+    },
+    {
+      "name": "Music Disc Ward",
+      "path": "music_disc.ward"
+    },
+    {
+      "name": "Entity Iron Golem Death",
+      "path": "entity.iron_golem.death"
+    },
+    {
+      "name": "Entity Wolf Death",
+      "path": "entity.wolf.death"
+    },
+    {
+      "name": "Entity Iron Golem Attack",
+      "path": "entity.iron_golem.attack"
+    },
+    {
+      "name": "Entity Pig Hurt",
+      "path": "entity.pig.hurt"
+    },
+    {
+      "name": "Block Spawner Fall",
+      "path": "block.spawner.fall"
+    },
+    {
+      "name": "Entity Wither Ambient",
+      "path": "entity.wither.ambient"
+    },
+    {
+      "name": "Block Dispenser Launch",
+      "path": "block.dispenser.launch"
+    },
+    {
+      "name": "Entity Silverfish Hurt",
+      "path": "entity.silverfish.hurt"
+    },
+    {
+      "name": "Entity Horse Jump",
+      "path": "entity.horse.jump"
+    },
+    {
+      "name": "Block Metal Break",
+      "path": "block.metal.break"
+    },
+    {
+      "name": "Entity Mule Hurt",
+      "path": "entity.mule.hurt"
+    },
+    {
+      "name": "Entity Witch Throw",
+      "path": "entity.witch.throw"
+    },
+    {
+      "name": "Entity Cat Ambient",
+      "path": "entity.cat.ambient"
+    },
+    {
+      "name": "Music Disc 13",
+      "path": "music_disc.13"
+    },
+    {
+      "name": "Music Overworld Snowy Slopes",
+      "path": "music.overworld.snowy_slopes"
+    },
+    {
+      "name": "Entity Ender Dragon Shoot",
+      "path": "entity.ender_dragon.shoot"
+    },
+    {
+      "name": "Block Metal Place",
+      "path": "block.metal.place"
+    },
+    {
+      "name": "Entity Slime Squish",
+      "path": "entity.slime.squish"
+    },
+    {
+      "name": "Entity Rabbit Death",
+      "path": "entity.rabbit.death"
+    },
+    {
+      "name": "Block Crop Break",
+      "path": "block.crop.break"
+    },
+    {
+      "name": "Entity Item Break",
+      "path": "entity.item.break"
+    },
+    {
+      "name": "Entity Wolf Ambient",
+      "path": "entity.wolf.ambient"
+    },
+    {
+      "name": "Entity Bat Death",
+      "path": "entity.bat.death"
+    },
+    {
+      "name": "Block Redstone Torch Burnout",
+      "path": "block.redstone_torch.burnout"
+    },
+    {
+      "name": "Entity Horse Angry",
+      "path": "entity.horse.angry"
+    },
+    {
+      "name": "Entity Player Splash High Speed",
+      "path": "entity.player.splash.high_speed"
+    },
+    {
+      "name": "Entity Zombie Horse Ambient",
+      "path": "entity.zombie_horse.ambient"
+    },
+    {
+      "name": "Entity Bat Hurt",
+      "path": "entity.bat.hurt"
+    },
+    {
+      "name": "Entity Blaze Ambient",
+      "path": "entity.blaze.ambient"
+    },
+    {
+      "name": "Block Wood Hit",
+      "path": "block.wood.hit"
+    },
+    {
+      "name": "Entity Mule Death",
+      "path": "entity.mule.death"
+    },
+    {
+      "name": "Entity Wolf Shake",
+      "path": "entity.wolf.shake"
+    },
+    {
+      "name": "Block Grass Step",
+      "path": "block.grass.step"
+    },
+    {
+      "name": "Entity Zombie Villager Converted",
+      "path": "entity.zombie_villager.converted"
+    },
+    {
+      "name": "Entity Skeleton Hurt",
+      "path": "entity.skeleton.hurt"
+    },
+    {
+      "name": "Block Nether Bricks Hit",
+      "path": "block.nether_bricks.hit"
+    },
+    {
+      "name": "Block Wooden Trapdoor Close",
+      "path": "block.wooden_trapdoor.close"
+    },
+    {
+      "name": "Entity Donkey Ambient",
+      "path": "entity.donkey.ambient"
+    },
+    {
+      "name": "Entity Ghast Warn",
+      "path": "entity.ghast.warn"
+    },
+    {
+      "name": "Weather Rain",
+      "path": "weather.rain"
+    },
+    {
+      "name": "Entity Player Hurt On Fire",
+      "path": "entity.player.hurt_on_fire"
+    },
+    {
+      "name": "Music Disc 11",
+      "path": "music_disc.11"
+    },
+    {
+      "name": "Entity Slime Hurt Small",
+      "path": "entity.slime.hurt_small"
+    },
+    {
+      "name": "Entity Ghast Ambient",
+      "path": "entity.ghast.ambient"
+    },
+    {
+      "name": "Entity Enderman Stare",
+      "path": "entity.enderman.stare"
+    },
+    {
+      "name": "Entity Rabbit Attack",
+      "path": "entity.rabbit.attack"
+    },
+    {
+      "name": "Entity Minecart Riding",
+      "path": "entity.minecart.riding"
+    },
+    {
+      "name": "Block Metal Hit",
+      "path": "block.metal.hit"
+    },
+    {
+      "name": "Entity Iron Golem Step",
+      "path": "entity.iron_golem.step"
+    },
+    {
+      "name": "Entity Skeleton Horse Jump Water",
+      "path": "entity.skeleton_horse.jump_water"
+    },
+    {
+      "name": "Entity Zombie Horse Death",
+      "path": "entity.zombie_horse.death"
+    },
+    {
+      "name": "Entity Lightning Bolt Impact",
+      "path": "entity.lightning_bolt.impact"
+    },
+    {
+      "name": "Block Lever Click",
+      "path": "block.lever.click"
+    },
+    {
+      "name": "Block Tripwire Detach",
+      "path": "block.tripwire.detach"
+    },
+    {
+      "name": "Music Disc Far",
+      "path": "music_disc.far"
+    },
+    {
+      "name": "Block Grass Fall",
+      "path": "block.grass.fall"
+    },
+    {
+      "name": "Entity Ender Pearl Throw",
+      "path": "entity.ender_pearl.throw"
+    },
+    {
+      "name": "Entity Villager Ambient",
+      "path": "entity.villager.ambient"
+    },
+    {
+      "name": "Entity Player Splash",
+      "path": "entity.player.splash"
+    },
+    {
+      "name": "Block Stone Place",
+      "path": "block.stone.place"
+    },
+    {
+      "name": "Music Overworld Frozen Peaks",
+      "path": "music.overworld.frozen_peaks"
+    },
+    {
+      "name": "Block Tripwire Attach",
+      "path": "block.tripwire.attach"
+    },
+    {
+      "name": "Block Lava Extinguish",
+      "path": "block.lava.extinguish"
+    },
+    {
+      "name": "Entity Blaze Hurt",
+      "path": "entity.blaze.hurt"
+    },
+    {
+      "name": "Music Disc Mellohi",
+      "path": "music_disc.mellohi"
+    },
+    {
+      "name": "Entity Horse Breathe",
+      "path": "entity.horse.breathe"
+    },
+    {
+      "name": "Entity Horse Ambient",
+      "path": "entity.horse.ambient"
+    },
+    {
+      "name": "Entity Guardian Attack",
+      "path": "entity.guardian.attack"
+    },
+    {
+      "name": "Entity Zombie Break Wooden Door",
+      "path": "entity.zombie.break_wooden_door"
+    },
+    {
+      "name": "Block Cobweb Hit",
+      "path": "block.cobweb.hit"
+    },
+    {
+      "name": "Block Ladder Step",
+      "path": "block.ladder.step"
+    },
+    {
+      "name": "Entity Enderman Death",
+      "path": "entity.enderman.death"
+    },
+    {
+      "name": "Entity Horse Land",
+      "path": "entity.horse.land"
+    },
+    {
+      "name": "Block Note Block Pling",
+      "path": "block.note_block.pling"
+    },
+    {
+      "name": "Entity Slime Hurt",
+      "path": "entity.slime.hurt"
+    },
+    {
+      "name": "Block Wool Break",
+      "path": "block.wool.break"
+    },
+    {
+      "name": "Block Nether Ore Step",
+      "path": "block.nether_ore.step"
+    },
+    {
+      "name": "Entity Witch Ambient",
+      "path": "entity.witch.ambient"
+    },
+    {
+      "name": "Block Fire Ambient",
+      "path": "block.fire.ambient"
+    },
+    {
+      "name": "Entity Rabbit Jump",
+      "path": "entity.rabbit.jump"
+    },
+    {
+      "name": "Block Ladder Fall",
+      "path": "block.ladder.fall"
+    },
+    {
+      "name": "Entity Guardian Hurt",
+      "path": "entity.guardian.hurt"
+    },
+    {
+      "name": "Entity Armor Stand Fall",
+      "path": "entity.armor_stand.fall"
+    },
+    {
+      "name": "Music Disc Stal",
+      "path": "music_disc.stal"
+    },
+    {
+      "name": "Item Dye Use",
+      "path": "item.dye.use"
+    },
+    {
+      "name": "Entity Zombie Attack Iron Door",
+      "path": "entity.zombie.attack_iron_door"
+    },
+    {
+      "name": "Entity Chicken Death",
+      "path": "entity.chicken.death"
+    },
+    {
+      "name": "Block Note Block Snare",
+      "path": "block.note_block.snare"
+    },
+    {
+      "name": "Block Vine Place",
+      "path": "block.vine.place"
+    },
+    {
+      "name": "Block Netherrack Place",
+      "path": "block.netherrack.place"
+    },
+    {
+      "name": "Block Wooden Trapdoor Open",
+      "path": "block.wooden_trapdoor.open"
+    },
+    {
+      "name": "Music Dragon",
+      "path": "music.dragon"
+    },
+    {
+      "name": "Entity Zombified Piglin Hurt",
+      "path": "entity.zombified_piglin.hurt"
+    },
+    {
+      "name": "Entity Player Death",
+      "path": "entity.player.death"
+    },
+    {
+      "name": "Entity Hostile Big Fall",
+      "path": "entity.hostile.big_fall"
+    },
+    {
+      "name": "Entity Player Burp",
+      "path": "entity.player.burp"
+    },
+    {
+      "name": "Entity Generic Swim",
+      "path": "entity.generic.swim"
+    },
+    {
+      "name": "Entity Hostile Swim",
+      "path": "entity.hostile.swim"
+    },
+    {
+      "name": "Music Disc Mall",
+      "path": "music_disc.mall"
+    },
+    {
+      "name": "Entity Skeleton Horse Swim",
+      "path": "entity.skeleton_horse.swim"
+    },
+    {
+      "name": "Entity Generic Splash",
+      "path": "entity.generic.splash"
+    },
+    {
+      "name": "Block Chest Locked",
+      "path": "block.chest.locked"
+    },
+    {
+      "name": "Entity Iron Golem Repair",
+      "path": "entity.iron_golem.repair"
+    },
+    {
+      "name": "Block Gravel Place",
+      "path": "block.gravel.place"
+    },
+    {
+      "name": "Block Nether Wart Break",
+      "path": "block.nether_wart.break"
+    },
+    {
+      "name": "Entity Arrow Hit Player",
+      "path": "entity.arrow.hit_player"
+    },
+    {
+      "name": "Weather Rain Above",
+      "path": "weather.rain.above"
+    },
+    {
+      "name": "Entity Rabbit Ambient",
+      "path": "entity.rabbit.ambient"
+    },
+    {
+      "name": "Block Wool Place",
+      "path": "block.wool.place"
+    },
+    {
+      "name": "Block Vine Break",
+      "path": "block.vine.break"
+    },
+    {
+      "name": "Entity Player Swim",
+      "path": "entity.player.swim"
+    },
+    {
+      "name": "Block Wart Block Hit",
+      "path": "block.wart_block.hit"
+    },
+    {
+      "name": "Block Nether Ore Fall",
+      "path": "block.nether_ore.fall"
+    },
+    {
+      "name": "Block Fence Gate Open",
+      "path": "block.fence_gate.open"
+    },
+    {
+      "name": "Entity Armor Stand Break",
+      "path": "entity.armor_stand.break"
+    },
+    {
+      "name": "Block Nether Ore Hit",
+      "path": "block.nether_ore.hit"
+    },
+    {
+      "name": "Entity Sheep Ambient",
+      "path": "entity.sheep.ambient"
+    },
+    {
+      "name": "Music Overworld Jungle",
+      "path": "music.overworld.jungle"
+    },
+    {
+      "name": "Block Lily Pad Place",
+      "path": "block.lily_pad.place"
+    },
+    {
+      "name": "Block Netherrack Break",
+      "path": "block.netherrack.break"
+    },
+    {
+      "name": "Entity Zombie Death",
+      "path": "entity.zombie.death"
+    }
+  ],
+  "minecraftItems": [
+    "stone",
+    "grass",
+    "dirt",
+    "cobblestone",
+    "planks",
+    "sapling",
+    "bedrock",
+    "sand",
+    "gravel",
+    "gold_ore",
+    "iron_ore",
+    "coal_ore",
+    "log",
+    "leaves",
+    "sponge",
+    "glass",
+    "lapis_ore",
+    "lapis_block",
+    "dispenser",
+    "sandstone",
+    "noteblock",
+    "golden_rail",
+    "detector_rail",
+    "sticky_piston",
+    "web",
+    "tallgrass",
+    "deadbush",
+    "piston",
+    "wool",
+    "yellow_flower",
+    "red_flower",
+    "brown_mushroom",
+    "red_mushroom",
+    "gold_block",
+    "iron_block",
+    "stone_slab",
+    "brick_block",
+    "tnt",
+    "bookshelf",
+    "mossy_cobblestone",
+    "obsidian",
+    "torch",
+    "mob_spawner",
+    "oak_stairs",
+    "chest",
+    "diamond_ore",
+    "diamond_block",
+    "crafting_table",
+    "farmland",
+    "furnace",
+    "ladder",
+    "rail",
+    "stone_stairs",
+    "lever",
+    "stone_pressure_plate",
+    "wooden_pressure_plate",
+    "redstone_ore",
+    "redstone_torch",
+    "stone_button",
+    "snow_layer",
+    "ice",
+    "snow",
+    "cactus",
+    "clay",
+    "jukebox",
+    "fence",
+    "pumpkin",
+    "netherrack",
+    "soul_sand",
+    "glowstone",
+    "lit_pumpkin",
+    "stained_glass",
+    "trapdoor",
+    "monster_egg",
+    "stonebrick",
+    "brown_mushroom_block",
+    "red_mushroom_block",
+    "iron_bars",
+    "glass_pane",
+    "melon_block",
+    "vine",
+    "fence_gate",
+    "brick_stairs",
+    "stone_brick_stairs",
+    "mycelium",
+    "waterlily",
+    "nether_brick",
+    "nether_brick_fence",
+    "nether_brick_stairs",
+    "enchanting_table",
+    "end_portal_frame",
+    "end_stone",
+    "dragon_egg",
+    "redstone_lamp",
+    "wooden_slab",
+    "sandstone_stairs",
+    "emerald_ore",
+    "ender_chest",
+    "tripwire_hook",
+    "emerald_block",
+    "spruce_stairs",
+    "birch_stairs",
+    "jungle_stairs",
+    "command_block",
+    "beacon",
+    "cobblestone_wall",
+    "wooden_button",
+    "anvil",
+    "trapped_chest",
+    "light_weighted_pressure_plate",
+    "heavy_weighted_pressure_plate",
+    "daylight_detector",
+    "redstone_block",
+    "quartz_ore",
+    "hopper",
+    "quartz_block",
+    "quartz_stairs",
+    "activator_rail",
+    "dropper",
+    "stained_hardened_clay",
+    "stained_glass_pane",
+    "leaves2",
+    "log2",
+    "acacia_stairs",
+    "dark_oak_stairs",
+    "slime",
+    "barrier",
+    "iron_trapdoor",
+    "prismarine",
+    "sea_lantern",
+    "hay_block",
+    "carpet",
+    "hardened_clay",
+    "coal_block",
+    "packed_ice",
+    "double_plant",
+    "red_sandstone",
+    "red_sandstone_stairs",
+    "stone_slab2",
+    "spruce_fence_gate",
+    "birch_fence_gate",
+    "jungle_fence_gate",
+    "dark_oak_fence_gate",
+    "acacia_fence_gate",
+    "spruce_fence",
+    "birch_fence",
+    "jungle_fence",
+    "dark_oak_fence",
+    "acacia_fence",
+    "iron_shovel",
+    "iron_pickaxe",
+    "iron_axe",
+    "flint_and_steel",
+    "apple",
+    "bow",
+    "arrow",
+    "coal",
+    "diamond",
+    "iron_ingot",
+    "gold_ingot",
+    "iron_sword",
+    "wooden_sword",
+    "wooden_shovel",
+    "wooden_pickaxe",
+    "wooden_axe",
+    "stone_sword",
+    "stone_shovel",
+    "stone_pickaxe",
+    "stone_axe",
+    "diamond_sword",
+    "diamond_shovel",
+    "diamond_pickaxe",
+    "diamond_axe",
+    "stick",
+    "bowl",
+    "mushroom_stew",
+    "golden_sword",
+    "golden_shovel",
+    "golden_pickaxe",
+    "golden_axe",
+    "string",
+    "feather",
+    "gunpowder",
+    "wooden_hoe",
+    "stone_hoe",
+    "iron_hoe",
+    "diamond_hoe",
+    "golden_hoe",
+    "wheat_seeds",
+    "wheat",
+    "bread",
+    "leather_helmet",
+    "leather_chestplate",
+    "leather_leggings",
+    "leather_boots",
+    "chainmail_helmet",
+    "chainmail_chestplate",
+    "chainmail_leggings",
+    "chainmail_boots",
+    "iron_helmet",
+    "iron_chestplate",
+    "iron_leggings",
+    "iron_boots",
+    "diamond_helmet",
+    "diamond_chestplate",
+    "diamond_leggings",
+    "diamond_boots",
+    "golden_helmet",
+    "golden_chestplate",
+    "golden_leggings",
+    "golden_boots",
+    "flint",
+    "porkchop",
+    "cooked_porkchop",
+    "painting",
+    "golden_apple",
+    "sign",
+    "wooden_door",
+    "bucket",
+    "water_bucket",
+    "lava_bucket",
+    "minecart",
+    "saddle",
+    "iron_door",
+    "redstone",
+    "snowball",
+    "boat",
+    "leather",
+    "milk_bucket",
+    "brick",
+    "clay_ball",
+    "reeds",
+    "paper",
+    "book",
+    "slime_ball",
+    "chest_minecart",
+    "furnace_minecart",
+    "egg",
+    "compass",
+    "fishing_rod",
+    "clock",
+    "glowstone_dust",
+    "fish",
+    "cooked_fish",
+    "dye",
+    "bone",
+    "sugar",
+    "cake",
+    "bed",
+    "repeater",
+    "cookie",
+    "filled_map",
+    "shears",
+    "melon",
+    "pumpkin_seeds",
+    "melon_seeds",
+    "beef",
+    "cooked_beef",
+    "chicken",
+    "cooked_chicken",
+    "rotten_flesh",
+    "ender_pearl",
+    "blaze_rod",
+    "ghast_tear",
+    "gold_nugget",
+    "nether_wart",
+    "potion",
+    "glass_bottle",
+    "spider_eye",
+    "fermented_spider_eye",
+    "blaze_powder",
+    "magma_cream",
+    "brewing_stand",
+    "cauldron",
+    "ender_eye",
+    "speckled_melon",
+    "spawn_egg",
+    "experience_bottle",
+    "fire_charge",
+    "writable_book",
+    "written_book",
+    "emerald",
+    "item_frame",
+    "flower_pot",
+    "carrot",
+    "potato",
+    "baked_potato",
+    "poisonous_potato",
+    "map",
+    "golden_carrot",
+    "skull",
+    "carrot_on_a_stick",
+    "nether_star",
+    "pumpkin_pie",
+    "fireworks",
+    "firework_charge",
+    "enchanted_book",
+    "comparator",
+    "netherbrick",
+    "quartz",
+    "tnt_minecart",
+    "hopper_minecart",
+    "prismarine_shard",
+    "prismarine_crystals",
+    "rabbit",
+    "cooked_rabbit",
+    "rabbit_stew",
+    "rabbit_foot",
+    "rabbit_hide",
+    "armor_stand",
+    "iron_horse_armor",
+    "golden_horse_armor",
+    "diamond_horse_armor",
+    "lead",
+    "name_tag",
+    "command_block_minecart",
+    "mutton",
+    "cooked_mutton",
+    "banner",
+    "spruce_door",
+    "birch_door",
+    "jungle_door",
+    "acacia_door",
+    "dark_oak_door",
+    "record_13",
+    "record_cat",
+    "record_blocks",
+    "record_chirp",
+    "record_far",
+    "record_mall",
+    "record_mellohi",
+    "record_stal",
+    "record_strad",
+    "record_ward",
+    "record_11",
+    "record_wait"
+  ],
+  "actionSpecs": {
+    "actionBar": [
+      {
+        "name": "message",
+        "kind": "string",
+        "optional": false
+      }
+    ],
+    "applyLayout": [
+      {
+        "name": "layout",
+        "kind": "string",
+        "optional": false
+      }
+    ],
+    "applyPotion": [
+      {
+        "name": "effect",
+        "kind": "potion",
+        "optional": false
+      },
+      {
+        "name": "duration",
+        "kind": "number",
+        "optional": false
+      },
+      {
+        "name": "level",
+        "kind": "number",
+        "optional": false
+      },
+      {
+        "name": "override",
+        "kind": "boolean",
+        "optional": false
+      },
+      {
+        "name": "showIcon",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "balanceTeam": [],
+    "cancelEvent": [],
+    "changeHealth": [
+      {
+        "name": "op",
+        "kind": "operation",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "changePlayerGroup": [
+      {
+        "name": "group",
+        "kind": "group",
+        "optional": false
+      },
+      {
+        "name": "demotionProtection",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "changeVelocity": [
+      {
+        "name": "x",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "y",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "z",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "chat": [
+      {
+        "name": "message",
+        "kind": "string",
+        "optional": false
+      }
+    ],
+    "clearEffects": [],
+    "closeMenu": [],
+    "compassTarget": [
+      {
+        "name": "location",
+        "kind": "location",
+        "optional": false
+      }
+    ],
+    "consumeItem": [],
+    "displayMenu": [
+      {
+        "name": "menu",
+        "kind": "menu",
+        "optional": false
+      }
+    ],
+    "displayNametag": [
+      {
+        "name": "displayNametag",
+        "kind": "boolean",
+        "optional": false
+      }
+    ],
+    "dropItem": [
+      {
+        "name": "itemName",
+        "kind": "item",
+        "optional": false
+      },
+      {
+        "name": "location",
+        "kind": "location",
+        "optional": false
+      },
+      {
+        "name": "dropNaturally",
+        "kind": "boolean",
+        "optional": true
+      },
+      {
+        "name": "disableMerging",
+        "kind": "boolean",
+        "optional": true
+      },
+      {
+        "name": "prioritizePlayer",
+        "kind": "boolean",
+        "optional": true
+      },
+      {
+        "name": "inventoryFallback",
+        "kind": "boolean",
+        "optional": true
+      },
+      {
+        "name": "despawnDurationTicks",
+        "kind": "value",
+        "optional": true
+      },
+      {
+        "name": "pickupDelayTicks",
+        "kind": "value",
+        "optional": true
+      }
+    ],
+    "enchant": [
+      {
+        "name": "enchant",
+        "kind": "enchant",
+        "optional": false
+      },
+      {
+        "name": "level",
+        "kind": "number",
+        "optional": false
+      }
+    ],
+    "exit": [],
+    "failParkour": [
+      {
+        "name": "message",
+        "kind": "string",
+        "optional": false
+      }
+    ],
+    "fullHeal": [],
+    "function": [
+      {
+        "name": "function",
+        "kind": "function",
+        "optional": false
+      },
+      {
+        "name": "global",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "gamemode": [
+      {
+        "name": "gamemode",
+        "kind": "gamemode",
+        "optional": false
+      }
+    ],
+    "giveItem": [
+      {
+        "name": "itemName",
+        "kind": "item",
+        "optional": false
+      },
+      {
+        "name": "allowMultiple",
+        "kind": "boolean",
+        "optional": true
+      },
+      {
+        "name": "slot",
+        "kind": "slot",
+        "optional": true
+      },
+      {
+        "name": "replaceExisting",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "globalstat": [
+      {
+        "name": "name",
+        "kind": "varName",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "varOp",
+        "optional": false
+      },
+      {
+        "name": "value",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "automaticUnset",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "globalvar": [
+      {
+        "name": "name",
+        "kind": "varName",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "varOp",
+        "optional": false
+      },
+      {
+        "name": "value",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "automaticUnset",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "hungerLevel": [
+      {
+        "name": "op",
+        "kind": "operation",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "if": [
+      {
+        "name": "mode",
+        "kind": "ifMode",
+        "optional": false
+      },
+      {
+        "name": "conditions",
+        "kind": "block",
+        "optional": false
+      },
+      {
+        "name": "ifActions",
+        "kind": "block",
+        "optional": false
+      },
+      {
+        "name": "elseActions",
+        "kind": "block",
+        "optional": true
+      }
+    ],
+    "kill": [],
+    "launchTarget": [
+      {
+        "name": "location",
+        "kind": "location",
+        "optional": false
+      },
+      {
+        "name": "strength",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "lobby": [
+      {
+        "name": "lobby",
+        "kind": "lobby",
+        "optional": false
+      }
+    ],
+    "maxHealth": [
+      {
+        "name": "op",
+        "kind": "operation",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "heal",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "parkCheck": [],
+    "pause": [
+      {
+        "name": "ticks",
+        "kind": "number",
+        "optional": false
+      }
+    ],
+    "playerTime": [
+      {
+        "name": "time",
+        "kind": "time",
+        "optional": false
+      }
+    ],
+    "playerWeather": [
+      {
+        "name": "weather",
+        "kind": "weather",
+        "optional": false
+      }
+    ],
+    "random": [
+      {
+        "name": "actions",
+        "kind": "block",
+        "optional": false
+      }
+    ],
+    "removeItem": [
+      {
+        "name": "itemName",
+        "kind": "item",
+        "optional": false
+      }
+    ],
+    "resetInventory": [],
+    "setTeam": [
+      {
+        "name": "team",
+        "kind": "team",
+        "optional": false
+      }
+    ],
+    "sound": [
+      {
+        "name": "sound",
+        "kind": "string",
+        "optional": false
+      },
+      {
+        "name": "volume",
+        "kind": "number",
+        "optional": true
+      },
+      {
+        "name": "pitch",
+        "kind": "number",
+        "optional": true
+      },
+      {
+        "name": "location",
+        "kind": "location",
+        "optional": true
+      }
+    ],
+    "stat": [
+      {
+        "name": "name",
+        "kind": "varName",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "varOp",
+        "optional": false
+      },
+      {
+        "name": "value",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "automaticUnset",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "teamstat": [
+      {
+        "name": "name",
+        "kind": "varName",
+        "optional": false
+      },
+      {
+        "name": "team",
+        "kind": "team",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "varOp",
+        "optional": false
+      },
+      {
+        "name": "value",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "automaticUnset",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "teamvar": [
+      {
+        "name": "name",
+        "kind": "varName",
+        "optional": false
+      },
+      {
+        "name": "team",
+        "kind": "team",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "varOp",
+        "optional": false
+      },
+      {
+        "name": "value",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "automaticUnset",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "title": [
+      {
+        "name": "title",
+        "kind": "string",
+        "optional": false
+      },
+      {
+        "name": "subtitle",
+        "kind": "string",
+        "optional": true
+      },
+      {
+        "name": "fadein",
+        "kind": "number",
+        "optional": true
+      },
+      {
+        "name": "stay",
+        "kind": "number",
+        "optional": true
+      },
+      {
+        "name": "fadeout",
+        "kind": "number",
+        "optional": true
+      }
+    ],
+    "tp": [
+      {
+        "name": "location",
+        "kind": "location",
+        "optional": false
+      },
+      {
+        "name": "preventTeleportInsideBlocks",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "var": [
+      {
+        "name": "name",
+        "kind": "varName",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "varOp",
+        "optional": false
+      },
+      {
+        "name": "value",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "automaticUnset",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "xpLevel": [
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ]
+  },
+  "conditionSpecs": {
+    "blockType": [
+      {
+        "name": "itemName",
+        "kind": "item",
+        "optional": false
+      }
+    ],
+    "damageAmount": [
+      {
+        "name": "op",
+        "kind": "comparison",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "damageCause": [
+      {
+        "name": "cause",
+        "kind": "damageCause",
+        "optional": false
+      }
+    ],
+    "doingParkour": [],
+    "fishingEnv": [
+      {
+        "name": "environment",
+        "kind": "fishingEnv",
+        "optional": false
+      }
+    ],
+    "gamemode": [
+      {
+        "name": "gamemode",
+        "kind": "gamemode",
+        "optional": false
+      }
+    ],
+    "hasGroup": [
+      {
+        "name": "group",
+        "kind": "group",
+        "optional": false
+      },
+      {
+        "name": "includeHigherGroups",
+        "kind": "boolean",
+        "optional": true
+      }
+    ],
+    "hasItem": [
+      {
+        "name": "itemName",
+        "kind": "item",
+        "optional": false
+      },
+      {
+        "name": "whatToCheck",
+        "kind": "itemProperty",
+        "optional": true
+      },
+      {
+        "name": "whereToCheck",
+        "kind": "itemLocation",
+        "optional": true
+      },
+      {
+        "name": "amount",
+        "kind": "itemAmount",
+        "optional": true
+      }
+    ],
+    "hasPermission": [
+      {
+        "name": "permission",
+        "kind": "permission",
+        "optional": false
+      }
+    ],
+    "hasPotion": [
+      {
+        "name": "effect",
+        "kind": "potion",
+        "optional": false
+      }
+    ],
+    "hasTeam": [
+      {
+        "name": "team",
+        "kind": "team",
+        "optional": false
+      }
+    ],
+    "health": [
+      {
+        "name": "op",
+        "kind": "comparison",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "hunger": [
+      {
+        "name": "op",
+        "kind": "comparison",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "inRegion": [
+      {
+        "name": "region",
+        "kind": "region",
+        "optional": false
+      }
+    ],
+    "isFlying": [],
+    "isItem": [
+      {
+        "name": "itemName",
+        "kind": "item",
+        "optional": false
+      }
+    ],
+    "isSneaking": [],
+    "maxHealth": [
+      {
+        "name": "op",
+        "kind": "comparison",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      }
+    ],
+    "canPvp": [],
+    "placeholder": [
+      {
+        "name": "placeholder",
+        "kind": "placeholder",
+        "optional": false
+      },
+      {
+        "name": "op",
+        "kind": "comparison",
+        "optional": false
+      },
+      {
+        "name": "amount",
+        "kind": "value",
+        "optional": false
+      },
+      {
+        "name": "fallback",
+        "kind": "value",
+        "optional": true
+      }
+    ],
+    "portal": [
+      {
+        "name": "portalType",
+        "kind": "portal",
+        "optional": false
+      }
+    ]
+  },
+  "actionsToKws": {
+    "ACTION_BAR": "actionBar",
+    "APPLY_INVENTORY_LAYOUT": "applyLayout",
+    "APPLY_POTION_EFFECT": "applyPotion",
+    "CANCEL_EVENT": "cancelEvent",
+    "CHANGE_HEALTH": "changeHealth",
+    "CHANGE_HUNGER": "hungerLevel",
+    "CHANGE_MAX_HEALTH": "maxHealth",
+    "CHANGE_VAR": "var",
+    "CLEAR_POTION_EFFECTS": "clearEffects",
+    "CLOSE_MENU": "closeMenu",
+    "CONDITIONAL": "if",
+    "DROP_ITEM": "dropItem",
+    "ENCHANT_HELD_ITEM": "enchant",
+    "EXIT": "exit",
+    "FAIL_PARKOUR": "failParkour",
+    "PARKOUR_CHECKPOINT": "parkCheck",
+    "FUNCTION": "function",
+    "GIVE_EXPERIENCE_LEVELS": "xpLevel",
+    "GIVE_ITEM": "giveItem",
+    "HEAL": "fullHeal",
+    "KILL": "kill",
+    "LAUNCH": "launchTarget",
+    "MESSAGE": "chat",
+    "PAUSE": "pause",
+    "PLAY_SOUND": "sound",
+    "RANDOM": "random",
+    "REMOVE_ITEM": "removeItem",
+    "RESET_INVENTORY": "resetInventory",
+    "SEND_TO_LOBBY": "lobby",
+    "SET_COMPASS_TARGET": "compassTarget",
+    "SET_GAMEMODE": "gamemode",
+    "SET_GROUP": "changePlayerGroup",
+    "SET_MENU": "displayMenu",
+    "SET_PLAYER_TIME": "playerTime",
+    "SET_PLAYER_WEATHER": "playerWeather",
+    "SET_TEAM": "setTeam",
+    "SET_VELOCITY": "changeVelocity",
+    "TELEPORT": "tp",
+    "TITLE": "title",
+    "TOGGLE_NAMETAG_DISPLAY": "displayNametag",
+    "USE_HELD_ITEM": "consumeItem"
+  },
+  "conditionsToKws": {
+    "BLOCK_TYPE": "blockType",
+    "COMPARE_DAMAGE": "damageAmount",
+    "COMPARE_HEALTH": "health",
+    "COMPARE_HUNGER": "hunger",
+    "COMPARE_MAX_HEALTH": "maxHealth",
+    "COMPARE_PLACEHOLDER": "placeholder",
+    "COMPARE_VAR": "var",
+    "DAMAGE_CAUSE": "damageCause",
+    "FISHING_ENVIRONMENT": "fishingEnv",
+    "IS_DOING_PARKOUR": "doingParkour",
+    "IS_FLYING": "isFlying",
+    "IS_IN_REGION": "inRegion",
+    "IS_ITEM": "isItem",
+    "IS_SNEAKING": "isSneaking",
+    "PORTAL_TYPE": "portal",
+    "PVP_ENABLED": "canPvp",
+    "REQUIRE_GAMEMODE": "gamemode",
+    "REQUIRE_GROUP": "hasGroup",
+    "REQUIRE_ITEM": "hasItem",
+    "REQUIRE_PERMISSION": "hasPermission",
+    "REQUIRE_POTION_EFFECT": "hasPotion",
+    "REQUIRE_TEAM": "hasTeam"
+  },
+  "actionNames": {
+    "APPLY_POTION_EFFECT": "Apply Potion Effect",
+    "CLEAR_POTION_EFFECTS": "Clear All Potion Effects",
+    "FAIL_PARKOUR": "Fail Parkour",
+    "PARKOUR_CHECKPOINT": "Parkour Checkpoint",
+    "GIVE_EXPERIENCE_LEVELS": "Give Experience Levels",
+    "GIVE_ITEM": "Give Item",
+    "REMOVE_ITEM": "Remove Item",
+    "SEND_TO_LOBBY": "Send to Lobby",
+    "CONDITIONAL": "Conditional",
+    "SET_GROUP": "Change Player's Group",
+    "KILL": "Kill Player",
+    "HEAL": "Full Heal",
+    "TITLE": "Display Title",
+    "ACTION_BAR": "Display Action Bar",
+    "RESET_INVENTORY": "Reset Inventory",
+    "CHANGE_MAX_HEALTH": "Change Max Health",
+    "CHANGE_VAR": "Change Variable",
+    "CHANGE_HEALTH": "Change Health",
+    "MESSAGE": "Send a Chat Message",
+    "EXIT": "Exit",
+    "RANDOM": "Random Action",
+    "SET_VELOCITY": "Change Velocity",
+    "TELEPORT": "Teleport Player",
+    "CANCEL_EVENT": "Cancel Event",
+    "PLAY_SOUND": "Play Sound",
+    "SET_COMPASS_TARGET": "Set Compass Target",
+    "SET_GAMEMODE": "Set Gamemode",
+    "CHANGE_HUNGER": "Change Hunger Level",
+    "FUNCTION": "Trigger Function",
+    "APPLY_INVENTORY_LAYOUT": "Apply Inventory Layout",
+    "ENCHANT_HELD_ITEM": "Enchant Held Item",
+    "PAUSE": "Pause Execution",
+    "SET_TEAM": "Set Player Team",
+    "SET_MENU": "Display Menu",
+    "CLOSE_MENU": "Close Menu",
+    "USE_HELD_ITEM": "Use/Remove Held Item",
+    "DROP_ITEM": "Drop Item",
+    "LAUNCH": "Launch to Target",
+    "SET_PLAYER_WEATHER": "Set Player Weather",
+    "SET_PLAYER_TIME": "Set Player Time",
+    "TOGGLE_NAMETAG_DISPLAY": "Toggle Nametag Display"
+  },
+  "conditionNames": {
+    "REQUIRE_GROUP": "Required Group",
+    "COMPARE_VAR": "Variable Requirement",
+    "REQUIRE_PERMISSION": "Required Permission",
+    "IS_IN_REGION": "Within Region",
+    "REQUIRE_ITEM": "Has Item",
+    "IS_DOING_PARKOUR": "Doing Parkour",
+    "REQUIRE_POTION_EFFECT": "Has Potion Effect",
+    "IS_SNEAKING": "Player Sneaking",
+    "IS_FLYING": "Player Flying",
+    "COMPARE_HEALTH": "Player Health",
+    "COMPARE_MAX_HEALTH": "Max Player Health",
+    "COMPARE_HUNGER": "Player Hunger",
+    "REQUIRE_GAMEMODE": "Required Gamemode",
+    "COMPARE_PLACEHOLDER": "Placeholder Number Requirement",
+    "REQUIRE_TEAM": "Required Team",
+    "DAMAGE_CAUSE": "Damage Cause",
+    "PVP_ENABLED": "PvP Enabled",
+    "FISHING_ENVIRONMENT": "Fishing Environment",
+    "PORTAL_TYPE": "Portal Type",
+    "BLOCK_TYPE": "Block Type",
+    "IS_ITEM": "Is Item",
+    "COMPARE_DAMAGE": "Damage Amount"
+  },
+  "placeholderSpecs": [
+    {
+      "name": "server.name",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "server.shortname",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.name",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.ping",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.health",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.maxhealth",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.hunger",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.experience",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.level",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.version",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.protocol",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.gamemode",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.region.name",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.location.x",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.location.y",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.location.z",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.location.pitch",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.location.yaw",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.pos.x",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.pos.y",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.pos.z",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.pos.pitch",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.pos.yaw",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.block.x",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.block.y",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.block.z",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.group.name",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.group.tag",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.group.priority",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.group.color",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.team.name",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.team.tag",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.team.color",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "player.team.players",
+      "valueType": "number",
+      "args": "team"
+    },
+    {
+      "name": "player.parkour.ticks",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "player.parkour.formatted",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "house.name",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "house.guests",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "house.cookies",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "house.visitingrules",
+      "valueType": "string",
+      "args": "none"
+    },
+    {
+      "name": "house.players",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.day",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.month",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.year",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.hour",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.minute",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.seconds",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.unix",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "date.unix.ms",
+      "valueType": "number",
+      "args": "none"
+    },
+    {
+      "name": "var.player",
+      "valueType": "number",
+      "args": "var"
+    },
+    {
+      "name": "var.global",
+      "valueType": "number",
+      "args": "var"
+    },
+    {
+      "name": "var.team",
+      "valueType": "number",
+      "args": "teamVar"
+    },
+    {
+      "name": "stat.player",
+      "valueType": "number",
+      "args": "var"
+    },
+    {
+      "name": "stat.global",
+      "valueType": "number",
+      "args": "var"
+    },
+    {
+      "name": "stat.team",
+      "valueType": "number",
+      "args": "teamVar"
+    },
+    {
+      "name": "random.int",
+      "valueType": "number",
+      "args": "integerBounds"
+    },
+    {
+      "name": "random.whole",
+      "valueType": "number",
+      "args": "integerBounds"
+    },
+    {
+      "name": "random.decimal",
+      "valueType": "number",
+      "args": "numberBounds"
+    }
+  ],
+  "operationSymbols": {
+    "Set": "=",
+    "Increment": "+=",
+    "Decrement": "-=",
+    "Multiply": "*=",
+    "Divide": "/=",
+    "Left Shift": "<<=",
+    "Arithmetic Right Shift": ">>=",
+    "Logical Right Shift": ">>>=",
+    "Bitwise AND": "&=",
+    "Bitwise OR": "|=",
+    "Bitwise XOR": "^=",
+    "Unset": "unset"
+  },
+  "comparisonSymbols": {
+    "Equal": "==",
+    "Less Than": "<",
+    "Less Than or Equal": "<=",
+    "Greater Than": ">",
+    "Greater Than or Equal": ">="
+  },
+  "shorthands": [
+    "globalstat",
+    "stat",
+    "teamstat",
+    "globalvar",
+    "var",
+    "teamvar",
+    "randomint",
+    "health",
+    "maxHealth",
+    "hunger",
+    "locX",
+    "locY",
+    "locZ",
+    "unix"
+  ],
+  "deadActionKws": [
+    "balanceTeam"
+  ],
   "actionLimits": {
     "CONDITIONAL": 25,
     "SET_GROUP": 1,

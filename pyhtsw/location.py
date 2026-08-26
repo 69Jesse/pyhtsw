@@ -78,8 +78,6 @@ class CustomLocation(Location):
         self.pitch = pitch
 
     def render(self) -> tuple[str, str | None]:
-        # `x y z yaw pitch`, the order htsw's own coordinate parser reads them
-        # in. Its prose reference says pitch first and is wrong.
         parts: list[Coordish] = [self.x, self.y, self.z]
         if self.yaw is not None or self.pitch is not None:
             parts.append(self.yaw if self.yaw is not None else 0)

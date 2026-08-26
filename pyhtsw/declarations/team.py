@@ -43,7 +43,7 @@ class Team(Declared):
     def stat(self, name: str) -> 'TeamStat':
         from pyhtsw.stats.team_stat import TeamStat
 
-        return TeamStat(name, self)
+        return TeamStat(name, team=self)
 
     def players(self) -> PlaceholderCheckable:
         from pyhtsw.placeholders.team import TeamPlayers

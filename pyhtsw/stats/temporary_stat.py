@@ -107,7 +107,8 @@ class TemporaryStat(Stat):
 
     @name.setter
     def name(self, value: str) -> None:  # type: ignore[assignment]
-        pass  # ignore on purpose
+        # `Stat.__init__` assigns it; the number is the identity here.
+        pass
 
     @staticmethod
     def extract_number_from_name(name: str) -> int | None:

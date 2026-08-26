@@ -1,7 +1,7 @@
 from pyhtsw import Container, TeamStat
 
 with Container() as container:
-    t = TeamStat('points', 'red').as_long()
+    t = TeamStat('points', team='red').as_long()
     t.value = 10
 
 assert container.into_htsl() == 'teamvar "points" "red" = 10 true', (

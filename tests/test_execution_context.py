@@ -139,14 +139,14 @@ assert container.into_htsl() == 'var "x" = 1 true', container.into_htsl()
 # loop, which DOES chase the chain transitively, so c ends up holding the
 # resolved numeric value 5.
 with ExecutionContext() as ctx:
-    s0 = PlayerStat('s0').without_auto_unset()
+    s0 = PlayerStat('s0').with_auto_unset(False)
     s0.value = 5
-    a = PlayerStat('a').without_auto_unset()
+    a = PlayerStat('a').with_auto_unset(False)
     a.value = '%var.player/s'
-    b = PlayerStat('b').without_auto_unset()
+    b = PlayerStat('b').with_auto_unset(False)
     b.value = 0
 
-    c = PlayerStat('c').without_auto_unset()
+    c = PlayerStat('c').with_auto_unset(False)
     c.value = '%var.player/a%%var.player/b%%'
 
     # Mid-execution check: at this point c stores the once-substituted
@@ -173,11 +173,11 @@ assert int(ctx.get_raw(c)) == 5, ctx.get_raw(c)
 # through string-mode → substitute → cast, so `c.value = f"{a}"` stores long
 # 123 even though `a` is double 123.0.
 with ExecutionContext() as ctx:
-    a = PlayerStat('a').without_auto_unset()
+    a = PlayerStat('a').with_auto_unset(False)
     a.value = 123.0
-    b = PlayerStat('b').without_auto_unset()
+    b = PlayerStat('b').with_auto_unset(False)
     b.value = a
-    c = PlayerStat('c').without_auto_unset()
+    c = PlayerStat('c').with_auto_unset(False)
     c.value = f'{a}'
 
 assert 'var "b" = %var.player/a%' in ctx.into_htsl(), ctx.into_htsl()

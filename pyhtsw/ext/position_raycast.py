@@ -269,10 +269,10 @@ def create_position_raycast(
         raise ValueError('create_position_raycast needs at least one position')
 
     def player_double(suffix: str) -> PlayerStat:
-        return PlayerStat(f'{stat_prefix}{suffix}').as_double().without_auto_unset()
+        return PlayerStat(f'{stat_prefix}{suffix}').as_double().with_auto_unset(False)
 
     def player_long(suffix: str) -> PlayerStat:
-        return PlayerStat(f'{stat_prefix}{suffix}').as_long().without_auto_unset()
+        return PlayerStat(f'{stat_prefix}{suffix}').as_long().with_auto_unset(False)
 
     look = (player_double('look/x'), player_double('look/y'), player_double('look/z'))
     org = (player_double('pos/x'), player_double('pos/y'), player_double('pos/z'))

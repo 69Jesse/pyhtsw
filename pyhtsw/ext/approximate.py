@@ -109,7 +109,7 @@ def approximate_sqrt(
         assert isinstance(x, Editable)
         x_or_temp4 = x.as_double()
         if isinstance(x_or_temp4, Stat):
-            x_or_temp4 = x_or_temp4.without_auto_unset()
+            x_or_temp4 = x_or_temp4.with_auto_unset(False)
 
     assign_to = assign_to.as_double()
 
@@ -164,7 +164,7 @@ def _reduction_input(
     assert isinstance(x, Editable)
     x = x.as_double()
     if isinstance(x, Stat):
-        x = x.without_auto_unset()
+        x = x.with_auto_unset(False)
     return x
 
 

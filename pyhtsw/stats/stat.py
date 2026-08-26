@@ -114,13 +114,5 @@ class Stat(Editable):
         clone.auto_unset = flag
         return clone
 
-    def without_auto_unset(self) -> Self:
-        """
-        Creates a copy of the current object, with the automatic unset flag set to False.
-        """
-        clone = self.cloned()
-        clone.auto_unset = False
-        return clone
-
     def unset(self) -> None:
         UnsetExpression(self).write()

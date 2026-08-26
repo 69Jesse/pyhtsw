@@ -20,7 +20,7 @@ assert container.into_htsl() == 'chat "Total: %var.global/shared%"', (
 
 
 with Container() as container:
-    t = TeamStat('points', 'red')
+    t = TeamStat('points', team='red')
     chat(f'Red: {t}')
 
 assert container.into_htsl() == 'chat "Red: %var.team/points red%"', (

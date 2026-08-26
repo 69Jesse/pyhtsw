@@ -178,10 +178,7 @@ class Checkable(BaseObject):
     def __str__(self) -> str:
         return self.into_inside_string()
 
-    def as_type(self, internal_type: InternalType, /) -> Self:
-        """
-        Creates a copy of the current object, with the internal type set to the specified type.
-        """
+    def _as_type(self, internal_type: InternalType, /) -> Self:
         clone = self.cloned()
         clone.internal_type = internal_type
         if clone.fallback_value is not None:
@@ -194,25 +191,25 @@ class Checkable(BaseObject):
         """
         Creates a copy of the current object, with the internal type set to LONG.
         """
-        return self.as_type(InternalType.LONG)
+        return self._as_type(InternalType.LONG)
 
     def as_double(self) -> Self:
         """
         Creates a copy of the current object, with the internal type set to DOUBLE.
         """
-        return self.as_type(InternalType.DOUBLE)
+        return self._as_type(InternalType.DOUBLE)
 
     def as_string(self) -> Self:
         """
         Creates a copy of the current object, with the internal type set to STRING.
         """
-        return self.as_type(InternalType.STRING)
+        return self._as_type(InternalType.STRING)
 
     def as_any(self) -> Self:
         """
         Creates a copy of the current object, with the internal type set to ANY.
         """
-        return self.as_type(InternalType.ANY)
+        return self._as_type(InternalType.ANY)
 
     def with_fallback(self, fallback_value: HousingType) -> Self:
         """
@@ -408,7 +405,7 @@ class Checkable(BaseObject):
         from pyhtsw.expression.expression import Expression
         from pyhtsw.stats.temporary_stat import TemporaryStat
 
-        tmp = TemporaryStat.transient().as_type(self.internal_type)
+        tmp = TemporaryStat.transient()._as_type(self.internal_type)
 
         def build_ops(n: int) -> list[Expression]:
             if n == 1:
@@ -449,7 +446,7 @@ class Checkable(BaseObject):
 
         expressions: list[Expression] = []
 
-        temporary_stat_1 = TemporaryStat.transient().as_type(self.internal_type)
+        temporary_stat_1 = TemporaryStat.transient()._as_type(self.internal_type)
         expressions.append(
             BinaryExpression(
                 left=temporary_stat_1,
@@ -489,7 +486,7 @@ class Checkable(BaseObject):
             ),
         )
 
-        temporary_stat_2 = TemporaryStat.transient().as_type(self.internal_type)
+        temporary_stat_2 = TemporaryStat.transient()._as_type(self.internal_type)
         expressions.append(
             BinaryExpression(
                 left=temporary_stat_2,
@@ -694,7 +691,7 @@ class Checkable(BaseObject):
         from pyhtsw.expression.expression import Expression
         from pyhtsw.stats.temporary_stat import TemporaryStat
 
-        tmp = TemporaryStat.transient().as_type(self.internal_type)
+        tmp = TemporaryStat.transient()._as_type(self.internal_type)
         expressions: list[Expression] = [
             BinaryExpression(tmp, self, BinaryOperator.Set),
             ConditionalExpression(
@@ -777,11 +774,6 @@ class Checkable(BaseObject):
             other,
             ComparisonOperator.LessThanOrEqual,
         )
-
-    @property
-    def value(self) -> Self:
-        clone = self.cloned()
-        return clone
 
     @abstractmethod
     def __repr__(self) -> str:

@@ -123,7 +123,7 @@ def _run_placeholder(
     if kind == 'var.team':
         key = args[0] if args else ''
         team = args[1] if len(args) > 1 else ''
-        return resolve_var(TeamStat(key, team), args[2] if len(args) > 2 else None)
+        return resolve_var(TeamStat(key, team=team), args[2] if len(args) > 2 else None)
     if kind == 'stat.player':
         return resolve_stat(PlayerStat(args[0] if args else ''))
     if kind == 'stat.global':
@@ -131,7 +131,7 @@ def _run_placeholder(
     if kind == 'stat.team':
         key = args[0] if args else ''
         team = args[1] if len(args) > 1 else ''
-        return resolve_stat(TeamStat(key, team))
+        return resolve_stat(TeamStat(key, team=team))
 
     # Any other placeholder type falls back to the simulator's registered
     # placeholder classes (dates, player values, ...), mirroring htsw's other

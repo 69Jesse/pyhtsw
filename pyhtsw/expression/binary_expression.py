@@ -264,7 +264,7 @@ class BinaryExpression[
             right: Checkable | HousingType = minimize(expr.right)
 
             internal_type = BinaryExpression._operand_result_type(left, right)
-            stat = TemporaryStat.transient().as_type(internal_type)
+            stat = TemporaryStat.transient()._as_type(internal_type)
             expressions.append(
                 BinaryExpression(
                     left=stat,
@@ -931,7 +931,7 @@ class BinaryExpression[
         yield from expressions
 
     def create_temp_stat_and_write(self) -> TemporaryStat:
-        stat = TemporaryStat.transient().as_type(self.internal_type)
+        stat = TemporaryStat.transient()._as_type(self.internal_type)
 
         expressions = BinaryExpression(
             left=stat,
@@ -948,7 +948,7 @@ class BinaryExpression[
         return stat
 
     def materialize(self) -> tuple[list[Expression], TemporaryStat]:
-        stat = TemporaryStat.transient().as_type(self.internal_type)
+        stat = TemporaryStat.transient()._as_type(self.internal_type)
         expressions = BinaryExpression(
             left=stat,
             right=self.cloned(),

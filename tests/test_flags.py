@@ -62,9 +62,9 @@ assert htsl == 'var "s" = "Alice" true', htsl
 # the source type. With the flag off, `c` would store long 123.
 with NoTypeCasting():
     with ExecutionContext() as ctx:
-        a = PlayerStat('a').without_auto_unset()
+        a = PlayerStat('a').with_auto_unset(False)
         a.value = 123.0
-        c = PlayerStat('c').without_auto_unset()
+        c = PlayerStat('c').with_auto_unset(False)
         c.value = f'{a}'
 
 assert isinstance(ctx.get_raw(c), float), type(ctx.get_raw(c))

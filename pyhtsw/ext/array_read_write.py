@@ -30,7 +30,7 @@ def make_temps(
 ) -> tuple[PlayerStat, ...]:
     width = len(template)
     return tuple(
-        PlayerStat(f'tmp{i * width + k}').as_type(InternalType.from_value(template[k]))
+        PlayerStat(f'tmp{i * width + k}')._as_type(InternalType.from_value(template[k]))
         for k in range(width)
     )
 
@@ -284,7 +284,7 @@ def _emit_fast_read(
         raise ValueError(f'array_read fast path: width {width} too large')
     tmp_str_stats = [PlayerStat(names[k]) for k in range(width)]
     n_stats = [
-        PlayerStat(names[width + k]).as_long().without_auto_unset()
+        PlayerStat(names[width + k]).as_long().with_auto_unset(False)
         for k in range(width)
     ]
 
@@ -327,7 +327,7 @@ def _emit_fast_read(
         # consumes the composed reference and assigns the value in one action.
         # Widening the left side to ANY stops a typed coercion from quoting it
         # into one-pass string semantics.
-        output[k].as_type(InternalType.ANY).value = tmp_str_k
+        output[k]._as_type(InternalType.ANY).value = tmp_str_k
 
 
 type MaybeSequence[T] = T | Sequence[T]
@@ -431,7 +431,7 @@ def _emit_fast_write(
         raise ValueError(f'array_write fast path: width {width} too large')
     # `_emit_fast_read` claims pool[:3 * width] for itself.
     q_stats = [PlayerStat(pool[3 * width + k]) for k in range(width)]
-    d = PlayerStat(pool[4 * width]).as_long().without_auto_unset()
+    d = PlayerStat(pool[4 * width]).as_long().with_auto_unset(False)
     lo = [PlayerStat(f'hw{k}_0').as_long() for k in range(width)]
     hi = [PlayerStat(f'hw{k}_{_HI_KEY}').as_long() for k in range(width)]
     # The un-rebaked part of the table may be unset (first call), so a blit
@@ -463,7 +463,7 @@ def _emit_fast_write(
                 # that; the quoted form a typed left side would coerce it into
                 # stops after one pass and yields the text. Widening the left
                 # side to ANY suppresses that coercion.
-                item[k].as_type(InternalType.ANY).value += slots[j][k]
+                item[k]._as_type(InternalType.ANY).value += slots[j][k]
 
     with strict_order(), preserved():
         # lo_k = diff_k = input[k] - items[index][k], via one composed read.
@@ -661,7 +661,7 @@ def _emit_staged_write(
     if 2 * width > len(pool):
         raise ValueError(f'array_write staged path: width {width} too large')
     counters = [
-        PlayerStat(pool[k]).as_long().without_auto_unset() for k in range(width)
+        PlayerStat(pool[k]).as_long().with_auto_unset(False) for k in range(width)
     ]
     bakers = [PlayerStat(pool[width + k]) for k in range(width)]
     staged = [[TemporaryStat() for _ in range(width)] for _ in range(cs)]
@@ -694,7 +694,7 @@ def _emit_staged_write(
             template = f'%var.player/{p_k.name}%%var.player/{d_k.name}%{tail}'
             for j in range(cs):
                 set_string(bakers[k], template)
-                staged[j][k].as_type(InternalType.ANY).value = bakers[k]
+                staged[j][k]._as_type(InternalType.ANY).value = bakers[k]
                 if j != cs - 1:
                     d_k.value += coeff
 
@@ -705,7 +705,7 @@ def _emit_staged_write(
                         # A string-typed left side copies in one quoted pass,
                         # so a value that looks like a placeholder is not
                         # resolved a second time.
-                        staged[j][k].as_type(InternalType.STRING).value = input[k]
+                        staged[j][k]._as_type(InternalType.STRING).value = input[k]
                     else:
                         staged[j][k].value = input[k]
 
@@ -724,7 +724,7 @@ def _emit_staged_write(
                             # temp's raw numeric value - exact, and without
                             # the literal L/D tail a quoted typed read would
                             # keep as text.
-                            item.as_type(InternalType.ANY).value = staged[j][k]
+                            item._as_type(InternalType.ANY).value = staged[j][k]
 
 
 def array_read(

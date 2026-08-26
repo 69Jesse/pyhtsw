@@ -22,8 +22,8 @@ def format_time_string(
     hours = TemporaryStat().as_long()
     minutes = TemporaryStat().as_long()
     scratch = TemporaryStat().as_long()
-    buffer = PlayerStat('s0').as_string().without_auto_unset()
-    piece = PlayerStat('s1').as_string().without_auto_unset()
+    buffer = PlayerStat('s0').as_string().with_auto_unset(False)
+    piece = PlayerStat('s1').as_string().with_auto_unset(False)
 
     seconds.value = raw_seconds
     with IfAll(seconds < 0):
@@ -83,4 +83,4 @@ def format_time_string(
                 buffer.value = f'{piece}{label}'
                 has_content.value = 1
 
-    output.without_auto_unset().value = buffer
+    output.with_auto_unset(False).value = buffer

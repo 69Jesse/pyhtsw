@@ -88,7 +88,7 @@ class InternalType(Enum):
         from pyhtsw.checkable import Checkable
 
         if isinstance(value, Checkable):
-            return value.as_type(self)
+            return value._as_type(self)
         else:
             return self.type_compatible_housing_type(value)
 

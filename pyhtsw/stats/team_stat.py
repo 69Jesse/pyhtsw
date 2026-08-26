@@ -18,7 +18,7 @@ def _team_stat_factory(match: re.Match[str]) -> 'TeamStat':
     parts = _split_parts(match.group(1))
     name = parts[0] if len(parts) > 0 else ''
     team = parts[1] if len(parts) > 1 else None
-    stat = TeamStat(name, team)
+    stat = TeamStat(name, team=team)
     if len(parts) > 2:
         stat = stat.with_fallback(housing_type_from_string(parts[2]))
     return stat
@@ -36,8 +36,8 @@ class TeamStat(
         self,
         name: str,
         /,
-        team: 'Team | str | None' = None,
         *,
+        team: 'Team | str | None' = None,
         internal_type: InternalType = InternalType.ANY,
         fallback_value: HousingType | None = None,
         auto_unset: bool = True,

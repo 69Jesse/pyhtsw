@@ -129,7 +129,7 @@ def create_raycast(
     def make_global(suffix: str, *, double: bool) -> GlobalStat:
         stat = GlobalStat(f'{stat_prefix}{suffix}')
         stat = stat.as_double() if double else stat.as_long()
-        return stat.without_auto_unset()
+        return stat.with_auto_unset(False)
 
     active = make_global('active', double=False)
     dist2 = make_global('dist2', double=True)

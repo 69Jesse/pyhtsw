@@ -90,7 +90,7 @@ class Container:
     blocks: list['Block']
     contexts: list[ExpressionContext]
     importables: list['Importable']
-    importable_keys: set[tuple[str, str]]
+    importables_by_key: dict[tuple[str, str], 'Importable']
     project: 'Project | None'
     item_plan: 'ItemPlan | None'
     _consumer_reserved: set[int]
@@ -115,7 +115,7 @@ class Container:
         self.add_block(GlobalBlock())
         self.contexts = []
         self.importables = []
-        self.importable_keys = set()
+        self.importables_by_key = {}
         self.project = None
         self.item_plan = None
         self._consumer_reserved = set()
@@ -127,7 +127,10 @@ class Container:
         self.ignore_scope = ignore_scope
 
     def has_importable(self, kind: str, name: str) -> bool:
-        return (kind, name) in self.importable_keys
+        return (kind, name) in self.importables_by_key
+
+    def find_importable(self, kind: str, name: str) -> 'Importable | None':
+        return self.importables_by_key.get((kind, name))
 
     def report_action_limit_violation(self, block: 'Block', leftover: int) -> None:
         """Record a block that ran out of room and cannot carve out a follow-up
@@ -175,12 +178,12 @@ class Container:
 
     def register_importable(self, importable: 'Importable') -> None:
         key = (importable.kind, importable.identifier())
-        if key in self.importable_keys:
+        if key in self.importables_by_key:
             raise RuntimeError(
                 f'An importable of kind "{importable.kind}" named '
                 f'"{importable.identifier()}" already exists. Names must be unique.',
             )
-        self.importable_keys.add(key)
+        self.importables_by_key[key] = importable
         self.importables.append(importable)
 
     def expressions(self) -> list['Expression']:
@@ -324,7 +327,7 @@ class Container:
 
             ids: dict[int, None] = {}
             # Computed expressions passed directly as a field (e.g. an action
-            # argument) only become a sentinel when into_htsl stringifies them â€”
+            # argument) only become a sentinel when into_htsl stringifies them —
             # register them now so they share this statement's materialize batch.
             # BinaryExpression/CompoundExpression handle their own operands via
             # the flatten path, so we never materialize their fields here.

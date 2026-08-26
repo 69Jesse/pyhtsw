@@ -26,11 +26,21 @@ assert container.into_htsl() == (
 ), container.into_htsl()
 
 
-# Pitch and yaw go through the same join, so they drop it too
+# Yaw and pitch go through the same join, so they drop it too. They are
+# emitted in that order -- `x y z yaw pitch` -- and positionally they come in
+# that order too.
 with Container() as container:
-    pitch = PlayerStat('pitch').as_double()
-    teleport_player(Location.custom(1, 2, 3, pitch, 90.0))
+    yaw = PlayerStat('yaw').as_double()
+    teleport_player(Location.custom(1, 2, 3, yaw, 90.0))
 
 assert container.into_htsl() == (
-    'tp "custom_coordinates" "1 2 3 %var.player/pitch% 90.0" false'
+    'tp "custom_coordinates" "1 2 3 %var.player/yaw% 90.0" false'
 ), container.into_htsl()
+
+
+with Container() as container:
+    teleport_player(Location.custom(1, 2, 3, pitch=10.0, yaw=20.0))
+
+assert container.into_htsl() == ('tp "custom_coordinates" "1 2 3 20.0 10.0" false'), (
+    container.into_htsl()
+)

@@ -1,10 +1,12 @@
 from typing import TYPE_CHECKING
 
 from ..placeholders import PlaceholderCheckable
+from .declaration import resolve_declaration
 
 if TYPE_CHECKING:
     from ..importable import TeamImportable
     from ..stats.team_stat import TeamStat
+    from ..types import ALL_HOUSING_COLORS
 
 
 __all__ = ('Team',)
@@ -26,6 +28,29 @@ class Team:
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def _declaration(self, field: str) -> 'TeamImportable':
+        from ..importable import TeamImportable
+
+        return resolve_declaration(
+            self.__htsw_importable__,
+            TeamImportable,
+            self.name,
+            field,
+            'create_team',
+        )
+
+    @property
+    def tag(self) -> str | None:
+        return self._declaration('tag').tag
+
+    @property
+    def color(self) -> 'ALL_HOUSING_COLORS | None':
+        return self._declaration('color').color
+
+    @property
+    def friendly_fire(self) -> bool | None:
+        return self._declaration('friendly_fire').friendly_fire
 
     def stat(self, key: str) -> 'TeamStat':
         from ..stats.team_stat import TeamStat

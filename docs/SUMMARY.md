@@ -6,6 +6,7 @@
 - [Exporting](./exporting.md)
 - [Importables](./importables.md)
 - [Items](./items.md)
+- [Inlining](./inlining.md)
 - [Locations](./locations.md)
 - [Expressions](./expressions.md)
 - [Scoreboards](./scoreboards.md)

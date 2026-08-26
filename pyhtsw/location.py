@@ -30,10 +30,10 @@ class Location:
         x: Coordish,
         y: Coordish,
         z: Coordish,
-        pitch: Coordish | None = None,
         yaw: Coordish | None = None,
+        pitch: Coordish | None = None,
     ) -> 'CustomLocation':
-        return CustomLocation(x, y, z, pitch, yaw)
+        return CustomLocation(x, y, z, yaw, pitch)
 
     @staticmethod
     def house_spawn() -> 'HouseSpawnLocation':
@@ -68,20 +68,22 @@ class CustomLocation(Location):
         x: Coordish,
         y: Coordish,
         z: Coordish,
-        pitch: Coordish | None = None,
         yaw: Coordish | None = None,
+        pitch: Coordish | None = None,
     ) -> None:
         self.x = x
         self.y = y
         self.z = z
-        self.pitch = pitch
         self.yaw = yaw
+        self.pitch = pitch
 
     def render(self) -> tuple[str, str | None]:
+        # `x y z yaw pitch`, the order htsw's own coordinate parser reads them
+        # in. Its prose reference says pitch first and is wrong.
         parts: list[Coordish] = [self.x, self.y, self.z]
-        if self.pitch is not None or self.yaw is not None:
-            parts.append(self.pitch if self.pitch is not None else 0)
+        if self.yaw is not None or self.pitch is not None:
             parts.append(self.yaw if self.yaw is not None else 0)
+            parts.append(self.pitch if self.pitch is not None else 0)
         with NoFallbackValues():
             coordinates = ' '.join(str(part) for part in parts)
         return type(self).keyword, coordinates

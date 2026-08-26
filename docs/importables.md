@@ -16,8 +16,17 @@ def tick() -> None:
     chat('one second passed')
 ```
 
-- `repeat_ticks` runs the function on an interval (optional).
+- `repeat_ticks` runs the function on an interval (optional). It is part of
+  the function's definition, so the project is the source of truth for it:
+  re-importing a looping function without `repeat_ticks` stops the loop in
+  the house.
 - `icon` is an `Item` or `Item` subclass (optional).
+
+A house may hold **200 functions** in total, so a function is worth declaring
+only when the actions have to be one shared thing. A menu slot or command whose
+whole body triggers a single-use function should hold the actions itself
+instead; an item's behaviour should always be a function. See
+[Inlining](./inlining.md).
 
 ## Events
 
@@ -133,6 +142,59 @@ class Guide(
 - `left_click_redirect=True` makes a left click run the right-click actions.
 - `NPC.Equipment(helmet=, chestplate=, leggings=, boots=, hand=)` — each is an
   `Item` or `Item` subclass.
+- A handler taking one argument receives the NPC it belongs to, so it can read
+  its own name and position instead of closing over them.
+
+#### create_npc
+
+A class statement cannot be written in a loop, so NPCs generated from data use
+`create_npc`, which returns the NPC as a value. It goes anywhere a subclass does.
+
+```python
+from pyhtsw import chat, create_npc
+
+
+for enemy in ENEMIES:
+    def strike(enemy=enemy) -> None:
+        chat(f'You strike the {enemy.name}!')
+
+    create_npc(enemy.name, enemy.pos, skin='Steve', on_click=strike)
+```
+
+Handlers can also be attached afterwards, which reads better when there is only
+one NPC and its body is long:
+
+```python
+smith = create_npc('&6Blacksmith', (10, 65, 10), look_at_players=True)
+
+
+@smith.click
+def forge() -> None:
+    display_menu(FORGE)
+```
+
+`@npc.left_click`, `@npc.right_click` and `@npc.click` are the same names as the
+class-body decorators — used on a created NPC they attach the handler, used on
+the class they tag a method.
+
+#### on_click
+
+Housing has no "either button" action list. A left click can only be pointed at
+the right-click one, which is what `leftClickRedirect` does, so wanting an NPC
+that just *responds to being clicked* costs two settings that have to agree.
+
+`on_click` is that pair under one name: it fills the right-click list and turns
+the redirect on.
+
+```python
+create_npc('&aShopkeeper', (8, 65, 8), on_click=lambda: display_menu(SHOP))
+```
+
+It is mutually exclusive with `on_left_click`, `on_right_click` and
+`left_click_redirect` — the overloads make passing both a type error, and it is
+rejected at runtime too, in whichever order they are applied. Reach for the pair
+when the two buttons genuinely do different things, and `on_click` when they
+don't.
 
 ### Menu
 
@@ -262,6 +324,19 @@ Red.stat('kills').value += 1
 - `permissions={'Fly': True, 'Ban': False}` is the raw 1:1 form, accepted
   alongside `allow`/`deny` as an escape hatch.
 
+Every declared field reads back off the value itself — `VIP.priority`,
+`VIP.color`, `Red.friendly_fire` — including through a bare `Group('VIP')`,
+since that compares equal to the declared one. A field left out of the
+declaration reads as `None`; `permissions` comes back as a read-only view.
+Reading a name that was never declared in the current container raises, rather
+than answering `None` for a group that does not exist here:
+
+```python
+Group('VIP').priority        # 5
+create_group('Plain').tag    # None
+Group('Ghost').priority      # RuntimeError: ... was never declared ...
+```
+
 ## Commands
 
 A command owns a single action list, so it is a decorator like
@@ -283,6 +358,10 @@ def warp() -> None:
 
 Housing has no trigger-command action, so unlike a `Function` the returned
 `Command` cannot be called from other actions.
+
+A command owning its own list is also why a command that only triggers one
+single-use function should hold that function's actions directly — see
+[Inlining](./inlining.md).
 
 ## Binding a house
 

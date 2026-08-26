@@ -750,7 +750,7 @@ def _registered_twin(
 def _free_item_name(base: str, count: int) -> str:
     from ..container import get_current_container
 
-    taken = get_current_container().importable_keys
+    taken = get_current_container().importables_by_key
     if ('items', base) not in taken:
         return base
     sized = base if count <= 1 else f'{base} x{count}'

@@ -82,6 +82,25 @@ Menu slots and NPC equipment are unaffected: htsw's schema types those fields as
 the Project view, and they share the file with any action that uses the same
 item.
 
+## Behaviour
+
+An item's click handler should trigger a function rather than do the work
+inline. Housing binds the actions into every copy of the item that has already
+been handed out, and those copies cannot be re-bound; the function they trigger
+can still be edited. `consumeItem` is the one action that has to stay on the
+item. See [Inlining](./inlining.md).
+
+## Matching an item
+
+`HasItem` (and the actions that take an item to find) defaults to
+`what_to_check='metadata'`, which compares the **whole** NBT — name, lore,
+enchantments, count-independent tags, all of it. So editing an item's lore does
+not update the copies already in circulation; it makes them stop matching, and a
+check written against the new item quietly sees nothing.
+
+Pass `what_to_check='item_type'` when only the material matters, and treat a
+lore edit on an item players already hold as a migration rather than a tweak.
+
 ## Copies
 
 `item.cloned(...)` overrides only what you name and keeps the rest, click

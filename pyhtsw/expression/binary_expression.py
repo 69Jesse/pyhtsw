@@ -74,10 +74,9 @@ _BARRIER_TYPES: tuple[type, ...] | None = None
 def _barrier_types() -> tuple[type, ...]:
     global _BARRIER_TYPES
     if _BARRIER_TYPES is None:
-        from ..actions.pause_execution import PauseExecutionExpression
-        from ..actions.trigger_function import TriggerFunctionExpression
+        from ..schedule import get_control_types
 
-        _BARRIER_TYPES = (PauseExecutionExpression, TriggerFunctionExpression)
+        _BARRIER_TYPES = get_control_types()
     return _BARRIER_TYPES
 
 

@@ -5,7 +5,7 @@ from pyhtsw import (
     Container,
     chat,
     cleanup_stale_files,
-    create_function,
+    function,
     set_projects_folder,
 )
 
@@ -28,7 +28,7 @@ root = tmp / 'cleanup-test'
 
 with Container() as container:
 
-    @create_function('Foo')
+    @function('Foo')
     def foo() -> None:
         chat('hi')
 

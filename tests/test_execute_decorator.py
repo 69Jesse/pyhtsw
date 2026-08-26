@@ -1,8 +1,8 @@
-from pyhtsw import ExecutionContext, chat, create_function, execute
+from pyhtsw import ExecutionContext, chat, execute, function
 
 with ExecutionContext():
 
-    @create_function('execute decorator test')
+    @function('execute decorator test')
     def func() -> None:
         chat('hello from the test function')
 

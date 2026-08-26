@@ -387,14 +387,14 @@ class FunctionImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from pyhtsw.declarations.function import create_function
+        from pyhtsw.declarations.function import function
 
-        function = create_function(
+        value = function(
             name=self.name,
             repeat_ticks=self.repeat_ticks,
             icon=self.icon,
         )(_block_replayer(self.block))
-        function.__htsw_importable__.module = self.module
+        value.__htsw_importable__.module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:
         entry: dict[str, Any] = {'name': self.name}
@@ -424,10 +424,10 @@ class EventImportable(Importable):
         self.event = name
 
     def reexport(self) -> None:
-        from pyhtsw.declarations.event import create_event
+        from pyhtsw.declarations.event import event
 
-        event = create_event(self.event)(_block_replayer(self.block))  # type: ignore[arg-type]
-        event.declaration().module = self.module
+        value = event(self.event)(_block_replayer(self.block))  # type: ignore[arg-type]
+        value.declaration().module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:
         return {
@@ -922,15 +922,15 @@ class CommandImportable(Importable):
         return self.name
 
     def reexport(self) -> None:
-        from pyhtsw.declarations.command import create_command
+        from pyhtsw.declarations.command import command
 
-        command = create_command(
+        value = command(
             name=self.name,
             mode=self.mode,
             required_priority=self.required_priority,
             listed=self.listed,
         )(_block_replayer(self.block))
-        command.__htsw_importable__.module = self.module
+        value.__htsw_importable__.module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:
         entry: dict[str, Any] = {'name': self.name}

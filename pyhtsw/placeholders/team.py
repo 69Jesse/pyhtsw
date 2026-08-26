@@ -4,6 +4,7 @@ from typing import Self, final
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.compiler.schedule import Effects, Resource
+from pyhtsw.declarations.declared import declared_name
 from pyhtsw.declarations.team import Team
 from pyhtsw.execute.backend_type import BackendType, JavaLong
 from pyhtsw.expression.housing_type import HousingType
@@ -83,14 +84,14 @@ class TeamPlayersPlaceholder(
         effects=Effects.of(reads=(Resource.TEAM,)),
     )
 
-    team: Team | None
+    team: str | None
 
-    def __init__(self, team: Team | str | None = None) -> None:
+    def __init__(self, team: 'Team | str | None' = None) -> None:
+        team = declared_name(team)
         if team is None:
             key = '%player.team.players%'
         else:
-            team = team if isinstance(team, Team) else Team(team)
-            key = f'%player.team.players/{team.name}%'
+            key = f'%player.team.players/{team}%'
         self.team = team
         super().__init__(
             placeholder=key,
@@ -103,7 +104,7 @@ class TeamPlayersPlaceholder(
     def cloned(
         self,
         *,
-        team: Team | str | None | Missing = MISSING,
+        team: 'Team | str | None | Missing' = MISSING,
         internal_type: InternalType | Missing = MISSING,
         fallback_value: HousingType | None | Missing = MISSING,
     ) -> Self:

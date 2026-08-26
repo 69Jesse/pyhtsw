@@ -5,13 +5,12 @@ from pathlib import Path
 from pyhtsw import (
     NPC,
     Container,
+    Item,
+    Menu,
+    Region,
     chat,
-    create_event,
-    create_function,
-    create_item,
-    create_menu,
-    create_npc,
-    create_region,
+    event,
+    function,
     give_item,
     set_projects_folder,
 )
@@ -20,15 +19,15 @@ tmp = Path(tempfile.mkdtemp())
 set_projects_folder(tmp, save=False)
 
 with Container() as container:
-    wand = create_item('blaze_rod', name='&aMagic Wand')
+    wand = Item('blaze_rod', name='&aMagic Wand')
 
     @wand.right_click
     def on_right() -> None:
         chat('used the wand')
 
-    border = create_item('black_stained_glass_pane', name=' ', importable_name='Border')
+    border = Item('black_stained_glass_pane', name=' ', importable_name='Border')
 
-    shop = create_menu('Shop', 6)
+    shop = Menu('Shop', 6)
     shop.place(border, x=0)
     shop.place(border, xy_check=lambda x, y: (x + y) % 2 == 0)
 
@@ -36,13 +35,13 @@ with Container() as container:
     def buy() -> None:
         chat('bought')
 
-    spawn = create_region('Spawn', ((0, 100, 0), (10, 110, 10)))
+    spawn = Region('Spawn', ((0, 100, 0), (10, 110, 10)))
 
     @spawn.on_enter
     def enter() -> None:
         chat('entered')
 
-    merchant = create_npc(
+    merchant = NPC(
         'Merchant',
         (1, 64, 2),
         skin='Steve',
@@ -54,11 +53,11 @@ with Container() as container:
     def right() -> None:
         chat('hello')
 
-    @create_function('Tick', repeat_ticks=20, icon=wand)
+    @function('Tick', repeat_ticks=20, icon=wand)
     def tick() -> None:
         chat('tick')
 
-    @create_event('Player Join')
+    @event('Player Join')
     def join() -> None:
         give_item(wand)
 

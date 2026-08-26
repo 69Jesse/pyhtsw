@@ -7,7 +7,7 @@ from pyhtsw import (
     PlayerStat,
     TemporaryStat,
     chat,
-    create_function,
+    function,
     set_projects_folder,
 )
 
@@ -17,7 +17,7 @@ set_projects_folder(tmp, save=False)
 
 with Container() as container:
 
-    @create_function('Foo')
+    @function('Foo')
     def foo() -> None:
         held = TemporaryStat().with_value(123)
         x = PlayerStat('x')

@@ -164,7 +164,7 @@ class Container:
             'triggering one costs 4 ticks and a click handler can fire faster '
             'than that - splitting these behind your back would silently drop or '
             'reorder the tail. Move the overflowing actions into their own '
-            '@create_function and call it (the same 4 ticks, but now visible), '
+            '@function and call it (the same 4 ticks, but now visible), '
             'or shorten the list. Pass ignore_action_limits=True to the Container '
             'to skip this check.',
         )
@@ -605,7 +605,7 @@ class Container:
             log(
                 f'\x1b[38;2;255;191;0mActions were written outside of any importable; '
                 f'wrapping them into a function named "{name}". Put them inside an '
-                f'importable (e.g. @create_function) to silence this.\x1b[0m',
+                f'importable (e.g. @function) to silence this.\x1b[0m',
             )
             importables.insert(0, FunctionImportable(global_block, name=name))
         return importables

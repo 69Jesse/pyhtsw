@@ -4,9 +4,9 @@ from pyhtsw import (
     GlobalStat,
     IfAll,
     PlayerStat,
-    create_function,
     disable_global_export,
     exit_function,
+    function,
     trigger_function,
 )
 from pyhtsw.placeholders.player import PlayerName
@@ -72,7 +72,7 @@ with ExecutionContext(players=['A', 'B', 'C']) as ctx:
     touched = PlayerStat('touched').as_long()
     ctx.put(counter, 0, ignore_warning=True)
 
-    @create_function('bump')
+    @function('bump')
     def bump() -> None:
         counter.value += 1
         touched.value = 1
@@ -97,7 +97,7 @@ with ExecutionContext(players=['A', 'B', 'C']) as ctx:
 
     holder: dict[str, object] = {}
 
-    @create_function('spread')
+    @function('spread')
     def spread() -> None:
         with IfAll(active == 0):
             active.value = 1

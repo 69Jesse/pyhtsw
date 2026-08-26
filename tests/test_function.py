@@ -1,8 +1,8 @@
-from pyhtsw import Container, chat, create_function, trigger_function
+from pyhtsw import Container, chat, function, trigger_function
 
 with Container() as container:
 
-    @create_function('greet')
+    @function('greet')
     def greet() -> None:
         chat('hello')
 

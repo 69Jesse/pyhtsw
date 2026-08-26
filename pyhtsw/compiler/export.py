@@ -15,7 +15,7 @@ def export(
     name: str,
 ) -> None:
     """Gather every importable reachable from `exportable` — a module, a single
-    importable handle (a `@create_function`/`@create_event` result or an
+    importable handle (a `@function`/`@event` result or an
     Item/Menu/Region/NPC subclass), a bare build callback, or any (nested)
     sequence of those — and write them out as a fresh project named `name`.
 

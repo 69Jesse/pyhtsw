@@ -4,9 +4,9 @@ from pyhtsw import (
     IfAll,
     PlayerStat,
     chat,
-    create_event,
-    create_function,
+    event,
     full_heal,
+    function,
 )
 
 # A function block splits into an overflow function once 25 conditionals are
@@ -22,7 +22,7 @@ def build(n: int) -> None:
 
 with Container() as as_function:
 
-    @create_function('Many')
+    @function('Many')
     def _many() -> None:
         build(COND)
 
@@ -35,7 +35,7 @@ assert len(function_blocks) > 1, (
 
 with Container() as as_event:
 
-    @create_event('Player Join')
+    @event('Player Join')
     def _on_join() -> None:
         build(COND)
 
@@ -81,7 +81,7 @@ raised = False
 try:
     with Container():
 
-        @create_function('TooMany')
+        @function('TooMany')
         def _too_many() -> None:
             with IfAll(*[HasPermission('Fly') for _ in range(21)]):
                 chat('hi')
@@ -93,7 +93,7 @@ assert raised, 'expected a RuntimeError for 21 hasPermission conditions'
 # 20 is still fine, and so is a mix that stays under each type's own limit.
 with Container():
 
-    @create_function('JustEnough')
+    @function('JustEnough')
     def _just_enough() -> None:
         with IfAll(
             *[HasPermission('Fly') for _ in range(20)],

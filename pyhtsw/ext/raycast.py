@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from pyhtsw.actions.flow import IfAll, IfAny, exit_function, trigger_function
-from pyhtsw.declarations.function import Function, create_function
+from pyhtsw.declarations.function import Function, function
 from pyhtsw.declarations.item import Item
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.ext.look_vector import approximate_look_vector
@@ -143,7 +143,7 @@ def create_raycast(
     length = make_global('length', double=True)
     headshot = make_global('headshot', double=False)
 
-    @create_function(name, icon=icon)
+    @function(name, icon=icon)
     def raycast_function() -> None:
         with IfAll(active == 0):
             active.value = 1

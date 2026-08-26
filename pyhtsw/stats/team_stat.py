@@ -1,12 +1,15 @@
 import re
-from typing import Self, final
+from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
-from pyhtsw.declarations.team import Team
+from pyhtsw.declarations.declared import declared_name
 from pyhtsw.expression.housing_type import HousingType, housing_type_from_string
 from pyhtsw.internal_type import InternalType
 from pyhtsw.stats.player_stat import _split_parts
 from pyhtsw.stats.stat import Stat
+
+if TYPE_CHECKING:
+    from pyhtsw.declarations.team import Team
 
 __all__ = ('TeamStat',)
 
@@ -14,7 +17,7 @@ __all__ = ('TeamStat',)
 def _team_stat_factory(match: re.Match[str]) -> 'TeamStat':
     parts = _split_parts(match.group(1))
     name = parts[0] if len(parts) > 0 else ''
-    team = Team(parts[1]) if len(parts) > 1 else None
+    team = parts[1] if len(parts) > 1 else None
     stat = TeamStat(name, team)
     if len(parts) > 2:
         stat = stat.with_fallback(housing_type_from_string(parts[2]))
@@ -27,13 +30,13 @@ class TeamStat(
     pattern=re.compile(r'%var\.team/([^%]+)%'),
     pattern_factory=_team_stat_factory,
 ):
-    team: Team | None
+    team: str | None
 
     def __init__(
         self,
         name: str,
         /,
-        team: Team | str | None = None,
+        team: 'Team | str | None' = None,
         *,
         internal_type: InternalType = InternalType.ANY,
         fallback_value: HousingType | None = None,
@@ -45,14 +48,12 @@ class TeamStat(
             fallback_value=fallback_value,
             auto_unset=auto_unset,
         )
-        self.team = (
-            team if isinstance(team, Team) else Team(team) if team is not None else None
-        )
+        self.team = declared_name(team)
 
     def into_hashable(self) -> tuple[object, ...]:
         return (
             *super().into_hashable(),
-            self.team.name if self.team is not None else None,
+            self.team,
         )
 
     @staticmethod
@@ -66,7 +67,7 @@ class TeamStat(
     def into_string_lhs(self) -> str:
         value = super().into_string_lhs()
         if self.team is not None:
-            return f'{value} "{self.team.name}"'
+            return f'{value} "{self.team}"'
         return value
 
     def into_string_middle(self, include_fallback_value: bool = True) -> str:
@@ -74,7 +75,7 @@ class TeamStat(
             include_fallback_value=include_fallback_value,
         )
         if self.team is not None or value:
-            name = self.team.name if isinstance(self.team, Team) else 'None'
+            name = self.team if self.team is not None else 'None'
             if ' ' in name:
                 name = f'"{name}"'
             return f' {name}{value}'
@@ -84,7 +85,7 @@ class TeamStat(
         self,
         *,
         name: str | Missing = MISSING,
-        team: Team | str | None | Missing = MISSING,
+        team: 'Team | str | None | Missing' = MISSING,
         internal_type: InternalType | Missing = MISSING,
         fallback_value: HousingType | None | Missing = MISSING,
         auto_unset: bool | Missing = MISSING,

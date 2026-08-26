@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 __all__ = (
     'Declared',
     'declared_field',
+    'declared_name',
     'register_importable',
 )
 
@@ -25,6 +26,22 @@ def register_importable[ImportableT: 'Importable'](
     importable.module = caller_module()
     get_current_container().register_importable(importable)
     return importable
+
+
+@overload
+def declared_name(value: 'Declared | str') -> str: ...
+
+
+@overload
+def declared_name(value: None) -> None: ...
+
+
+def declared_name(value: 'Declared | str | None') -> str | None:
+    """The identifier behind a reference: the class declares, the string
+    refers, and either names the same importable."""
+    if value is None or isinstance(value, str):
+        return value
+    return value.name
 
 
 class declared_field[T]:
@@ -77,9 +94,8 @@ class declared_field[T]:
 class Declared:
     """A value that names an importable and reads its declared fields off it.
 
-    Equality is by (kind, name), so a bare `Team('Red')` written for reference
-    is the same value as the one `create_team` returned and resolves the same
-    declaration."""
+    Equality is by (kind, name), so two values naming the same declaration
+    compare equal and resolve the same importable."""
 
     __htsw_kind__: ClassVar[str]
     __htsw_factory__: ClassVar[str]

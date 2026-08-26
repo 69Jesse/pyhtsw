@@ -7,7 +7,7 @@ from pyhtsw.compiler.importable import MenuImportable, MenuSlot, XYCheck
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
 from pyhtsw.declarations.item import Item
 
-__all__ = ('Menu', 'create_menu')
+__all__ = ('Menu',)
 
 MenuSize = Literal[1, 2, 3, 4, 5, 6]
 MenuAxis = int | Sequence[int] | None
@@ -50,13 +50,11 @@ def _slot_membership(
 class Menu(Declared):
     COLS: ClassVar[int] = _COLS
     __htsw_kind__ = 'menus'
-    __htsw_factory__ = 'create_menu'
+    __htsw_factory__ = 'Menu'
 
     size: declared_field[int] = declared_field()
 
     def __init__(self, name: str, size: MenuSize) -> None:
-        """Declare a menu as a value. Prefer `create_menu(...)`, which is the
-        same thing under a name matching `create_function` and friends."""
         _check_size(name, size)
         super().__init__(name)
         self.__htsw_importable__ = register_importable(
@@ -159,10 +157,3 @@ class Menu(Declared):
         """Place `item` in every cell `xy_check` accepts (every cell when it is
         omitted). Later placements win, so fill first and place on top after."""
         self._add_slot(item, None, None, xy_check, None)
-
-
-def create_menu(name: str, size: MenuSize) -> Menu:
-    """Declare a menu and return it, so menus can be built by a function called
-    in a loop. The result goes anywhere a menu is taken, `display_menu`
-    included."""
-    return Menu(name, size)

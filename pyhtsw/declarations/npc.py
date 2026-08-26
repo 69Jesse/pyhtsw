@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, Literal, overload
+from typing import Any, Literal
 
 from pyhtsw.compiler.block import NamedBlock
 from pyhtsw.compiler.container import get_current_container
@@ -13,7 +13,7 @@ from pyhtsw.compiler.importable import (
 )
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
 
-__all__ = ('NPC', 'create_npc')
+__all__ = ('NPC',)
 
 Which = Literal['left', 'right', 'both']
 
@@ -32,7 +32,7 @@ class NPC(Declared):
     Equipment = NpcEquipment
 
     __htsw_kind__ = 'npcs'
-    __htsw_factory__ = 'create_npc'
+    __htsw_factory__ = 'NPC'
 
     pos: declared_field[Coord] = declared_field()
     skin: 'declared_field[NpcSkin | None]' = declared_field()
@@ -57,8 +57,6 @@ class NPC(Declared):
         skin: NpcSkin | None = None,
         equipment: NpcEquipment | None = None,
     ) -> None:
-        """Declare an NPC as a value. Prefer `create_npc(...)`, which is the
-        same thing under a name matching `create_function` and friends."""
         super().__init__(name)
         self.__htsw_importable__ = register_importable(
             NpcImportable(
@@ -145,61 +143,3 @@ class NPC(Declared):
         """`@npc.click` - run these actions on either button."""
         self.attach('both', func)
         return func
-
-
-@overload
-def create_npc(
-    name: str,
-    pos: Coord,
-    *,
-    on_click: Handler,
-    look_at_players: bool | None = ...,
-    hide_name_tag: bool | None = ...,
-    skin: NpcSkin | None = ...,
-    equipment: NpcEquipment | None = ...,
-) -> NPC: ...
-
-
-@overload
-def create_npc(
-    name: str,
-    pos: Coord,
-    *,
-    on_left_click: Handler | None = ...,
-    on_right_click: Handler | None = ...,
-    left_click_redirect: bool | None = ...,
-    look_at_players: bool | None = ...,
-    hide_name_tag: bool | None = ...,
-    skin: NpcSkin | None = ...,
-    equipment: NpcEquipment | None = ...,
-) -> NPC: ...
-
-
-def create_npc(
-    name: str,
-    pos: Coord,
-    *,
-    on_click: Handler | None = None,
-    on_left_click: Handler | None = None,
-    on_right_click: Handler | None = None,
-    left_click_redirect: bool | None = None,
-    look_at_players: bool | None = None,
-    hide_name_tag: bool | None = None,
-    skin: NpcSkin | None = None,
-    equipment: NpcEquipment | None = None,
-) -> NPC:
-    """Declare an NPC and return it, so NPCs can be built by a function called
-    in a loop. `on_click` and the left/right pair are mutually exclusive - the
-    overloads make passing both a type error, and it is rejected at runtime."""
-    return NPC(
-        name,
-        pos,
-        on_click=on_click,
-        on_left_click=on_left_click,
-        on_right_click=on_right_click,
-        left_click_redirect=left_click_redirect,
-        look_at_players=look_at_players,
-        hide_name_tag=hide_name_tag,
-        skin=skin,
-        equipment=equipment,
-    )

@@ -10,19 +10,13 @@ from pyhtsw import (
     Region,
     Team,
     chat,
-    create_command,
-    create_event,
-    create_function,
-    create_group,
-    create_item,
-    create_menu,
-    create_npc,
-    create_region,
-    create_team,
+    command,
+    event,
+    function,
 )
 
 with Container():
-    vip = create_group(
+    vip = Group(
         'VIP',
         tag='VIP',
         tag_shown_in_chat=True,
@@ -33,7 +27,7 @@ with Container():
         chat_speed='Slow 1s',
         default_gamemode='ADVENTURE',
     )
-    red = create_team('Red', tag='RED', color='Dark Red', friendly_fire=False)
+    red = Team('Red', tag='RED', color='Dark Red', friendly_fire=False)
 
     assert vip.priority == 5, vip.priority
     assert vip.tag == 'VIP'
@@ -47,14 +41,8 @@ with Container():
     assert red.color == 'Dark Red'
     assert red.friendly_fire is False
 
-    # A bare reference compares equal to the declared value, so it reads the
-    # same fields.
-    assert Group('VIP') == vip
-    assert Group('VIP').priority == 5
-    assert Team('Red').color == 'Dark Red'
-
     # Declared, but the field was left out: None, not an error.
-    plain = create_group('Plain')
+    plain = Group('Plain')
     assert plain.priority is None
     assert plain.permissions is None
 
@@ -67,41 +55,41 @@ with Container():
     assert raised, 'expected permissions to be read-only'
     assert vip.permissions == {'Fly': True, 'Ban': False}
 
-    # Never declared anywhere: a raise, not a silent None.
+    # Declaring the same name twice is a hard error, not a silent merge.
     raised = False
     try:
-        _ = Group('Ghost').priority
+        Group('VIP')
     except RuntimeError as error:
         raised = True
-        assert 'create_group' in str(error), error
-    assert raised, 'expected a RuntimeError for an undeclared group'
+        assert 'VIP' in str(error), error
+    assert raised, 'expected a RuntimeError for a duplicate group declaration'
 
     raised = False
     try:
-        _ = Team('Ghost').tag
+        Team('Red')
     except RuntimeError as error:
         raised = True
-        assert 'create_team' in str(error), error
-    assert raised, 'expected a RuntimeError for an undeclared team'
+        assert 'Red' in str(error), error
+    assert raised, 'expected a RuntimeError for a duplicate team declaration'
 
 
 with Container() as container:
-    wand = create_item('blaze_rod', name='&aWand')
-    shop = create_menu('Shop', 6)
-    smith = create_npc('Smith', (1, 64, 2), skin='Steve', look_at_players=True)
-    spawn = create_region('Spawn', ((0, 100, 0), (10, 110, 10)))
-    squad = create_team('Squad', tag='SQ')
-    mods = create_group('Mods', priority=9)
+    wand = Item('blaze_rod', name='&aWand', importable_name='Wand')
+    shop = Menu('Shop', 6)
+    smith = NPC('Smith', (1, 64, 2), skin='Steve', look_at_players=True)
+    spawn = Region('Spawn', ((0, 100, 0), (10, 110, 10)))
+    squad = Team('Squad', tag='SQ')
+    mods = Group('Mods', priority=9)
 
-    @create_function('Tick', repeat_ticks=20, icon=wand)
+    @function('Tick', repeat_ticks=20, icon=wand)
     def tick() -> None:
         chat('tick')
 
-    @create_command('warp', mode='Self', required_priority=3, listed=True)
+    @command('warp', mode='Self', required_priority=3, listed=True)
     def warp() -> None:
         chat('warp')
 
-    @create_event('Player Join')
+    @event('Player Join')
     def join() -> None:
         chat('hi')
 
@@ -158,7 +146,7 @@ with Container() as container:
 
     # A name another importable of the same kind already holds is refused, and
     # nothing moved; a name only another *kind* holds is fine.
-    admins = create_group('Admins')
+    admins = Group('Admins')
     mods.name = 'Squad'  # a team, not a group -> free
     assert mods.name == 'Squad'
     raised = False
@@ -180,13 +168,13 @@ with Container() as container:
 
 
 with Container() as container:
-    first = create_item(
+    first = Item(
         'blaze_rod',
         name='&aRecord',
         importable_name='Record1',
         on_right_click=lambda: chat('one'),
     )
-    second = create_item(
+    second = Item(
         'blaze_rod',
         name='&aRecord',
         importable_name='Record2',
@@ -202,5 +190,5 @@ with Container() as container:
     assert first.importable is not second.importable
 
     # Without a name, an interactive item derives one from its display name.
-    derived = create_item('stick', name='&eTorch', on_click=lambda: chat('lit'))
+    derived = Item('stick', name='&eTorch', on_click=lambda: chat('lit'))
     assert derived.importable.name == 'Torch', derived.importable.name

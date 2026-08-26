@@ -5,9 +5,9 @@ from pathlib import Path
 from pyhtsw import (
     Container,
     IfAll,
+    Region,
     WithinRegion,
     chat,
-    create_region,
     set_projects_folder,
 )
 
@@ -17,7 +17,7 @@ set_projects_folder(tmp, save=False)
 
 with Container() as container:
     # Handlers up front...
-    arena = create_region(
+    arena = Region(
         'Arena',
         ((0, 60, 0), (16, 80, 16)),
         on_enter=lambda: chat('&centered the arena'),
@@ -25,7 +25,7 @@ with Container() as container:
     )
 
     # ...or attached afterwards, which is what a loop needs.
-    lobby = create_region('Lobby')
+    lobby = Region('Lobby')
 
     @lobby.on_enter
     def _welcome() -> None:
@@ -42,13 +42,13 @@ with Container() as container:
     assert lobby.bounds == ((0, 60, 0), (10, 70, 10)), lobby.bounds
 
     # A region built in a loop, the thing the subclass form could not do.
-    pads = [create_region(f'Pad {n}', ((n, 60, 0), (n + 1, 61, 1))) for n in range(3)]
+    pads = [Region(f'Pad {n}', ((n, 60, 0), (n + 1, 61, 1))) for n in range(3)]
     for pad in pads:
         pad.attach('enter', lambda: chat('&bpad'))
 
     # The condition takes the value, or a bare name for a region declared
     # in-game.
-    @create_region('Watcher').on_enter
+    @Region('Watcher').on_enter
     def _watch() -> None:
         with IfAll(WithinRegion(arena)):
             chat('&ealso in the arena')
@@ -94,10 +94,10 @@ assert 'inRegion "Hand Placed"' in watcher, watcher
 
 # Two regions cannot share a name.
 with Container():
-    create_region('Twin')
+    Region('Twin')
     raised = False
     try:
-        create_region('Twin')
+        Region('Twin')
     except RuntimeError:
         raised = True
     assert raised, 'expected a duplicate region name to be refused'

@@ -3,13 +3,13 @@ import tempfile
 from pathlib import Path
 
 from pyhtsw import (
+    NPC,
     Container,
+    Group,
+    Team,
     change_player_group,
     chat,
-    create_command,
-    create_group,
-    create_npc,
-    create_team,
+    command,
     set_player_team,
     set_projects_folder,
 )
@@ -20,8 +20,8 @@ set_projects_folder(tmp, save=False)
 
 # A declared team is the same Team value the actions already take.
 with Container() as container:
-    red = create_team('Red', tag='RED', color='Dark Red', friendly_fire=False)
-    vip = create_group(
+    red = Team('Red', tag='RED', color='Dark Red', friendly_fire=False)
+    vip = Group(
         'VIP',
         tag='VIP',
         tag_shown_in_chat=True,
@@ -33,12 +33,12 @@ with Container() as container:
         default_gamemode='ADVENTURE',
     )
 
-    @create_command('warp', mode='Self', required_priority=3, listed=True)
+    @command('warp', mode='Self', required_priority=3, listed=True)
     def _warp() -> None:
         set_player_team(red)
         change_player_group(vip)
 
-    greeter = create_npc(
+    greeter = NPC(
         '&aGreeter',
         (1, 2, 3),
         left_click_redirect=True,
@@ -72,12 +72,12 @@ assert group['permissions'] == {
     'Ban': False,
 }, group['permissions']
 
-command = data['commands'][0]
-assert command['name'] == 'warp'
-assert command['mode'] == 'Self'
-assert command['requiredPriority'] == 3
-assert command['listed'] is True
-assert command['actions'] == 'commands/warp.htsl'
+command_entry = data['commands'][0]
+assert command_entry['name'] == 'warp'
+assert command_entry['mode'] == 'Self'
+assert command_entry['requiredPriority'] == 3
+assert command_entry['listed'] is True
+assert command_entry['actions'] == 'commands/warp.htsl'
 assert (
     (tmp / 'tgc' / 'commands' / 'warp.htsl')
     .read_text()
@@ -96,7 +96,7 @@ assert npc['skin'] == 'Alex'
 # houseUuid lands only on the entry import.json, and only when asked for.
 with Container() as plain:
 
-    @create_command('noop')
+    @command('noop')
     def _noop() -> None:
         chat('noop')
 
@@ -109,7 +109,7 @@ assert 'houseUuid' not in json.loads((tmp / 'no-uuid' / 'import.json').read_text
 raised = False
 with Container():
     try:
-        create_group('Bad', allow=['Fly'], deny=['Fly'])
+        Group('Bad', allow=['Fly'], deny=['Fly'])
     except ValueError:
         raised = True
 assert raised, 'expected a ValueError for a permission in both allow and deny'
@@ -119,7 +119,7 @@ assert raised, 'expected a ValueError for a permission in both allow and deny'
 raised = False
 with Container():
     try:
-        create_team('Bad', tag='no-dashes')
+        Team('Bad', tag='no-dashes')
     except ValueError:
         raised = True
 assert raised, "expected a ValueError for tag='no-dashes'"
@@ -127,7 +127,7 @@ assert raised, "expected a ValueError for tag='no-dashes'"
 raised = False
 with Container():
     try:
-        create_group('Bad', priority=21)
+        Group('Bad', priority=21)
     except ValueError:
         raised = True
 assert raised, 'expected a ValueError for priority 21'
@@ -136,7 +136,7 @@ raised = False
 with Container():
     try:
 
-        @create_command('bad', required_priority=99)
+        @command('bad', required_priority=99)
         def _bad() -> None:
             chat('x')
     except ValueError:

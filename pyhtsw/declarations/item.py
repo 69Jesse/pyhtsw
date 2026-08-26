@@ -28,7 +28,6 @@ __all__ = (
     'normalize_item_key',
     'normalize_item',
     'Item',
-    'create_item',
 )
 
 
@@ -320,7 +319,7 @@ class Item:
         if importable is None:
             self._declare()
             return
-        # Already an items[] entry (create_item, or a twin it shares with) - it
+        # Already an items[] entry (a named item, or a twin it shares with) - it
         # just gains the action list. htsw identifies an item by its NBT, so a
         # twin is the same item and correctly gains it too.
         for side in sides:
@@ -810,29 +809,3 @@ def item_referenced_importables(value: Item) -> list[tuple[str, str]]:
     importables."""
     name = item_reference_name(value)
     return [('items', name)] if name is not None else []
-
-
-def create_item(
-    key: ALL_ITEM_KEYS,
-    *,
-    importable_name: str | None = None,
-    on_click: 'ItemHandler | None' = None,
-    on_left_click: 'ItemHandler | None' = None,
-    on_right_click: 'ItemHandler | None' = None,
-    **fields: Any,
-) -> Item:
-    """Declare an item as an items[] entry and return it. `Item(...)` on its
-    own builds a value the export-time plan names; this one is named up front,
-    so actions and other importables can reference it by that name."""
-    item = Item(
-        key,
-        importable_name=importable_name,
-        on_click=on_click,
-        on_left_click=on_left_click,
-        on_right_click=on_right_click,
-        **fields,
-    )
-    # An interactive item, or one given a name, already registered in __init__.
-    if item.__htsw_importable__ is None:
-        item._declare()
-    return item

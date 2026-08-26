@@ -12,10 +12,7 @@ from pyhtsw.types import (
 from pyhtsw.compiler.importable import GroupImportable
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
 
-__all__ = (
-    'Group',
-    'create_group',
-)
+__all__ = ('Group',)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -36,7 +33,7 @@ def _permissions_view(
 
 class Group(Declared):
     __htsw_kind__ = 'groups'
-    __htsw_factory__ = 'create_group'
+    __htsw_factory__ = 'Group'
 
     tag: declared_field[str | None] = declared_field()
     tag_shown_in_chat: declared_field[bool | None] = declared_field()
@@ -47,6 +44,36 @@ class Group(Declared):
     )
     chat_speed: 'declared_field[ALL_CHAT_SPEEDS | None]' = declared_field()
     default_gamemode: 'declared_field[ALL_DEFAULT_GAMEMODES | None]' = declared_field()
+
+    def __init__(
+        self,
+        name: str,
+        *,
+        tag: str | None = None,
+        tag_shown_in_chat: bool | None = None,
+        color: ALL_HOUSING_COLORS | None = None,
+        priority: int | None = None,
+        allow: Sequence[ALL_PERMISSIONS] | None = None,
+        deny: Sequence[ALL_PERMISSIONS] | None = None,
+        permissions: Mapping[ALL_PERMISSIONS, bool] | None = None,
+        chat_speed: ALL_CHAT_SPEEDS | None = None,
+        default_gamemode: ALL_DEFAULT_GAMEMODES | None = None,
+    ) -> None:
+        """Declare a group importable. A group that already exists in the house
+        is referenced by its plain name instead."""
+        super().__init__(name)
+        self.__htsw_importable__ = register_importable(
+            GroupImportable(
+                name=name,
+                tag=tag,
+                tag_shown_in_chat=tag_shown_in_chat,
+                color=color,
+                priority=priority,
+                permissions=_merge_permissions(name, allow, deny, permissions),
+                chat_speed=chat_speed,
+                default_gamemode=default_gamemode,
+            ),
+        )
 
 
 def _merge_permissions(
@@ -65,34 +92,3 @@ def _merge_permissions(
             )
         merged[permission] = False
     return merged or None
-
-
-def create_group(
-    name: str,
-    *,
-    tag: str | None = None,
-    tag_shown_in_chat: bool | None = None,
-    color: ALL_HOUSING_COLORS | None = None,
-    priority: int | None = None,
-    allow: Sequence[ALL_PERMISSIONS] | None = None,
-    deny: Sequence[ALL_PERMISSIONS] | None = None,
-    permissions: Mapping[ALL_PERMISSIONS, bool] | None = None,
-    chat_speed: ALL_CHAT_SPEEDS | None = None,
-    default_gamemode: ALL_DEFAULT_GAMEMODES | None = None,
-) -> Group:
-    """Declare a group importable and return the `Group` that
-    `change_player_group` and `HasGroup` already take."""
-    group = Group(name)
-    group.__htsw_importable__ = register_importable(
-        GroupImportable(
-            name=name,
-            tag=tag,
-            tag_shown_in_chat=tag_shown_in_chat,
-            color=color,
-            priority=priority,
-            permissions=_merge_permissions(name, allow, deny, permissions),
-            chat_speed=chat_speed,
-            default_gamemode=default_gamemode,
-        ),
-    )
-    return group

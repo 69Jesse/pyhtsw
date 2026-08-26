@@ -1,6 +1,12 @@
 from helpers import expect_exception
 
-from pyhtsw import NPC, Container, GlobalStat, Item, chat, create_npc
+from pyhtsw import (
+    NPC,
+    Container,
+    GlobalStat,
+    Item,
+    chat,
+)
 
 flag = GlobalStat('flag').as_long()
 
@@ -18,7 +24,7 @@ def _entry(container: Container, name: str) -> dict:
 
 
 with Container() as container:
-    create_npc(
+    NPC(
         'Guard',
         (1, 2, 3),
         on_left_click=lambda: chat('left'),
@@ -35,7 +41,7 @@ assert guard['pos'] == (1, 2, 3)
 
 
 with Container() as container:
-    smith = create_npc('Smith', (0, 0, 0))
+    smith = NPC('Smith', (0, 0, 0))
 
     @smith.left_click
     def _smith_left() -> None:
@@ -51,14 +57,14 @@ assert smith_entry['left'] is not None and smith_entry['right'] is not None
 
 
 with Container() as container:
-    create_npc('Statue', (5, 5, 5), hide_name_tag=True)
+    NPC('Statue', (5, 5, 5), hide_name_tag=True)
 
 statue = _entry(container, 'Statue')
 assert statue['left'] is None and statue['right'] is None
 
 
 with Container() as container:
-    create_npc('Shopkeeper', (2, 2, 2), on_click=lambda: chat('welcome'))
+    NPC('Shopkeeper', (2, 2, 2), on_click=lambda: chat('welcome'))
 
 shop = _entry(container, 'Shopkeeper')
 assert shop['right'] is not None, shop
@@ -67,7 +73,7 @@ assert shop['redirect'] is True, shop
 
 
 with Container() as container:
-    banker = create_npc('Banker', (3, 3, 3))
+    banker = NPC('Banker', (3, 3, 3))
 
     @banker.click
     def _bank() -> None:
@@ -86,23 +92,23 @@ for kwargs in (
 ):
     with expect_exception(ValueError):
         with Container():
-            create_npc('Clash', (0, 0, 0), on_click=lambda: chat('y'), **kwargs)  # type: ignore[arg-type]
+            NPC('Clash', (0, 0, 0), on_click=lambda: chat('y'), **kwargs)  # type: ignore[arg-type]
 
 
 with expect_exception(ValueError):
     with Container():
-        npc = create_npc('Late', (0, 0, 0), on_left_click=lambda: chat('x'))
+        npc = NPC('Late', (0, 0, 0), on_left_click=lambda: chat('x'))
         npc.attach('both', lambda: chat('y'))
 
 with expect_exception(ValueError):
     with Container():
-        npc = create_npc('Early', (0, 0, 0), on_click=lambda: chat('y'))
+        npc = NPC('Early', (0, 0, 0), on_click=lambda: chat('y'))
         npc.attach('left', lambda: chat('x'))
 
 
 with expect_exception(ValueError):
     with Container():
-        broken = create_npc('Broken', (0, 0, 0), left_click_redirect=False)
+        broken = NPC('Broken', (0, 0, 0), left_click_redirect=False)
 
         @broken.click
         def _both() -> None:
@@ -115,7 +121,7 @@ with Container() as container:
     def _greet(npc: NPC) -> None:
         chat(f'I am {npc.name}')
 
-    create_npc(
+    NPC(
         'Knight',
         (7, 7, 7),
         on_click=_greet,

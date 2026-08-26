@@ -4,6 +4,7 @@ from pyhtsw.checkable import Checkable
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.compiler.schedule import Effects, Resource, Stream
+from pyhtsw.declarations.declared import declared_name
 from pyhtsw.declarations.group import Group
 from pyhtsw.declarations.team import Team
 from pyhtsw.expression.expression import Expression
@@ -545,18 +546,18 @@ class SetPlayerTeamExpression(Expression):
         forbidden_events=('Player Quit',),
     )
 
-    team: Team
+    team: str
 
-    def __init__(self, team: Team) -> None:
-        self.team = team
+    def __init__(self, team: 'Team | str') -> None:
+        self.team = declared_name(team)
 
     def into_htsl(self) -> str:
-        return f'setTeam {self.inline_quoted(self.team.name)}'
+        return f'setTeam {self.inline_quoted(self.team)}'
 
     def cloned(
         self,
         *,
-        team: Team | Missing = MISSING,
+        team: 'Team | str | Missing' = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -566,8 +567,7 @@ class SetPlayerTeamExpression(Expression):
         )
 
 
-def set_player_team(team: Team | str) -> None:
-    team = team if isinstance(team, Team) else Team(team)
+def set_player_team(team: 'Team | str') -> None:
     SetPlayerTeamExpression(team=team).write()
 
 
@@ -584,20 +584,20 @@ class ChangePlayerGroupExpression(Expression):
         ),
     )
 
-    group: Group
+    group: str
     demotion_protection: bool
 
-    def __init__(self, group: Group, demotion_protection: bool = True) -> None:
-        self.group = group
+    def __init__(self, group: 'Group | str', demotion_protection: bool = True) -> None:
+        self.group = declared_name(group)
         self.demotion_protection = demotion_protection
 
     def into_htsl(self) -> str:
-        return f'changePlayerGroup {self.inline_quoted(self.group.name)} {self.inline(self.demotion_protection)}'
+        return f'changePlayerGroup {self.inline_quoted(self.group)} {self.inline(self.demotion_protection)}'
 
     def cloned(
         self,
         *,
-        group: Group | Missing = MISSING,
+        group: 'Group | str | Missing' = MISSING,
         demotion_protection: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -609,8 +609,7 @@ class ChangePlayerGroupExpression(Expression):
         )
 
 
-def change_player_group(group: Group | str, demotion_protection: bool = True) -> None:
-    group = group if isinstance(group, Group) else Group(group)
+def change_player_group(group: 'Group | str', demotion_protection: bool = True) -> None:
     ChangePlayerGroupExpression(
         group=group,
         demotion_protection=demotion_protection,

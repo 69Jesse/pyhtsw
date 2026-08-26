@@ -6,8 +6,8 @@ from pyhtsw import (
     NoOptimization,
     PlayerStat,
     chat,
-    create_function,
     exit_function,
+    function,
     strict_order,
 )
 from pyhtsw.directives.no_optimization import OPTIMIZATION_PASSES, optimization_enabled
@@ -21,7 +21,7 @@ def htsl_of(body: Callable[[], None], name: str = 'flags') -> str:
     # Optimizer-only: one case puts `exit` at the top level of a block, which
     # htsw scopes to conditionals, so the scope pass has to stay out of the way.
     with Container(ignore_scope=True) as container:
-        create_function(name)(body)
+        function(name)(body)
     return next(
         block.into_htsl() for block in container.blocks if block.get_name() == name
     )

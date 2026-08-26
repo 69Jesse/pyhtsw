@@ -10,7 +10,7 @@ from pyhtsw import (
     PlayerStat,
     Random,
     chat,
-    create_function,
+    function,
 )
 
 # IfAll inside IfAll raises
@@ -88,7 +88,7 @@ with Container() as container:
     x = PlayerStat('x').as_long()
     with IfAll(x > 0):
 
-        @create_function('inner')
+        @function('inner')
         def inner() -> None:
             with IfAll(x > 5):
                 chat('deep but legal')
@@ -128,7 +128,7 @@ with Container() as container:
     x = PlayerStat('x').as_long()
     with IfAll(x > 0):
 
-        @create_function('fn inner')
+        @function('fn inner')
         def fn_inner() -> None:
             with IfAll(x > 5):
                 chat('legal inside function body')
@@ -145,7 +145,7 @@ with expect_exception(SyntaxError):
     with Container():
         x = PlayerStat('x').as_long()
 
-        @create_function('fn bad')
+        @function('fn bad')
         def fn_bad() -> None:
             with IfAll(x > 5):
                 with IfAll(x > 10):
@@ -159,7 +159,7 @@ with expect_exception(SyntaxError):
     with Container():
         x = PlayerStat('x').as_long()
 
-        @create_function('raising body')
+        @function('raising body')
         def raising_body() -> None:
             with IfAll(x > 0):
                 with IfAll(x > 1):
@@ -250,7 +250,7 @@ with Container() as container:
     x = PlayerStat('x').as_long()
     with IfAll(x > 0):
 
-        @create_function('mod inner')
+        @function('mod inner')
         def mod_inner() -> None:
             x.value = x % 100
 

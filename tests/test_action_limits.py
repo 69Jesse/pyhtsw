@@ -1,7 +1,7 @@
 from pyhtsw import (
     Container,
     PlayerStat,
-    create_function,
+    function,
 )
 
 
@@ -24,7 +24,7 @@ def _top_level_and_total_var_lines(block_htsl: str) -> tuple[int, int]:
 with Container() as container:
     stats = [PlayerStat(f's{i}').as_long() for i in range(30)]
 
-    @create_function('limit overflow')
+    @function('limit overflow')
     def limit_overflow() -> None:
         for i in range(24):
             stats[i].value = i + 1
@@ -50,7 +50,7 @@ assert 'if and () {' in htsl, htsl
 with Container() as container:
     stats = [PlayerStat(f'c{i}').as_long() for i in range(25)]
 
-    @create_function('at limit')
+    @function('at limit')
     def at_limit() -> None:
         for i in range(25):
             stats[i].value = i + 1
@@ -72,7 +72,7 @@ with Container() as container:
     bs = [PlayerStat(f'b{i}').as_long() for i in range(26)]
     a = PlayerStat('a').as_long()
 
-    @create_function('single big')
+    @function('single big')
     def single_big() -> None:
         total = bs[0]
         for i in range(1, 26):

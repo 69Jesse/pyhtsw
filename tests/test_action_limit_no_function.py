@@ -7,11 +7,11 @@ from pyhtsw import (
     Enchantment,
     IfAll,
     Item,
+    Menu,
     PlayerStat,
     chat,
-    create_event,
-    create_function,
-    create_menu,
+    event,
+    function,
 )
 from pyhtsw.compiler.importable import Project
 from pyhtsw.compiler.limits import packing_cost
@@ -38,7 +38,7 @@ def _spill(count: int = 1400) -> None:
 
 with Container() as container:
 
-    @create_function(
+    @function(
         'Big',
         icon=Item('diamond_sword', enchantments=[Enchantment('sharpness', 3)]),
     )
@@ -65,7 +65,7 @@ assert icons['Big 3'] == {
 
 with Container() as container:
 
-    @create_function('Stacked', icon=Item('paper', count=62))
+    @function('Stacked', icon=Item('paper', count=62))
     def _stacked() -> None:
         _spill(2200)
 
@@ -80,7 +80,7 @@ assert icons['Stacked 4'] == {'item': 'minecraft:paper', 'count': 64}, icons
 
 with Container() as container:
 
-    @create_function('Plain')
+    @function('Plain')
     def _plain() -> None:
         _spill()
 
@@ -94,15 +94,15 @@ assert icons['Plain 2'] is None, icons
 
 with Container() as container:
 
-    @create_function('Big 2', icon=Item('apple'))
+    @function('Big 2', icon=Item('apple'))
     def _decoy_two() -> None:
         chat('decoy')
 
-    @create_function('Big 3')
+    @function('Big 3')
     def _decoy_three() -> None:
         chat('decoy')
 
-    @create_function('Big', icon=Item('diamond_sword'))
+    @function('Big', icon=Item('diamond_sword'))
     def _big_again() -> None:
         _spill()
 
@@ -117,7 +117,7 @@ assert icons['Big 4'] == {'item': 'minecraft:diamond_sword', 'count': 4}, icons
 
 try:
     with Container() as container:
-        panel = create_menu('Panel', 3)
+        panel = Menu('Panel', 3)
 
         @panel.on(item=Item('stone'), x=0, y=0)
         def buy_sword() -> None:
@@ -137,7 +137,7 @@ assert isinstance(ActionLimitError('x'), RuntimeError)
 assert 'Panel slot buy_sword' in message, message
 assert 'Panel slot sell_all' in message, message
 assert 'menu "Panel slot buy_sword"' in message, message
-assert '@create_function' in message, message
+assert '@function' in message, message
 assert '4 ticks' in message, message
 # Nothing was carved out on the way to the error.
 assert not any(
@@ -160,7 +160,7 @@ else:
 try:
     with Container() as container:
 
-        @create_event('Player Join')
+        @event('Player Join')
         def _on_join() -> None:
             _spill(1400)
 
@@ -175,7 +175,7 @@ assert 'event "event Player Join"' in message, message
 # === ignore_action_limits is still the way past it ===
 
 with Container(ignore_action_limits=True) as container:
-    quiet = create_menu('Quiet', 3)
+    quiet = Menu('Quiet', 3)
 
     @quiet.on(item=Item('stone'), x=0, y=0)
     def open_it() -> None:
@@ -193,7 +193,7 @@ assert not any(
 def _interleaved(conditionals: int, chats: int) -> list:
     with Container(ignore_action_limits=True) as raw:
 
-        @create_function('probe')
+        @function('probe')
         def _probe() -> None:
             for i in range(conditionals):
                 with IfAll(PlayerStat('x') > i):
@@ -223,7 +223,7 @@ assert reordered_cost[0] == 0, (source_cost, reordered_cost)
 
 # And it really does rescue the block end to end.
 with Container() as container:
-    shop = create_menu('Shop', 3)
+    shop = Menu('Shop', 3)
 
     @shop.on(item=Item('stone'), x=0, y=0)
     def open_shop() -> None:

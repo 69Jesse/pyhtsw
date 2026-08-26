@@ -8,7 +8,7 @@ from pyhtsw import (
     Container,
     Item,
     chat,
-    create_function,
+    function,
     give_item,
     set_projects_folder,
     trigger_function,
@@ -19,11 +19,11 @@ set_projects_folder(tmp, save=False)
 
 with Container() as container:
 
-    @create_function('Ability')
+    @function('Ability')
     def ability() -> None:
         chat('cast')
 
-    @create_function('Combat')
+    @function('Combat')
     def combat() -> None:
         chat('hit')
 
@@ -31,7 +31,7 @@ with Container() as container:
     # in features.cookie -> its .snbt must live under the abilities folder.
     potion = Item('potato', name='&aPotion')
 
-    @create_function('Cookie')
+    @function('Cookie')
     def cookie() -> None:
         chat('tick')
         # cross-module edge: features.cookie -> items.abilities
@@ -40,11 +40,11 @@ with Container() as container:
 
     # Mutually-recursive functions in two modules -> an include cycle that must
     # be broken (exactly one direction kept).
-    @create_function('PingA')
+    @function('PingA')
     def ping_a() -> None:
         trigger_function('PingB')
 
-    @create_function('PingB')
+    @function('PingB')
     def ping_b() -> None:
         trigger_function('PingA')
 
@@ -122,11 +122,11 @@ assert '.snbt' not in give
 # in from another package nesting as a referenced sub-project.
 with Container():
 
-    @create_function('Leaf')
+    @function('Leaf')
     def leaf() -> None:
         trigger_function('Dep')
 
-    @create_function('Dep')
+    @function('Dep')
     def dep() -> None:
         chat('dep')
 

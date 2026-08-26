@@ -11,7 +11,7 @@ from pyhtsw import (
     PlayerStat,
     TemporaryStat,
     chat,
-    create_function,
+    function,
 )
 
 with ExecutionContext() as ctx:
@@ -35,11 +35,11 @@ with Container() as container:
     a = PlayerStat('a').as_long()
     t = TemporaryStat().as_long()
 
-    @create_function('writer')
+    @function('writer')
     def writer() -> None:
         t.value = a + 1
 
-    @create_function('reader')
+    @function('reader')
     def reader() -> None:
         chat(f'{t}')
 

@@ -6,8 +6,8 @@ from pyhtsw import (
     NoOptimization,
     PlayerStat,
     chat,
-    create_function,
     exit_function,
+    function,
     pause_execution,
 )
 
@@ -18,7 +18,7 @@ z = PlayerStat('z').as_long()
 
 def htsl_of(body: 'object', name: str = 'merge') -> str:
     with Container() as container:
-        create_function(name)(body)  # type: ignore[arg-type]
+        function(name)(body)  # type: ignore[arg-type]
     return next(
         block.into_htsl() for block in container.blocks if block.get_name() == name
     )

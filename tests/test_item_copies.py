@@ -6,7 +6,7 @@ from pyhtsw import (
     Container,
     Item,
     chat,
-    create_function,
+    function,
     give_item,
     set_projects_folder,
 )
@@ -27,7 +27,7 @@ with Container() as container:
     OWNER_MENU = Item.housing_menu()
     GUEST_MENU = Item.housing_menu('GUEST')
 
-    @create_function('Hand Them Out')
+    @function('Hand Them Out')
     def hand_them_out() -> None:
         for item in (WAND, STACK, SAME, ICON, OWNER_MENU, GUEST_MENU):
             give_item(item)

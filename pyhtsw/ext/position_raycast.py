@@ -4,7 +4,7 @@ from typing import Any
 
 from pyhtsw.actions.flow import IfAll, exit_function, trigger_function
 from pyhtsw.checkable import Checkable
-from pyhtsw.declarations.function import Function, create_function
+from pyhtsw.declarations.function import Function, function
 from pyhtsw.declarations.item import Item
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.ext.look_vector import approximate_look_vector
@@ -318,7 +318,7 @@ def create_position_raycast(
         else None
     )
 
-    @create_function(name, icon=icon)
+    @function(name, icon=icon)
     def cast_function() -> None:
         if direction is None:
             approximate_look_vector(

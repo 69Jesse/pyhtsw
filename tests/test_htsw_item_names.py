@@ -10,10 +10,9 @@ from pyhtsw import (
     HasItem,
     IfAll,
     Item,
+    Menu,
     chat,
-    create_function,
-    create_menu,
-    create_npc,
+    function,
     give_item,
     set_projects_folder,
 )
@@ -32,7 +31,7 @@ def items_of(root: Path, relpath: str = 'import.json') -> dict[str, str]:
 
 with Container() as naming:
 
-    @create_function('Names')
+    @function('Names')
     def names() -> None:
         give_item(Item('gold_ingot', name='&6Coin'))  # display name
         give_item(Item('apple'))  # vanilla title
@@ -72,7 +71,7 @@ with Container() as shared_c:
     twin = Item('gold_ingot', name='&6Coin')  # equal NBT -> same file and name
     badge = Item('emerald', name='&aBadge')  # menu-only, never in an action
 
-    purse = create_menu('Purse', 1)
+    purse = Menu('Purse', 1)
 
     @purse.on(item=coin, x=0, y=0)
     def _take() -> None:
@@ -82,9 +81,9 @@ with Container() as shared_c:
     def _look() -> None:
         chat('looked')
 
-    create_npc('Teller', (0, 0, 0), equipment=NPC.Equipment(hand=twin))
+    NPC('Teller', (0, 0, 0), equipment=NPC.Equipment(hand=twin))
 
-    @create_function('Pay')
+    @function('Pay')
     def pay() -> None:
         give_item(twin)
         with IfAll(HasItem(coin)):
@@ -117,7 +116,7 @@ assert 'hasItem "Coin"' in pay_text
 
 with Container() as opted:
 
-    @create_function('Opted')
+    @function('Opted')
     def opted_fn() -> None:
         give_item(Item('bone', name='&fSecret', importable=False))
 
@@ -149,7 +148,7 @@ exec("WIDGET = make('stick', '&aWidget')", elsewhere.__dict__)  # noqa: S102
 
 with Container() as attributed:
 
-    @create_function('Use Widget')
+    @function('Use Widget')
     def use_widget() -> None:
         give_item(consumer.WIDGET)
         give_item(elsewhere.WIDGET)

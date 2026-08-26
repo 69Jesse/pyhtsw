@@ -1,17 +1,16 @@
 from pyhtsw import (
+    NPC,
     Item,
+    Menu,
+    Region,
     chat,
-    create_event,
-    create_function,
-    create_item,
-    create_menu,
-    create_npc,
-    create_region,
     display_menu,
+    event,
+    function,
     give_item,
 )
 
-wand = create_item(
+wand = Item(
     'blaze_rod',
     name='&aMagic Wand',
     lore='&7Right-click me',
@@ -25,7 +24,7 @@ def on_right() -> None:
 
 border = Item('black_stained_glass_pane', name=' ')
 
-shop = create_menu('Magic Shop', 6)
+shop = Menu('Magic Shop', 6)
 # decoration: fill the top row, then a checkerboard
 shop.place(border, x=0)
 shop.place(border, xy_check=lambda x, y: (x + y) % 2 == 0)
@@ -37,7 +36,7 @@ def buy_wand() -> None:
     chat('&aYou bought the Magic Wand!')
 
 
-spawn = create_region('Spawn', ((0, 100, 0), (16, 120, 16)))
+spawn = Region('Spawn', ((0, 100, 0), (16, 120, 16)))
 
 
 @spawn.on_enter
@@ -45,7 +44,7 @@ def enter() -> None:
     chat('&aWelcome to spawn!')
 
 
-create_npc(
+NPC(
     '&aShopkeeper',
     (8, 100, 8),
     skin='Alex',
@@ -54,12 +53,12 @@ create_npc(
 )
 
 
-@create_event('Player Join')
+@event('Player Join')
 def on_join() -> None:
     give_item(wand)
     chat('&eWelcome! Right-click the wand or visit the shopkeeper.')
 
 
-@create_function('Heartbeat', repeat_ticks=200, icon=wand)
+@function('Heartbeat', repeat_ticks=200, icon=wand)
 def heartbeat() -> None:
     chat('&8The house hums quietly...')

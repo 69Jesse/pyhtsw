@@ -12,14 +12,14 @@ from pyhtsw.compiler.importable import (
 )
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
 
-__all__ = ('Region', 'create_region')
+__all__ = ('Region',)
 
 Side = Literal['enter', 'exit']
 
 
 class Region(Declared):
     __htsw_kind__ = 'regions'
-    __htsw_factory__ = 'create_region'
+    __htsw_factory__ = 'Region'
 
     bounds: declared_field[Bounds | None] = declared_field()
 
@@ -31,8 +31,6 @@ class Region(Declared):
         on_enter: Handler | None = None,
         on_exit: Handler | None = None,
     ) -> None:
-        """Declare a region as a value. Prefer `create_region(...)`, which is
-        the same thing under a name matching `create_function` and friends."""
         super().__init__(name)
         self.__htsw_importable__ = register_importable(
             RegionImportable(name=name, bounds=bounds),
@@ -80,16 +78,3 @@ class Region(Declared):
         """`@region.on_exit` - run these actions when a player walks out."""
         self.attach('exit', func)
         return func
-
-
-def create_region(
-    name: str,
-    bounds: Bounds | None = None,
-    *,
-    on_enter: Handler | None = None,
-    on_exit: Handler | None = None,
-) -> Region:
-    """Declare a region and return it, so regions can be built by a function
-    called in a loop. Bounds are optional - htsw imports a region without them
-    and you place it in-game."""
-    return Region(name, bounds, on_enter=on_enter, on_exit=on_exit)

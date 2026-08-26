@@ -6,7 +6,7 @@ from pyhtsw import (
     NoOptimization,
     PlayerStat,
     chat,
-    create_function,
+    function,
     pause_execution,
 )
 from pyhtsw.directives.no_optimization import OPTIMIZATION_PASSES
@@ -33,7 +33,7 @@ def non_empty_blocks(container: Container) -> int:
 def build(name: str, body: Callable[[], None], *, reorder: bool) -> Container:
     def make() -> Container:
         with Container() as container:
-            create_function(name)(body)
+            function(name)(body)
         return container
 
     if reorder:

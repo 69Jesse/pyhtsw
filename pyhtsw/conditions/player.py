@@ -3,6 +3,7 @@ from typing import ClassVar, Self, final
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ConditionMeta
 from pyhtsw.compiler.schedule import Resource
+from pyhtsw.declarations.declared import declared_name
 from pyhtsw.declarations.group import Group
 from pyhtsw.declarations.region import Region
 from pyhtsw.declarations.team import Team
@@ -128,24 +129,24 @@ class HasGroup(Condition):
         reads=frozenset((Resource.GROUP,)),
     )
 
-    group: Group
+    group: str
     include_higher_groups: bool
 
     def __init__(
         self,
-        group: Group | str,
+        group: 'Group | str',
         include_higher_groups: bool = False,
     ) -> None:
-        self.group = group if isinstance(group, Group) else Group(group)
+        self.group = declared_name(group)
         self.include_higher_groups = include_higher_groups
 
     def into_htsl_raw(self) -> str:
-        return f'hasGroup {self.inline_quoted(self.group.name)} {self.inline(self.include_higher_groups)}'
+        return f'hasGroup {self.inline_quoted(self.group)} {self.inline(self.include_higher_groups)}'
 
     def cloned(
         self,
         *,
-        group: Group | str | Missing = MISSING,
+        group: 'Group | str | Missing' = MISSING,
         include_higher_groups: bool | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
@@ -167,22 +168,21 @@ class HasTeam(Condition):
         reads=frozenset((Resource.TEAM,)),
     )
 
-    team: Team | None
+    team: str | None
 
     def __init__(
         self,
-        team: Team | str | None,
+        team: 'Team | str | None',
     ) -> None:
-        self.team = team if not isinstance(team, str) else Team(team)
+        self.team = declared_name(team)
 
     def into_htsl_raw(self) -> str:
-        name = self.team.name if self.team is not None else 'None'
-        return f'hasTeam {self.inline_quoted(name)}'
+        return f'hasTeam {self.inline_quoted(self.team if self.team is not None else "None")}'
 
     def cloned(
         self,
         *,
-        team: Team | str | None | Missing = MISSING,
+        team: 'Team | str | None | Missing' = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(

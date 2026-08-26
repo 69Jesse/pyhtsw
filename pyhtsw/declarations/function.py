@@ -6,7 +6,7 @@ from pyhtsw.declarations.declared import Declared, declared_field, register_impo
 
 __all__ = (
     'Function',
-    'create_function',
+    'function',
 )
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class Function(Declared):
     __htsw_kind__ = 'functions'
-    __htsw_factory__ = 'create_function'
+    __htsw_factory__ = '@function'
 
     block: 'FunctionBlock | None'
 
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
     from pyhtsw.declarations.item import Item
 
 
-def create_function(
+def function(
     name: str,
     *,
     repeat_ticks: int | None = None,

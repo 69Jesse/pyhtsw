@@ -6,7 +6,7 @@ from pyhtsw import (
     PlayerStat,
     TemporaryStat,
     chat,
-    create_function,
+    function,
 )
 
 
@@ -22,14 +22,14 @@ def block_htsl(container: Container, name: str) -> str:
 
 with Container() as container:
 
-    @create_function('Alpha')
+    @function('Alpha')
     def alpha() -> None:
         t = TemporaryStat().as_long()
         t.value = 10
         t.value += 5
         chat(f'{t}')
 
-    @create_function('Beta')
+    @function('Beta')
     def beta() -> None:
         u = TemporaryStat().as_long()
         u.value = 20
@@ -44,7 +44,7 @@ assert max_temp(block_htsl(container, 'Beta')) == 0, block_htsl(container, 'Beta
 
 with Container() as container:
 
-    @create_function('Sequential')
+    @function('Sequential')
     def sequential() -> None:
         a = PlayerStat('a').as_long()
         out = PlayerStat('out').as_long()

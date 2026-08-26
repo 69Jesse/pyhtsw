@@ -7,12 +7,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from helpers import expect_exception  # noqa: E402
 
-from pyhtsw import (  # noqa: E402
+from pyhtsw import (
     Container,
     Item,
     Menu,
     chat,
-    create_menu,
     display_menu,
     set_projects_folder,
 )
@@ -29,7 +28,7 @@ Wand = Item('blaze_rod', name='&aWand')
 def build_page(title: str, greeting: str) -> Menu:
     """The point of the whole API: one function, called in a loop, and the
     handler closes over `greeting` without a default-argument dance."""
-    menu = create_menu(title, 6)
+    menu = Menu(title, 6)
     menu.fill(Black, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 0)
     menu.fill(Gray, xy_check=lambda x, y: menu.distance_from_edge(x, y) == 1)
     menu.place(Wand, slot=4)
@@ -44,13 +43,13 @@ def build_page(title: str, greeting: str) -> Menu:
 with Container() as container:
     pages = [build_page(f'Page {i}', f'hello {i}') for i in range(3)]
 
-    nav_menu = create_menu('Nav', 3)
+    nav_menu = Menu('Nav', 3)
 
     @nav_menu.on(item=Wand, slot=[10, 12, 14])
     def _nav() -> None:
         display_menu(pages[0])
 
-    legacy = create_menu('Legacy', 3)
+    legacy = Menu('Legacy', 3)
     legacy.place(Black, xy_check=lambda x, y: x == 0)
 
     @legacy.on(item=Wand, slot=13)
@@ -105,12 +104,12 @@ assert 'actions' in legacy[13] and 'actions' not in legacy[0]
 assert 'actions' in legacy[18] and 'actions' in legacy[26]
 
 with expect_exception(ValueError):
-    create_menu('Bad Size', 7)  # type: ignore[arg-type]
+    Menu('Bad Size', 7)  # type: ignore[arg-type]
 
 with expect_exception(ValueError):
-    create_menu('Both', 3).place(Wand, slot=1, x=0)
+    Menu('Both', 3).place(Wand, slot=1, x=0)
 
 with expect_exception(ValueError):
-    create_menu('Out Of Range', 1).place(Wand, slot=[99])
+    Menu('Out Of Range', 1).place(Wand, slot=[99])
 
 print('PASS')

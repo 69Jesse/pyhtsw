@@ -7,8 +7,7 @@ from pyhtsw import (
     Item,
     Location,
     chat,
-    create_function,
-    create_item,
+    function,
     give_item,
     normalize_item,
     set_projects_folder,
@@ -22,14 +21,14 @@ set_projects_folder(tmp, save=False)
 # Duplicate importable names raise.
 with Container():
 
-    @create_function('dup')
+    @function('dup')
     def _a() -> None:
         chat('a')
 
     raised = False
     try:
 
-        @create_function('dup')
+        @function('dup')
         def _b() -> None:
             chat('b')
     except RuntimeError:
@@ -70,7 +69,7 @@ assert resolve_location(Location.custom(1, 2, 3)) == ('custom_coordinates', '1 2
 # A declared item references by its declared name; a plain one is promoted to
 # an items[] entry and referenced by a derived name, never by path.
 with Container() as c:
-    sword = create_item('diamond_sword', name='&bSword')
+    sword = Item('diamond_sword', name='&bSword')
 
     give_item(sword)  # by declared name
     give_item(Item('apple'))  # no display name -> the vanilla title

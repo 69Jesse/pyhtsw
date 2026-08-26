@@ -10,8 +10,8 @@ from pyhtsw import (
     NoOptimization,
     PlayerStat,
     chat,
-    create_function,
     full_heal,
+    function,
     give_experience_levels,
     pause_execution,
     play_sound,
@@ -87,7 +87,7 @@ def executed(seed: int, *, reorder: bool) -> tuple[dict[str, object], list[str]]
 def _render(seed: int, flags: 'NoOptimization | None') -> str:
     def run() -> Container:
         with Container() as container:
-            create_function('fuzz')(
+            function('fuzz')(
                 lambda: emit(random.Random(seed), allow_barriers=True),
             )
         return container

@@ -5,7 +5,7 @@ from pyhtsw import (
     ExecutionContext,
     PlayerStat,
     chat,
-    create_function,
+    function,
     pause_execution,
 )
 
@@ -15,7 +15,7 @@ gems = PlayerStat('gems').as_long()
 
 def htsl_of(body: Callable[[], None], name: str = 'fold') -> str:
     with Container() as container:
-        create_function(name)(body)
+        function(name)(body)
     return next(
         block.into_htsl() for block in container.blocks if block.get_name() == name
     )

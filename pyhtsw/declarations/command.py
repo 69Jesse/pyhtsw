@@ -9,7 +9,7 @@ from pyhtsw.types import ALL_COMMAND_MODES
 
 __all__ = (
     'Command',
-    'create_command',
+    'command',
 )
 
 if TYPE_CHECKING:
@@ -22,14 +22,14 @@ class Command(Declared):
     the name for reference and reexport."""
 
     __htsw_kind__ = 'commands'
-    __htsw_factory__ = 'create_command'
+    __htsw_factory__ = '@command'
 
     mode: 'declared_field[ALL_COMMAND_MODES | None]' = declared_field()
     required_priority: declared_field[int | None] = declared_field()
     listed: declared_field[bool | None] = declared_field()
 
 
-def create_command(
+def command(
     name: str,
     *,
     mode: ALL_COMMAND_MODES | None = None,
@@ -37,7 +37,7 @@ def create_command(
     listed: bool | None = None,
 ) -> Callable[[Callable[[], None]], Command]:
     def decorator(callback: Callable[[], None]) -> Command:
-        command = Command(name=name)
+        value = Command(name=name)
         block = NamedBlock(
             f'command {name}',
             callback=callback,
@@ -45,7 +45,7 @@ def create_command(
         )
 
         get_current_container().add_block(block)
-        command.__htsw_importable__ = register_importable(
+        value.__htsw_importable__ = register_importable(
             CommandImportable(
                 block,
                 name=name,
@@ -54,6 +54,6 @@ def create_command(
                 listed=listed,
             ),
         )
-        return command
+        return value
 
     return decorator

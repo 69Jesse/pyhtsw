@@ -8,7 +8,7 @@ from pyhtsw.declarations.declared import Declared, register_importable
 
 __all__ = (
     'Event',
-    'create_event',
+    'event',
 )
 
 if TYPE_CHECKING:
@@ -20,24 +20,24 @@ class Event(Declared):
     the event fires it - so this only carries the event name for reference."""
 
     __htsw_kind__ = 'events'
-    __htsw_factory__ = 'create_event'
+    __htsw_factory__ = '@event'
 
     @property
     def event(self) -> 'EventName':
         return cast('EventName', self.name)
 
 
-def create_event(event: EventName) -> Callable[[Callable[[], None]], Event]:
+def event(name: EventName) -> Callable[[Callable[[], None]], Event]:
     def decorator(callback: Callable[[], None]) -> Event:
         block = NamedBlock(
-            f'event {event}',
+            f'event {name}',
             callback=callback,
             importable_kind='events',
         )
         get_current_container().add_block(block)
-        importable = register_importable(EventImportable(block, event=event))
+        importable = register_importable(EventImportable(block, event=name))
 
-        value = Event(event)
+        value = Event(name)
         value.__htsw_importable__ = importable
         return value
 

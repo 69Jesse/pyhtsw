@@ -5,14 +5,14 @@ from types import SimpleNamespace
 
 import pyhtsw
 from pyhtsw import (
+    NPC,
     Container,
+    Item,
+    Menu,
+    Region,
     chat,
-    create_event,
-    create_function,
-    create_item,
-    create_menu,
-    create_npc,
-    create_region,
+    event,
+    function,
     give_item,
     set_projects_folder,
 )
@@ -24,28 +24,28 @@ set_projects_folder(tmp, save=False)
 # Define every importable kind in a throwaway container (so nothing lands in the
 # global one); the handles below carry their importable for `export` to find.
 with Container():
-    wand = create_item('blaze_rod', name='&aMagic Wand')
+    wand = Item('blaze_rod', name='&aMagic Wand')
 
     @wand.right_click
     def on_right() -> None:
         chat('used the wand')
 
-    border = create_item('black_stained_glass_pane', name=' ', importable_name='Border')
+    border = Item('black_stained_glass_pane', name=' ', importable_name='Border')
 
-    shop = create_menu('Shop', 6)
+    shop = Menu('Shop', 6)
     shop.place(border, x=0)
 
     @shop.on(item=wand, x=3, y=4)
     def buy() -> None:
         chat('bought')
 
-    spawn = create_region('Spawn', ((0, 100, 0), (10, 110, 10)))
+    spawn = Region('Spawn', ((0, 100, 0), (10, 110, 10)))
 
     @spawn.on_enter
     def enter() -> None:
         chat('entered')
 
-    merchant = create_npc(
+    merchant = NPC(
         'Merchant',
         (1, 64, 2),
         skin='Steve',
@@ -56,11 +56,11 @@ with Container():
     def right() -> None:
         chat('hello')
 
-    @create_function('Tick', repeat_ticks=20, icon=wand)
+    @function('Tick', repeat_ticks=20, icon=wand)
     def tick() -> None:
         chat('tick')
 
-    @create_event('Player Join')
+    @event('Player Join')
     def join() -> None:
         give_item(wand)
 
@@ -108,7 +108,7 @@ assert 'bought' in (root / 'menus' / 'shop' / 'slot-3-4.htsl').read_text()
 # A single handle and a bare list both work; a bare build callback is run.
 with Container():
 
-    @create_function('Solo')
+    @function('Solo')
     def solo() -> None:
         chat('solo')
 

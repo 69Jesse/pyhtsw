@@ -130,8 +130,18 @@ EventName = Literal[
 
 NpcSkin = Literal['Steve', 'Alex', 'Players Skin']
 
-Coord = tuple[float, float, float]
+Coord = tuple[int, int, int]
 Bounds = tuple[Coord, Coord]
+
+
+def _block_pos(pos: Coord, *, what: str) -> dict[str, int]:
+    for axis, value in zip('xyz', pos, strict=True):
+        if not (isinstance(value, int) or float(value).is_integer()):
+            raise ValueError(
+                f'{what}: coordinate {axis}={value} must be a whole number.',
+            )
+    x, y, z = pos
+    return {'x': int(x), 'y': int(y), 'z': int(z)}
 
 
 def call_with_args(func: Callable[..., Any], *args: Any) -> Any:
@@ -501,10 +511,10 @@ class RegionImportable(Importable):
     def build(self, project: Project) -> dict[str, Any]:
         entry: dict[str, Any] = {'name': self.name}
         if self.bounds is not None:
-            (fx, fy, fz), (tx, ty, tz) = self.bounds
+            what = f'Region "{self.name}"'
             entry['bounds'] = {
-                'from': {'x': fx, 'y': fy, 'z': fz},
-                'to': {'x': tx, 'y': ty, 'z': tz},
+                'from': _block_pos(self.bounds[0], what=what),
+                'to': _block_pos(self.bounds[1], what=what),
             }
         folder = f'regions/{into_kebab(self.name)}'
         if self.on_enter is not None and not self.on_enter.is_empty():
@@ -727,8 +737,10 @@ class NpcImportable(Importable):
         )
 
     def build(self, project: Project) -> dict[str, Any]:
-        x, y, z = self.pos
-        entry: dict[str, Any] = {'name': self.name, 'pos': {'x': x, 'y': y, 'z': z}}
+        entry: dict[str, Any] = {
+            'name': self.name,
+            'pos': _block_pos(self.pos, what=f'NPC "{self.name}"'),
+        }
         folder = f'npcs/{into_kebab(self.name)}'
         if self.left is not None and not self.left.is_empty():
             entry['leftClickActions'] = project.write_block(f'{folder}/left', self.left)

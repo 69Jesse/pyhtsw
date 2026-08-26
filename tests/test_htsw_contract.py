@@ -68,6 +68,22 @@ assert {cls.kind for cls in IMPORTABLES} == set(CONTRACT['importables']), (
 )
 
 
+# htsw takes an NPC's `pos` as its identity and matches on the exact `x,y,z`
+# string, so a fraction can never name a live NPC. Both sides reject it.
+assert all(CONTRACT['nested']['pos'][axis].get('integer') for axis in 'xyz')
+
+for importable, kwargs in (
+    (NpcImportable, {'name': 'Guide', 'pos': (1.5, 64, -2)}),
+    (RegionImportable, {'name': 'Spawn', 'bounds': ((0, 64, 0), (4, 68.25, 4))}),
+):
+    try:
+        importable(**kwargs).build(None)  # type: ignore[arg-type]
+    except ValueError as error:
+        assert 'must be a whole number' in str(error), error
+    else:
+        raise AssertionError(f'{importable.__name__} accepted a fractional coordinate')
+
+
 # pyhtsw keys limits by expression class; map back to htsw's type names.
 HTSW_NAMES = {
     'ConditionalExpression': 'CONDITIONAL',

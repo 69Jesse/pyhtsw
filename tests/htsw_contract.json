@@ -360,15 +360,18 @@
     "pos": {
       "x": {
         "required": true,
-        "kind": "number"
+        "kind": "number",
+        "integer": true
       },
       "y": {
         "required": true,
-        "kind": "number"
+        "kind": "number",
+        "integer": true
       },
       "z": {
         "required": true,
-        "kind": "number"
+        "kind": "number",
+        "integer": true
       }
     },
     "bounds": {

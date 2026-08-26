@@ -30,7 +30,8 @@ else:
 # Only .htsl is checked — .snbt item display names legitimately carry §.
 writer = Project(Path(tempfile.mkdtemp()))
 writer.write(
-    'items/wand.snbt', '{id: "minecraft:stick", tag: {display: {Name: "§6Wand"}}}'
+    'items/wand.snbt',
+    '{id: "minecraft:stick", tag: {display: {Name: "§6Wand"}}}',
 )
 
 with expect_exception(ValueError):

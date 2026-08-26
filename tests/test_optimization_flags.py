@@ -5,10 +5,10 @@ from pyhtsw import (
     IfAll,
     NoOptimization,
     PlayerStat,
+    StrictOrder,
     chat,
     exit_function,
     function,
-    strict_order,
 )
 from pyhtsw.directives.no_optimization import OPTIMIZATION_PASSES, optimization_enabled
 
@@ -97,7 +97,7 @@ def loose() -> None:
 def pinned() -> None:
     for index in range(25):
         fill[index].value = index
-    with strict_order():
+    with StrictOrder():
         a.value += 1
         with IfAll(a > 5):
             a.value += 3

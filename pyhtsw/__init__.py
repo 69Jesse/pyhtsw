@@ -291,9 +291,7 @@ from pyhtsw.directives.no_fallback_values import NoFallbackValues as NoFallbackV
 from pyhtsw.directives.no_optimization import NoOptimization as NoOptimization
 from pyhtsw.directives.no_type_casting import NoTypeCasting as NoTypeCasting
 from pyhtsw.directives.preserved import Preserved as Preserved
-from pyhtsw.directives.preserved import preserved as preserved
 from pyhtsw.directives.strict_order import StrictOrder as StrictOrder
-from pyhtsw.directives.strict_order import strict_order as strict_order
 from pyhtsw.editable import Editable as Editable
 from pyhtsw.execute.backend_type import BackendType as BackendType
 from pyhtsw.execute.context import ExecutionContext as ExecutionContext
@@ -327,10 +325,6 @@ from pyhtsw.generated.enums import Sound as Sound
 from pyhtsw.helpers import chunk_expressions as chunk_expressions
 from pyhtsw.helpers import chunked as chunked
 from pyhtsw.internal_type import InternalType as InternalType
-from pyhtsw.location import CurrentLocation as CurrentLocation
-from pyhtsw.location import CustomLocation as CustomLocation
-from pyhtsw.location import HouseSpawnLocation as HouseSpawnLocation
-from pyhtsw.location import InvokersLocation as InvokersLocation
 from pyhtsw.location import Location as Location
 from pyhtsw.location import LocationName as LocationName
 from pyhtsw.misc.skull_data import SKULL_DATA as SKULL_DATA

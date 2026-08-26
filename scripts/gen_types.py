@@ -173,7 +173,11 @@ def render_specs(contract: dict) -> str:
 
 
 def render_names(contract: dict) -> str:
-    lines = [HEADER, '# fmt: off', '']
+    lines = [HEADER, '# fmt: off', 'from typing import Literal', '']
+    lines.append('')
+    lines += literal_block('ActionTypeName', list(contract['actionsToKws']))
+    lines.append('')
+    lines += literal_block('ConditionTypeName', list(contract['conditionsToKws']))
     for name, key in (
         ('ACTIONS_TO_KWS', 'actionsToKws'),
         ('CONDITIONS_TO_KWS', 'conditionsToKws'),

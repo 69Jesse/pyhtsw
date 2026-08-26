@@ -15,7 +15,7 @@ from pyhtsw.declarations.item import (
 )
 from pyhtsw.expression.expression import Expression
 from pyhtsw.generated.enums import EnchantmentName
-from pyhtsw.location import Location, resolve_location
+from pyhtsw.location import Location, ensure_location
 
 __all__ = (
     'Layout',
@@ -60,14 +60,14 @@ class GiveItemExpression(Expression):
 
     item: Item
     allow_multiple: bool
-    inventory_slot: str | int
+    inventory_slot: InventorySlot
     replace_existing_item: bool
 
     def __init__(
         self,
         item: Item,
         allow_multiple: bool = False,
-        inventory_slot: str | int = 'first_slot',
+        inventory_slot: InventorySlot = 'first_slot',
         replace_existing_item: bool = False,
     ) -> None:
         self.item = item
@@ -79,11 +79,8 @@ class GiveItemExpression(Expression):
         name = item_action_reference(self.item)
         # Numeric slots are emitted bare (htsw accepts -1..39); named slots
         # (e.g. "First Available Slot", "Hand Slot") are quoted.
-        slot = (
-            self.inline(self.inventory_slot)
-            if isinstance(self.inventory_slot, int)
-            else self.inline_quoted(self.inventory_slot)
-        )
+        wire = INVENTORY_SLOT_TO_HTSW.get(self.inventory_slot, self.inventory_slot)
+        slot = self.inline(wire) if isinstance(wire, int) else self.inline_quoted(wire)
         return (
             f'giveItem {self.inline_quoted(name)} {self.inline(self.allow_multiple)}'
             f' {slot} {self.inline(self.replace_existing_item)}'
@@ -97,7 +94,7 @@ class GiveItemExpression(Expression):
         *,
         item: Item | Missing = MISSING,
         allow_multiple: bool | Missing = MISSING,
-        inventory_slot: str | int | Missing = MISSING,
+        inventory_slot: InventorySlot | Missing = MISSING,
         replace_existing_item: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -117,10 +114,6 @@ def give_item(
     inventory_slot: InventorySlot = 'first_slot',
     replace_existing_item: bool = False,
 ) -> None:
-    inventory_slot = INVENTORY_SLOT_TO_HTSW.get(
-        inventory_slot,
-        inventory_slot,
-    )
     GiveItemExpression(
         item=item,
         allow_multiple=allow_multiple,
@@ -188,8 +181,7 @@ class DropItemExpression(Expression):
     )
 
     item: Item
-    location: str
-    coordinates: str | None
+    location: Location
     drop_naturally: bool
     disable_item_merging: bool
     prioritize_player: bool
@@ -200,8 +192,7 @@ class DropItemExpression(Expression):
     def __init__(
         self,
         item: Item,
-        location: str,
-        coordinates: str | None,
+        location: Location,
         drop_naturally: bool = False,
         disable_item_merging: bool = False,
         prioritize_player: bool = False,
@@ -210,8 +201,7 @@ class DropItemExpression(Expression):
         pickup_delay_ticks: int = 10,
     ) -> None:
         self.item = item
-        self.location = location
-        self.coordinates = coordinates
+        self.location = ensure_location(location)
         self.drop_naturally = drop_naturally
         self.disable_item_merging = disable_item_merging
         self.prioritize_player = prioritize_player
@@ -221,10 +211,12 @@ class DropItemExpression(Expression):
 
     def into_htsl(self) -> str:
         name = item_action_reference(self.item)
-        coordinates = self.coordinates if self.coordinates is not None else '~ ~ ~'
+        keyword, coordinates = self.location.render()
+        if coordinates is None:
+            coordinates = '~ ~ ~'
         return (
             f'dropItem {self.inline_quoted(name)}'
-            f' {self.inline_quoted(self.location)} {self.inline_quoted(coordinates)}'
+            f' {self.inline_quoted(keyword)} {self.inline_quoted(coordinates)}'
             f' {self.inline(self.drop_naturally)} {self.inline(self.disable_item_merging)}'
             f' {self.inline(self.prioritize_player)} {self.inline(self.fallback_to_inventory)}'
             f' {self.inline(self.despawn_duration_ticks)} {self.inline(self.pickup_delay_ticks)}'
@@ -237,8 +229,7 @@ class DropItemExpression(Expression):
         self,
         *,
         item: Item | Missing = MISSING,
-        location: str | Missing = MISSING,
-        coordinates: str | None | Missing = MISSING,
+        location: Location | Missing = MISSING,
         drop_naturally: bool | Missing = MISSING,
         disable_item_merging: bool | Missing = MISSING,
         prioritize_player: bool | Missing = MISSING,
@@ -251,7 +242,6 @@ class DropItemExpression(Expression):
             {
                 'item': item,
                 'location': location,
-                'coordinates': coordinates,
                 'drop_naturally': drop_naturally,
                 'disable_item_merging': disable_item_merging,
                 'prioritize_player': prioritize_player,
@@ -265,6 +255,7 @@ class DropItemExpression(Expression):
 def drop_item(
     item: Item,
     location: Location,
+    *,
     drop_naturally: bool = False,
     disable_item_merging: bool = False,
     prioritize_player: bool = False,
@@ -272,11 +263,9 @@ def drop_item(
     despawn_duration_ticks: int = 6000,
     pickup_delay_ticks: int = 10,
 ) -> None:
-    keyword, coordinates = resolve_location(location)
     DropItemExpression(
         item=item,
-        location=keyword,
-        coordinates=coordinates,
+        location=location,
         drop_naturally=drop_naturally,
         disable_item_merging=disable_item_merging,
         prioritize_player=prioritize_player,
@@ -314,44 +303,36 @@ class EnchantHeldItemExpression(Expression):
         forbidden_events=('player_quit',),
     )
 
-    enchantment_name: str
-    level: int
+    enchantment: Enchantment
 
-    def __init__(self, enchantment_name: str, level: int) -> None:
-        self.enchantment_name = enchantment_name
-        self.level = level
+    def __init__(self, enchantment: Enchantment | EnchantmentName) -> None:
+        self.enchantment = (
+            enchantment
+            if isinstance(enchantment, Enchantment)
+            else Enchantment(enchantment)
+        )
 
     def into_htsl(self) -> str:
-        return f'enchant {self.inline_quoted(self.enchantment_name)} {self.inline(self.level)}'
+        return (
+            f'enchant {self.inline_quoted(self.enchantment.name)}'
+            f' {self.inline(self.enchantment.level)}'
+        )
 
     def cloned(
         self,
         *,
-        enchantment_name: str | Missing = MISSING,
-        level: int | Missing = MISSING,
+        enchantment: Enchantment | EnchantmentName | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
             {
-                'enchantment_name': enchantment_name,
-                'level': level,
+                'enchantment': enchantment,
             },
         )
 
 
-def enchant_held_item(
-    enchantment: EnchantmentName | Enchantment,
-    level: int | None = None,
-) -> None:
-    if isinstance(enchantment, Enchantment):
-        name = enchantment.name
-        if level is None:
-            level = enchantment.level
-    else:
-        name = enchantment
-    if level is None:
-        level = 1
-    EnchantHeldItemExpression(enchantment_name=name, level=level).write()
+def enchant_held_item(enchantment: Enchantment | EnchantmentName) -> None:
+    EnchantHeldItemExpression(enchantment=enchantment).write()
 
 
 @final

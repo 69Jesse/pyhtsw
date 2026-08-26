@@ -1,8 +1,7 @@
-from typing import ClassVar
+from pyhtsw.directives.base import Directive
 
 __all__ = (
     'OPTIMIZATION_PASSES',
-    'no_optimization',
     'NoOptimization',
     'optimization_enabled',
 )
@@ -25,7 +24,7 @@ OPTIMIZATION_PASSES = (
 )
 
 
-class NoOptimization:
+class NoOptimization(Directive):
     """Disables optimization passes for the duration of the block.
 
     A bare `NoOptimization()` disables every pass. Naming a pass keeps it
@@ -36,8 +35,6 @@ class NoOptimization:
 
     Nested blocks intersect: a pass runs only if every open block allows it.
     """
-
-    _stack: ClassVar[list[frozenset[str]]] = []
 
     enabled: frozenset[str]
 
@@ -50,19 +47,13 @@ class NoOptimization:
             )
         self.enabled = frozenset(name for name, keep in passes.items() if keep)
 
-    def __enter__(self) -> None:
-        NoOptimization._stack.append(self.enabled)
-
-    def __exit__(self, *args: object) -> None:
-        NoOptimization._stack.pop()
-
 
 def optimization_enabled(pass_name: str) -> bool:
-    return all(pass_name in frame for frame in NoOptimization._stack)
+    return all(pass_name in frame.enabled for frame in NoOptimization._stack)
 
 
 def no_optimization() -> bool:
     """True when no pass at all may run."""
-    return bool(NoOptimization._stack) and not any(
+    return NoOptimization.active() and not any(
         optimization_enabled(pass_name) for pass_name in OPTIMIZATION_PASSES
     )

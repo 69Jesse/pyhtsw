@@ -32,12 +32,12 @@ __all__ = (
 
 class Enchantment:
     name: EnchantmentName
-    level: int | None
+    level: int
 
     def __init__(
         self,
         name: EnchantmentName,
-        level: int | None = None,
+        level: int = 1,
     ) -> None:
         self.name = name
         self.level = level
@@ -46,6 +46,9 @@ class Enchantment:
         if not isinstance(other, Enchantment):
             return NotImplemented
         return self.name == other.name and self.level == other.level
+
+    def __hash__(self) -> int:
+        return hash((self.name, self.level))
 
 
 if TYPE_CHECKING:
@@ -517,7 +520,7 @@ class Item:
                 NBTList(
                     [
                         NBTCompound()
-                        .put('lvl', NBTShort(enchantment.level or 1))
+                        .put('lvl', NBTShort(enchantment.level))
                         .put('id', NBTShort(ENCHANTMENT_TO_ID[enchantment.name]))
                         for enchantment in self.enchantments
                     ],

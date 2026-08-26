@@ -1,20 +1,11 @@
-from typing import ClassVar
+from pyhtsw.directives.base import Directive
 
-__all__ = (
-    'no_fallback_values',
-    'NoFallbackValues',
-)
+__all__ = ('NoFallbackValues',)
+
+
+class NoFallbackValues(Directive):
+    pass
 
 
 def no_fallback_values() -> bool:
-    return NoFallbackValues.counter > 0
-
-
-class NoFallbackValues:
-    counter: ClassVar[int] = 0
-
-    def __enter__(self) -> None:
-        NoFallbackValues.counter += 1
-
-    def __exit__(self, *args: object) -> None:
-        NoFallbackValues.counter -= 1
+    return NoFallbackValues.active()

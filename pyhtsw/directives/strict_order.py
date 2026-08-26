@@ -1,18 +1,22 @@
+from itertools import count
 from typing import TYPE_CHECKING, ClassVar
 
+from pyhtsw.directives.base import Directive
+
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from pyhtsw.expression.expression import Expression
 
 
 __all__ = (
     'StrictOrder',
-    'strict_order',
     'strict_order_region_of',
     'tag_strict_order_region',
 )
 
 
-# Set on an expression written inside a `strict_order()` block. The scheduler
+# Set on an expression written inside a `StrictOrder()` block. The scheduler
 # treats a tagged expression as an ordering barrier, so the region keeps its
 # order internally and nothing from outside moves through it. Wrapping it in a
 # conditional or carving it into an overflow function is still allowed - neither
@@ -21,24 +25,18 @@ __all__ = (
 STRICT_ORDER_ATTRIBUTE = '_strict_order_region'
 
 
-class StrictOrder:
-    _stack: ClassVar[list[int]] = []
-    _counter: ClassVar[int] = 0
+class StrictOrder(Directive):
+    _regions: 'ClassVar[Iterator[int]]' = count(1)
 
-    def __enter__(self) -> None:
-        StrictOrder._counter += 1
-        StrictOrder._stack.append(StrictOrder._counter)
+    region: int
 
-    def __exit__(self, *args: object) -> None:
-        StrictOrder._stack.pop()
-
-
-def strict_order() -> StrictOrder:
-    return StrictOrder()
+    def __init__(self) -> None:
+        self.region = next(StrictOrder._regions)
 
 
 def current_strict_order_region() -> int | None:
-    return StrictOrder._stack[-1] if StrictOrder._stack else None
+    stack = StrictOrder._stack
+    return stack[-1].region if stack else None
 
 
 def tag_strict_order_region(expression: 'Expression', region: int | None) -> None:

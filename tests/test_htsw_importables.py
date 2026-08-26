@@ -12,7 +12,7 @@ from pyhtsw import (
     normalize_item,
     set_projects_folder,
 )
-from pyhtsw.location import resolve_location
+from pyhtsw.location import ensure_location
 
 tmp = Path(tempfile.mkdtemp())
 set_projects_folder(tmp, save=False)
@@ -57,13 +57,13 @@ for bad in ('a string', 123, None):
 # A bare Location is not a valid location; the concrete ones are.
 raised = False
 try:
-    resolve_location(Location())
+    ensure_location(Location())
 except TypeError:
     raised = True
 assert raised, 'bare Location() should be rejected'
 
-assert resolve_location(Location.house_spawn()) == ('house_spawn', None)
-assert resolve_location(Location.custom(1, 2, 3)) == ('custom_coordinates', '1 2 3')
+assert Location.house_spawn().render() == ('house_spawn', None)
+assert Location.custom(1, 2, 3).render() == ('custom_coordinates', '1 2 3')
 
 
 # A declared item references by its declared name; a plain one is promoted to

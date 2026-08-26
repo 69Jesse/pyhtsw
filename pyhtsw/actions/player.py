@@ -1,4 +1,4 @@
-from typing import Self, cast, final
+from typing import Self, final
 
 from pyhtsw.checkable import Checkable
 from pyhtsw.clone import MISSING, Missing, clone_with
@@ -10,7 +10,7 @@ from pyhtsw.declarations.team import Team
 from pyhtsw.expression.expression import Expression
 from pyhtsw.expression.housing_type import NumericHousingType
 from pyhtsw.generated.enums import Gamemode, PotionEffect
-from pyhtsw.location import Location, LocationName, resolve_location
+from pyhtsw.location import Location, ensure_location
 
 __all__ = (
     'TeleportPlayerExpression',
@@ -60,40 +60,33 @@ class TeleportPlayerExpression(Expression):
         forbidden_events=('player_quit',),
     )
 
-    coordinates: str | None
-    location: LocationName
+    location: Location
     prevent_teleport_inside_block: bool
 
     def __init__(
         self,
-        coordinates: str | None = None,
-        location: LocationName = 'custom_coordinates',
+        location: Location,
         prevent_teleport_inside_block: bool = False,
     ) -> None:
-        self.coordinates = coordinates
-        self.location = location
+        self.location = ensure_location(location)
         self.prevent_teleport_inside_block = prevent_teleport_inside_block
 
     def into_htsl(self) -> str:
-        line = f'tp {self.inline_quoted(self.location)}'
-        if self.location == 'custom_coordinates' and self.coordinates is not None:
-            line += f' {self.inline_quoted(self.coordinates)}'
-        else:
-            line += f' {self.inline_quoted("~ ~ ~")}'
+        keyword, coordinates = self.location.render()
+        line = f'tp {self.inline_quoted(keyword)}'
+        line += f' {self.inline_quoted(coordinates if coordinates is not None else "~ ~ ~")}'
         line += f' {self.inline(self.prevent_teleport_inside_block)}'
         return line
 
     def cloned(
         self,
         *,
-        coordinates: str | None | Missing = MISSING,
-        location: LocationName | Missing = MISSING,
+        location: Location | Missing = MISSING,
         prevent_teleport_inside_block: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
             {
-                'coordinates': coordinates,
                 'location': location,
                 'prevent_teleport_inside_block': prevent_teleport_inside_block,
             },
@@ -102,12 +95,11 @@ class TeleportPlayerExpression(Expression):
 
 def teleport_player(
     location: Location,
+    *,
     prevent_teleport_inside_block: bool = False,
 ) -> None:
-    keyword, coordinates = resolve_location(location)
     TeleportPlayerExpression(
-        coordinates=coordinates,
-        location=cast(LocationName, keyword),
+        location=location,
         prevent_teleport_inside_block=prevent_teleport_inside_block,
     ).write()
 
@@ -399,40 +391,33 @@ class LaunchToTargetExpression(Expression):
         forbidden_events=('player_quit',),
     )
 
-    coordinates: str | None
-    location: LocationName
+    location: Location
     strength: Checkable | int
 
     def __init__(
         self,
-        coordinates: str | None = None,
-        location: LocationName = 'custom_coordinates',
+        location: Location,
         strength: Checkable | int = 2,
     ) -> None:
-        self.coordinates = coordinates
-        self.location = location
+        self.location = ensure_location(location)
         self.strength = strength
 
     def into_htsl(self) -> str:
-        line = f'launchTarget {self.inline_quoted(self.location)}'
-        if self.location == 'custom_coordinates' and self.coordinates is not None:
-            line += f' {self.inline_quoted(self.coordinates)}'
-        else:
-            line += f' {self.inline_quoted("~ ~ ~")}'
+        keyword, coordinates = self.location.render()
+        line = f'launchTarget {self.inline_quoted(keyword)}'
+        line += f' {self.inline_quoted(coordinates if coordinates is not None else "~ ~ ~")}'
         line += f' {self.inline(self.strength)}'
         return line
 
     def cloned(
         self,
         *,
-        coordinates: str | None | Missing = MISSING,
-        location: LocationName | Missing = MISSING,
+        location: Location | Missing = MISSING,
         strength: Checkable | int | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
             {
-                'coordinates': coordinates,
                 'location': location,
                 'strength': strength,
             },
@@ -441,14 +426,10 @@ class LaunchToTargetExpression(Expression):
 
 def launch_to_target(
     location: Location,
+    *,
     strength: Checkable | int = 2,
 ) -> None:
-    keyword, coordinates = resolve_location(location)
-    LaunchToTargetExpression(
-        coordinates=coordinates,
-        location=cast(LocationName, keyword),
-        strength=strength,
-    ).write()
+    LaunchToTargetExpression(location=location, strength=strength).write()
 
 
 @final
@@ -461,44 +442,36 @@ class SetCompassTargetExpression(Expression):
         forbidden_events=('player_quit',),
     )
 
-    coordinates: str | None
-    location: LocationName
+    location: Location
 
     def __init__(
         self,
-        coordinates: str | None = None,
-        location: LocationName = 'custom_coordinates',
+        location: Location,
     ) -> None:
-        self.coordinates = coordinates
-        self.location = location
+        self.location = ensure_location(location)
 
     def into_htsl(self) -> str:
-        line = f'compassTarget {self.inline_quoted(self.location)}'
-        if self.location == 'custom_coordinates' and self.coordinates is not None:
-            line += f' {self.inline_quoted(self.coordinates)}'
+        keyword, coordinates = self.location.render()
+        line = f'compassTarget {self.inline_quoted(keyword)}'
+        if coordinates is not None:
+            line += f' {self.inline_quoted(coordinates)}'
         return line
 
     def cloned(
         self,
         *,
-        coordinates: str | None | Missing = MISSING,
-        location: LocationName | Missing = MISSING,
+        location: Location | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
             {
-                'coordinates': coordinates,
                 'location': location,
             },
         )
 
 
 def set_compass_target(location: Location) -> None:
-    keyword, coordinates = resolve_location(location)
-    SetCompassTargetExpression(
-        coordinates=coordinates,
-        location=cast(LocationName, keyword),
-    ).write()
+    SetCompassTargetExpression(location=location).write()
 
 
 @final

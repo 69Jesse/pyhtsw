@@ -331,6 +331,7 @@ class Container:
         )
         from pyhtsw.expression.binary_expression import BinaryExpression
         from pyhtsw.expression.compound_expression import CompoundExpression
+        from pyhtsw.location import Location
 
         index = 0
         while index < len(expressions):
@@ -363,6 +364,11 @@ class Container:
                 elif isinstance(value, str):
                     for deferred_id in deferred.find_deferred_ids(value):
                         ids.setdefault(deferred_id, None)
+                elif isinstance(value, Location):
+                    text = value.render()[1]
+                    if text is not None:
+                        for deferred_id in deferred.find_deferred_ids(text):
+                            ids.setdefault(deferred_id, None)
             if not ids:
                 index += 1
                 continue
@@ -375,6 +381,12 @@ class Container:
                         key,
                         deferred.substitute_deferred(value, placeholders),
                     )
+                elif isinstance(value, Location):
+                    text = value.render()[1]
+                    if text is not None and deferred.text_has_deferred(text):
+                        value.replace_deferred_text(
+                            deferred.substitute_deferred(text, placeholders),
+                        )
             for key, deferred_id in direct_fields:
                 setattr(expression, key, editables[deferred_id])
             # The setup belongs to the statement that reads it, so it inherits

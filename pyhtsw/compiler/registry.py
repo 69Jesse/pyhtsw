@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from pyhtsw.compiler.schedule import Effects, ResourceKey
+from pyhtsw.generated.enums import EventName
+from pyhtsw.generated.names import ActionTypeName, ConditionTypeName
 
 if TYPE_CHECKING:
     from pyhtsw.expression.condition.condition import Condition
@@ -24,7 +26,7 @@ class ActionMeta:
     the class itself. The default answers are the safe ones: no htsw identity,
     no limit, unknown effects (a full reorder barrier)."""
 
-    htsw_name: str | None = None
+    htsw_name: ActionTypeName | None = None
     limit: int | None = None
     effects: Effects | None = None
     control: bool = False
@@ -32,16 +34,16 @@ class ActionMeta:
     item_only: bool = False
     menu_only: bool = False
     forbidden_in_events: bool = False
-    forbidden_events: tuple[str, ...] = ()
+    forbidden_events: tuple[EventName, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
 class ConditionMeta:
-    htsw_name: str | None = None
+    htsw_name: ConditionTypeName | None = None
     limit: int | None = None
     reads: frozenset[ResourceKey] | None = None
     display_name: str | None = None
-    scoped_events: tuple[str, ...] = ()
+    scoped_events: tuple[EventName, ...] = ()
 
 
 def _walk[T](cls: type[T]) -> Generator[type[T]]:

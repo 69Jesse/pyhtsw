@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, NamedTuple
 
+from pyhtsw.generated.enums import EventName
+
 if TYPE_CHECKING:
     from pyhtsw.compiler.block import Block
     from pyhtsw.compiler.importable import Importable
@@ -23,7 +25,7 @@ class ScopeViolation(NamedTuple):
     message: str
 
 
-CANCELLABLE_EVENTS: frozenset[str] = frozenset(
+CANCELLABLE_EVENTS: frozenset[EventName] = frozenset(
     {
         'player_death',
         'fish_caught',
@@ -75,7 +77,7 @@ def _name(cls: object) -> str:
 def _check_conditions(
     expression: 'Expression',
     *,
-    event: str | None,
+    event: 'EventName | None',
     report: 'list[str]',
 ) -> None:
     from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
@@ -100,7 +102,7 @@ def _check_action(
     cls: object,
     *,
     kind: 'ImportableKind',
-    event: str | None,
+    event: 'EventName | None',
     nested: bool,
     report: 'list[str]',
 ) -> None:
@@ -144,7 +146,7 @@ def _walk(
     expressions: 'list[Expression]',
     *,
     kind: 'ImportableKind',
-    event: str | None,
+    event: 'EventName | None',
     nested: bool,
     report: 'list[str]',
 ) -> None:
@@ -178,7 +180,7 @@ def check_scopes(
 ) -> list[ScopeViolation]:
     from pyhtsw.compiler.importable import EventImportable
 
-    events_by_block: dict[int, str] = {
+    events_by_block: dict[int, EventName] = {
         id(importable.block): importable.event
         for importable in importables
         if isinstance(importable, EventImportable)

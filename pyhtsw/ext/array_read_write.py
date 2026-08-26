@@ -418,8 +418,8 @@ def _emit_fast_write(
     input: Sequence[Checkable | NumericHousingType],
     chunk: int,
 ) -> None:
-    from pyhtsw.directives.preserved import preserved
-    from pyhtsw.directives.strict_order import strict_order
+    from pyhtsw.directives.preserved import Preserved
+    from pyhtsw.directives.strict_order import StrictOrder
     from pyhtsw.stats.temporary_stat import TemporaryStat
 
     n = len(items)
@@ -465,7 +465,7 @@ def _emit_fast_write(
                 # side to ANY suppresses that coercion.
                 item[k]._as_type(InternalType.ANY).value += slots[j][k]
 
-    with strict_order(), preserved():
+    with StrictOrder(), Preserved():
         # lo_k = diff_k = input[k] - items[index][k], via one composed read.
         _emit_fast_read(
             pattern=pattern,
@@ -650,7 +650,7 @@ def _emit_staged_write(
     input: Sequence[Checkable | HousingType],
     cs: int,
 ) -> None:
-    from pyhtsw.directives.strict_order import strict_order
+    from pyhtsw.directives.strict_order import StrictOrder
     from pyhtsw.stats.temporary_stat import TemporaryStat
 
     n = len(items)
@@ -669,7 +669,7 @@ def _emit_staged_write(
     pos = TemporaryStat().as_long()
     base = TemporaryStat().as_long()
 
-    with strict_order():
+    with StrictOrder():
         chunk_no.value = index
         chunk_no.value //= cs
         base.value = chunk_no

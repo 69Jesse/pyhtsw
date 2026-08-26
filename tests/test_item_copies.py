@@ -1,5 +1,4 @@
 import json
-import sys
 import tempfile
 from pathlib import Path
 
@@ -73,6 +72,3 @@ assert 'minecraft:dark_oak_door' in guest, guest
 assert 'HOUSING_MENU: "GUEST"' in guest, guest
 
 assert Item.from_snbt(owner).into_snbt() == Item.housing_menu().into_snbt()
-
-print('PASS')
-sys.exit(0)

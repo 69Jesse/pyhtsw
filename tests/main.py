@@ -39,6 +39,14 @@ def main() -> int:
         start = time.perf_counter()
         try:
             spec.loader.exec_module(module)
+        except SystemExit as error:
+            # A test calling sys.exit would otherwise take the runner with it,
+            # silently skipping every file sorting after it.
+            if error.code not in (None, 0):
+                elapsed = time.perf_counter() - start
+                failures.append((name, f'sys.exit({error.code!r})'))
+                print(f'FAIL {name} ({_fmt(elapsed)})')
+                continue
         except Exception:
             elapsed = time.perf_counter() - start
             failures.append((name, traceback.format_exc()))

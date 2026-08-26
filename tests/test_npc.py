@@ -29,14 +29,14 @@ with Container() as container:
         (1, 2, 3),
         on_left_click=lambda: chat('left'),
         on_right_click=lambda: chat('right'),
-        skin='Alex',
+        skin='alex',
         look_at_players=True,
     )
 
 guard = _entry(container, 'Guard')
 assert guard['left'] is not None and guard['right'] is not None
 assert guard['redirect'] is None
-assert guard['skin'] == 'Alex'
+assert guard['skin'] == 'alex'
 assert guard['pos'] == (1, 2, 3)
 
 

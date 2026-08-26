@@ -44,7 +44,7 @@ with Container() as container:
     merchant = NPC(
         'Merchant',
         (1, 64, 2),
-        skin='Steve',
+        skin='steve',
         look_at_players=True,
         equipment=NPC.Equipment(hand=wand),
     )
@@ -57,7 +57,7 @@ with Container() as container:
     def tick() -> None:
         chat('tick')
 
-    @event('Player Join')
+    @event('player_join')
     def join() -> None:
         give_item(wand)
 

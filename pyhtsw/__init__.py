@@ -1,3 +1,4 @@
+from pyhtsw.actions._inventory_slots import InventorySlot as InventorySlot
 from pyhtsw.actions.display import (
     ChatExpression as ChatExpression,
 )
@@ -213,9 +214,7 @@ from pyhtsw.actions.world import (
 from pyhtsw.actions.world import (
     SetPlayerWeatherExpression as SetPlayerWeatherExpression,
 )
-from pyhtsw.actions.world import (
-    custom_sound as custom_sound,
-)
+from pyhtsw.actions.world import Weather as Weather
 from pyhtsw.actions.world import (
     play_sound as play_sound,
 )
@@ -274,6 +273,16 @@ from pyhtsw.declarations.item import Enchantment as Enchantment
 from pyhtsw.declarations.item import Item as Item
 from pyhtsw.declarations.item import normalize_item as normalize_item
 from pyhtsw.declarations.item import normalize_item_key as normalize_item_key
+from pyhtsw.declarations.item_keys import ENCHANTMENT_TO_ID as ENCHANTMENT_TO_ID
+from pyhtsw.declarations.item_keys import ColorType as ColorType
+from pyhtsw.declarations.item_keys import CookieItemKey as CookieItemKey
+from pyhtsw.declarations.item_keys import DamageableItemKey as DamageableItemKey
+from pyhtsw.declarations.item_keys import HousingMenuTier as HousingMenuTier
+from pyhtsw.declarations.item_keys import ItemKey as ItemKey
+from pyhtsw.declarations.item_keys import ItemKeyName as ItemKeyName
+from pyhtsw.declarations.item_keys import LeatherArmorKey as LeatherArmorKey
+from pyhtsw.declarations.item_keys import NonSpecialItemKey as NonSpecialItemKey
+from pyhtsw.declarations.item_keys import PlayerSkullItemKey as PlayerSkullItemKey
 from pyhtsw.declarations.menu import Menu as Menu
 from pyhtsw.declarations.npc import NPC as NPC
 from pyhtsw.declarations.region import Region as Region
@@ -297,6 +306,24 @@ from pyhtsw.expression.condition.conditional_expression import (
 )
 from pyhtsw.expression.expression import Expression as Expression
 from pyhtsw.expression.housing_type import HousingType as HousingType
+from pyhtsw.generated.enums import ChatSpeed as ChatSpeed
+from pyhtsw.generated.enums import CommandMode as CommandMode
+from pyhtsw.generated.enums import DamageCauseName as DamageCauseName
+from pyhtsw.generated.enums import EnchantmentName as EnchantmentName
+from pyhtsw.generated.enums import EventName as EventName
+from pyhtsw.generated.enums import FishingEnvironmentName as FishingEnvironmentName
+from pyhtsw.generated.enums import Gamemode as Gamemode
+from pyhtsw.generated.enums import HousingColor as HousingColor
+from pyhtsw.generated.enums import ItemAmount as ItemAmount
+from pyhtsw.generated.enums import ItemLocation as ItemLocation
+from pyhtsw.generated.enums import ItemProperty as ItemProperty
+from pyhtsw.generated.enums import Lobby as Lobby
+from pyhtsw.generated.enums import MinecraftItem as MinecraftItem
+from pyhtsw.generated.enums import NpcSkin as NpcSkin
+from pyhtsw.generated.enums import Permission as Permission
+from pyhtsw.generated.enums import PortalTypeName as PortalTypeName
+from pyhtsw.generated.enums import PotionEffect as PotionEffect
+from pyhtsw.generated.enums import Sound as Sound
 from pyhtsw.helpers import chunk_expressions as chunk_expressions
 from pyhtsw.helpers import chunked as chunked
 from pyhtsw.internal_type import InternalType as InternalType
@@ -305,6 +332,7 @@ from pyhtsw.location import CustomLocation as CustomLocation
 from pyhtsw.location import HouseSpawnLocation as HouseSpawnLocation
 from pyhtsw.location import InvokersLocation as InvokersLocation
 from pyhtsw.location import Location as Location
+from pyhtsw.location import LocationName as LocationName
 from pyhtsw.misc.skull_data import SKULL_DATA as SKULL_DATA
 from pyhtsw.misc.skull_data import SkullData as SkullData
 from pyhtsw.placeholders.date import DateUnix as DateUnix
@@ -428,25 +456,3 @@ from pyhtsw.stats.player_stat import PlayerStat as PlayerStat
 from pyhtsw.stats.stat import Stat as Stat
 from pyhtsw.stats.team_stat import TeamStat as TeamStat
 from pyhtsw.stats.temporary_stat import TemporaryStat as TemporaryStat
-from pyhtsw.types import ALL_DAMAGE_CAUSES as ALL_DAMAGE_CAUSES
-from pyhtsw.types import ALL_ENCHANTMENTS as ALL_ENCHANTMENTS
-from pyhtsw.types import ALL_GAMEMODES as ALL_GAMEMODES
-from pyhtsw.types import ALL_ITEM_KEY_STRINGS as ALL_ITEM_KEY_STRINGS
-from pyhtsw.types import ALL_ITEM_KEYS as ALL_ITEM_KEYS
-from pyhtsw.types import ALL_LOCATIONS as ALL_LOCATIONS
-from pyhtsw.types import ALL_POTION_EFFECTS as ALL_POTION_EFFECTS
-from pyhtsw.types import ALL_SOUNDS as ALL_SOUNDS
-from pyhtsw.types import ALL_SOUNDS_PRETTY as ALL_SOUNDS_PRETTY
-from pyhtsw.types import ALL_SOUNDS_PRETTY_TO_RAW as ALL_SOUNDS_PRETTY_TO_RAW
-from pyhtsw.types import ALL_SOUNDS_RAW as ALL_SOUNDS_RAW
-from pyhtsw.types import COOKIE_ITEM_KEY as COOKIE_ITEM_KEY
-from pyhtsw.types import DAMAGEABLE_ITEM_KEYS as DAMAGEABLE_ITEM_KEYS
-from pyhtsw.types import ENCHANTMENT_TO_ID as ENCHANTMENT_TO_ID
-from pyhtsw.types import FISHING_ENVIRONMENTS as FISHING_ENVIRONMENTS
-from pyhtsw.types import INVENTORY_SLOTS as INVENTORY_SLOTS
-from pyhtsw.types import ITEM_CHECK_WHAT as ITEM_CHECK_WHAT
-from pyhtsw.types import ITEM_CHECK_WHERE as ITEM_CHECK_WHERE
-from pyhtsw.types import ITEM_REQUIRED_AMOUNT as ITEM_REQUIRED_AMOUNT
-from pyhtsw.types import LEATHER_ARMOR_KEYS as LEATHER_ARMOR_KEYS
-from pyhtsw.types import NON_SPECIAL_ITEM_KEYS as NON_SPECIAL_ITEM_KEYS
-from pyhtsw.types import PLAYER_SKULL_ITEM_KEY as PLAYER_SKULL_ITEM_KEY

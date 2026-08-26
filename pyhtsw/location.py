@@ -1,8 +1,15 @@
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pyhtsw.checkable import Checkable
 from pyhtsw.directives.no_fallback_values import NoFallbackValues
 from pyhtsw.expression.housing_type import HousingType
+
+LocationName = Literal[
+    'house_spawn',
+    'current_location',
+    'invokers_location',
+    'custom_coordinates',
+]
 
 __all__ = (
     'Location',

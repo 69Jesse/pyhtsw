@@ -20,20 +20,20 @@ set_projects_folder(tmp, save=False)
 
 # A declared team is the same Team value the actions already take.
 with Container() as container:
-    red = Team('Red', tag='RED', color='Dark Red', friendly_fire=False)
+    red = Team('Red', tag='RED', color='dark_red', friendly_fire=False)
     vip = Group(
         'VIP',
         tag='VIP',
         tag_shown_in_chat=True,
-        color='Gold',
+        color='gold',
         priority=5,
-        allow=['Fly', 'Build', '/tp'],
-        deny=['Ban'],
-        chat_speed='Slow 1s',
-        default_gamemode='ADVENTURE',
+        allow=['fly', 'build', 'tp'],
+        deny=['ban'],
+        chat_speed='slow_1s',
+        default_gamemode='adventure',
     )
 
-    @command('warp', mode='Self', required_priority=3, listed=True)
+    @command('warp', mode='self', required_priority=3, listed=True)
     def _warp() -> None:
         set_player_team(red)
         change_player_group(vip)
@@ -43,7 +43,7 @@ with Container() as container:
         (1, 2, 3),
         left_click_redirect=True,
         look_at_players=True,
-        skin='Alex',
+        skin='alex',
     )
 
     @greeter.right_click
@@ -109,7 +109,7 @@ assert 'houseUuid' not in json.loads((tmp / 'no-uuid' / 'import.json').read_text
 raised = False
 with Container():
     try:
-        Group('Bad', allow=['Fly'], deny=['Fly'])
+        Group('Bad', allow=['fly'], deny=['fly'])
     except ValueError:
         raised = True
 assert raised, 'expected a ValueError for a permission in both allow and deny'

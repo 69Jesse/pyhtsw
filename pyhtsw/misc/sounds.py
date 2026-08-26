@@ -7,7 +7,7 @@ from typing import get_args
 import numpy as np
 import sounddevice as sd
 
-from pyhtsw.types import ALL_SOUNDS, ALL_SOUNDS_PRETTY_TO_RAW, ALL_SOUNDS_RAW
+from pyhtsw.generated.enums import SOUND_NAME_TO_PATH, Sound
 
 __all__ = ('get_sound_paths', 'preview_sound')
 
@@ -96,7 +96,7 @@ SOUND_MIXER = Mixer()
 
 SOUNDS_DIR = Path(__file__).parent / 'sounds' / '1.8.9'
 
-SOUND_OVERRIDES: dict[ALL_SOUNDS_RAW, str] = {
+SOUND_OVERRIDES: dict[Sound, str] = {
     'game.player.hurt.fall.big': 'damage/fallbig',
     'game.player.hurt.fall.small': 'damage/fallsmall',
     'game.tnt.primed': 'random/fuse',
@@ -138,9 +138,9 @@ def _find_sound_files(parts: list[str]) -> list[Path]:
     return []
 
 
-def _build_mapping() -> dict[ALL_SOUNDS_RAW, list[Path]]:
-    mapping: dict[ALL_SOUNDS_RAW, list[Path]] = {}
-    for sound in get_args(ALL_SOUNDS_RAW):
+def _build_mapping() -> dict[Sound, list[Path]]:
+    mapping: dict[Sound, list[Path]] = {}
+    for sound in get_args(Sound):
         if sound in SOUND_OVERRIDES:
             override = SOUND_OVERRIDES[sound]
             parent = SOUNDS_DIR / Path(override).parent
@@ -151,17 +151,17 @@ def _build_mapping() -> dict[ALL_SOUNDS_RAW, list[Path]]:
     return mapping
 
 
-_MAPPING: dict[ALL_SOUNDS_RAW, list[Path]] | None = None
+_MAPPING: dict[Sound, list[Path]] | None = None
 
 
-def _get_mapping() -> dict[ALL_SOUNDS_RAW, list[Path]]:
+def _get_mapping() -> dict[Sound, list[Path]]:
     global _MAPPING
     if _MAPPING is None:
         _MAPPING = _build_mapping()
     return _MAPPING
 
 
-def get_sound_paths(raw_sound: ALL_SOUNDS_RAW) -> list[Path]:
+def get_sound_paths(raw_sound: Sound) -> list[Path]:
     return _get_mapping().get(raw_sound, [])
 
 
@@ -221,12 +221,12 @@ def _resample(data: np.ndarray, pitch: float) -> np.ndarray:
 
 
 def preview_sound(
-    sound: ALL_SOUNDS,
+    sound: Sound,
     *,
     volume: float = 0.7,
     pitch: float = 1.0,
 ) -> bool:
-    raw_sound: ALL_SOUNDS_RAW = ALL_SOUNDS_PRETTY_TO_RAW.get(sound, sound)  # type: ignore
+    raw_sound: Sound = SOUND_NAME_TO_PATH.get(sound, sound)  # type: ignore
     paths = get_sound_paths(raw_sound)
     if not paths:
         return False

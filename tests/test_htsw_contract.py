@@ -1,14 +1,6 @@
 import json
 from pathlib import Path
 
-from pyhtsw.types import (
-    ALL_CHAT_SPEEDS,
-    ALL_COMMAND_MODES,
-    ALL_DEFAULT_GAMEMODES,
-    ALL_HOUSING_COLORS,
-    ALL_PERMISSIONS,
-)
-
 from pyhtsw.compiler.importable import (
     EVENTS,
     CommandImportable,
@@ -27,6 +19,17 @@ from pyhtsw.compiler.limits import (
     get_limit,
     get_limits,
 )
+from pyhtsw.generated.enums import (
+    CHAT_SPEED_TO_HTSW,
+    COMMAND_MODE_TO_HTSW,
+    EVENT_NAME_TO_HTSW,
+    GAMEMODE_TO_DEFAULT_GAMEMODE,
+    HOUSING_COLOR_TO_HTSW,
+    NPC_SKIN_TO_HTSW,
+    PERMISSION_TO_HTSW,
+    EventName,
+    NpcSkin,
+)
 
 CONTRACT = json.loads(
     (Path(__file__).parent / 'htsw_contract.json').read_text(encoding='utf-8'),
@@ -37,19 +40,18 @@ def literal_values(alias: object) -> tuple[str, ...]:
     return alias.__args__  # type: ignore[attr-defined]
 
 
+# The user-facing values are snake_case; the *_TO_HTSW maps carry the exact
+# upstream strings, so those are what the contract is held against.
 enums = CONTRACT['enums']
-assert list(EVENTS) == enums['events'], EVENTS
-assert list(literal_values(ALL_HOUSING_COLORS)) == enums['colors']
-assert list(literal_values(ALL_CHAT_SPEEDS)) == enums['chatSpeeds']
-assert list(literal_values(ALL_DEFAULT_GAMEMODES)) == enums['defaultGameModes']
-assert list(literal_values(ALL_COMMAND_MODES)) == enums['commandModes']
-assert list(literal_values(ALL_PERMISSIONS)) == enums['permissions']
-
-# EventName mirrors EVENTS; keep the two in step.
-from pyhtsw.compiler.importable import EventName, NpcSkin  # noqa: E402
-
-assert list(literal_values(EventName)) == enums['events']
-assert list(literal_values(NpcSkin)) == enums['npcSkins']
+assert [EVENT_NAME_TO_HTSW[name] for name in EVENTS] == enums['events'], EVENTS
+assert list(HOUSING_COLOR_TO_HTSW.values()) == enums['colors']
+assert list(CHAT_SPEED_TO_HTSW.values()) == enums['chatSpeeds']
+assert list(GAMEMODE_TO_DEFAULT_GAMEMODE.values()) == enums['defaultGameModes']
+assert list(COMMAND_MODE_TO_HTSW.values()) == enums['commandModes']
+assert list(PERMISSION_TO_HTSW.values()) == enums['permissions']
+assert list(EVENT_NAME_TO_HTSW) == list(literal_values(EventName))
+assert list(NPC_SKIN_TO_HTSW.values()) == enums['npcSkins']
+assert list(NPC_SKIN_TO_HTSW) == list(literal_values(NpcSkin))
 
 
 IMPORTABLES = (

@@ -4,16 +4,24 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pyhtsw.types import (
-    ALL_CHAT_SPEEDS,
-    ALL_COMMAND_MODES,
-    ALL_DEFAULT_GAMEMODES,
-    ALL_HOUSING_COLORS,
-    ALL_PERMISSIONS,
+from pyhtsw.generated.enums import (
+    CHAT_SPEED_TO_HTSW,
+    COMMAND_MODE_TO_HTSW,
+    EVENT_NAME_TO_HTSW,
+    GAMEMODE_TO_DEFAULT_GAMEMODE,
+    HOUSING_COLOR_TO_HTSW,
+    NPC_SKIN_TO_HTSW,
+    PERMISSION_TO_HTSW,
+    ChatSpeed,
+    CommandMode,
+    EventName,
+    Gamemode,
+    HousingColor,
+    NpcSkin,
+    Permission,
 )
-
 from pyhtsw.utils.kebab import into_kebab
 from pyhtsw.utils.log import log
 
@@ -87,49 +95,8 @@ HEADER = '// Generated with PyHTSW (https://github.com/69Jesse/PyHTSW)'
 # A 0-arg handler (the importable has no runtime instance to hand back).
 Handler = Callable[[], Any]
 
-EVENTS: tuple[str, ...] = (
-    'Player Join',
-    'Player Quit',
-    'Player Death',
-    'Player Kill',
-    'Player Respawn',
-    'Group Change',
-    'PvP State Change',
-    'Fish Caught',
-    'Player Enter Portal',
-    'Player Damage',
-    'Player Block Break',
-    'Start Parkour',
-    'Complete Parkour',
-    'Player Drop Item',
-    'Player Pick Up Item',
-    'Player Change Held Item',
-    'Player Toggle Sneak',
-    'Player Toggle Flight',
-)
+EVENTS: tuple[str, ...] = tuple(EVENT_NAME_TO_HTSW)
 
-EventName = Literal[
-    'Player Join',
-    'Player Quit',
-    'Player Death',
-    'Player Kill',
-    'Player Respawn',
-    'Group Change',
-    'PvP State Change',
-    'Fish Caught',
-    'Player Enter Portal',
-    'Player Damage',
-    'Player Block Break',
-    'Start Parkour',
-    'Complete Parkour',
-    'Player Drop Item',
-    'Player Pick Up Item',
-    'Player Change Held Item',
-    'Player Toggle Sneak',
-    'Player Toggle Flight',
-]
-
-NpcSkin = Literal['Steve', 'Alex', 'Players Skin']
 
 Coord = tuple[int, int, int]
 Bounds = tuple[Coord, Coord]
@@ -431,7 +398,7 @@ class EventImportable(Importable):
 
     def build(self, project: Project) -> dict[str, Any]:
         return {
-            'event': self.event,
+            'event': EVENT_NAME_TO_HTSW[self.event],
             'actions': project.write_block(
                 f'events/{into_kebab(self.event)}',
                 self.block,
@@ -712,7 +679,7 @@ class NpcImportable(Importable):
         left_click_redirect: bool | None = None,
         look_at_players: bool | None = None,
         hide_name_tag: bool | None = None,
-        skin: str | None = None,
+        skin: NpcSkin | None = None,
         equipment: NpcEquipment | None = None,
     ) -> None:
         self.name = name
@@ -765,7 +732,7 @@ class NpcImportable(Importable):
         if self.hide_name_tag is not None:
             entry['hideNameTag'] = self.hide_name_tag
         if self.skin is not None:
-            entry['skin'] = self.skin
+            entry['skin'] = NPC_SKIN_TO_HTSW[self.skin]
         if self.equipment is not None:
             equipment = self.equipment.build(project)
             if equipment:
@@ -785,14 +752,14 @@ def _check_tag(name: str, tag: str | None) -> None:
 
 class TeamImportable(Importable):
     kind = 'teams'
-    color: ALL_HOUSING_COLORS | None
+    color: HousingColor | None
 
     def __init__(
         self,
         *,
         name: str,
         tag: str | None = None,
-        color: ALL_HOUSING_COLORS | None = None,
+        color: HousingColor | None = None,
         friendly_fire: bool | None = None,
     ) -> None:
         _check_tag(name, tag)
@@ -821,7 +788,7 @@ class TeamImportable(Importable):
         if self.tag is not None:
             entry['tag'] = self.tag
         if self.color is not None:
-            entry['color'] = self.color
+            entry['color'] = HOUSING_COLOR_TO_HTSW[self.color]
         if self.friendly_fire is not None:
             entry['friendlyFire'] = self.friendly_fire
         return entry
@@ -829,9 +796,9 @@ class TeamImportable(Importable):
 
 class GroupImportable(Importable):
     kind = 'groups'
-    color: ALL_HOUSING_COLORS | None
-    chat_speed: ALL_CHAT_SPEEDS | None
-    default_gamemode: ALL_DEFAULT_GAMEMODES | None
+    color: HousingColor | None
+    chat_speed: ChatSpeed | None
+    default_gamemode: Gamemode | None
 
     def __init__(
         self,
@@ -839,11 +806,11 @@ class GroupImportable(Importable):
         name: str,
         tag: str | None = None,
         tag_shown_in_chat: bool | None = None,
-        color: ALL_HOUSING_COLORS | None = None,
+        color: HousingColor | None = None,
         priority: int | None = None,
-        permissions: dict[ALL_PERMISSIONS, bool] | None = None,
-        chat_speed: ALL_CHAT_SPEEDS | None = None,
-        default_gamemode: ALL_DEFAULT_GAMEMODES | None = None,
+        permissions: dict[Permission, bool] | None = None,
+        chat_speed: ChatSpeed | None = None,
+        default_gamemode: Gamemode | None = None,
     ) -> None:
         _check_tag(name, tag)
         if priority is not None and not 0 <= priority <= 20:
@@ -883,28 +850,33 @@ class GroupImportable(Importable):
         if self.tag_shown_in_chat is not None:
             entry['tagShownInChat'] = self.tag_shown_in_chat
         if self.color is not None:
-            entry['color'] = self.color
+            entry['color'] = HOUSING_COLOR_TO_HTSW[self.color]
         if self.priority is not None:
             entry['priority'] = self.priority
         if self.permissions:
-            entry['permissions'] = dict(self.permissions)
+            entry['permissions'] = {
+                PERMISSION_TO_HTSW[permission]: allowed
+                for permission, allowed in self.permissions.items()
+            }
         if self.chat_speed is not None:
-            entry['chatSpeed'] = self.chat_speed
+            entry['chatSpeed'] = CHAT_SPEED_TO_HTSW[self.chat_speed]
         if self.default_gamemode is not None:
-            entry['defaultGameMode'] = self.default_gamemode
+            entry['defaultGameMode'] = GAMEMODE_TO_DEFAULT_GAMEMODE[
+                self.default_gamemode
+            ]
         return entry
 
 
 class CommandImportable(Importable):
     kind = 'commands'
-    mode: ALL_COMMAND_MODES | None
+    mode: CommandMode | None
 
     def __init__(
         self,
         block: 'Block',
         *,
         name: str,
-        mode: ALL_COMMAND_MODES | None = None,
+        mode: CommandMode | None = None,
         required_priority: int | None = None,
         listed: bool | None = None,
     ) -> None:
@@ -940,7 +912,7 @@ class CommandImportable(Importable):
                 self.block,
             )
         if self.mode is not None:
-            entry['mode'] = self.mode
+            entry['mode'] = COMMAND_MODE_TO_HTSW[self.mode]
         if self.required_priority is not None:
             entry['requiredPriority'] = self.required_priority
         if self.listed is not None:

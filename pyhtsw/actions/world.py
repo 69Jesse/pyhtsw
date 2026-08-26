@@ -1,17 +1,43 @@
-from typing import TYPE_CHECKING, ClassVar, Self, cast, final
+from typing import TYPE_CHECKING, ClassVar, Literal, Self, cast, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.compiler.schedule import Effects, Resource, Stream
 from pyhtsw.expression.expression import Expression
-from pyhtsw.location import Location, resolve_location
-from pyhtsw.types import ALL_LOCATIONS, ALL_SOUNDS, PLAYER_WEATHERS
+from pyhtsw.generated.enums import SOUND_NAME_TO_PATH, Sound
+from pyhtsw.location import Location, LocationName, resolve_location
 from pyhtsw.utils.log import log
+
+Weather = Literal['none', 'sunny', 'raining']
+
+WEATHER_TO_HTSW: dict[Weather, str] = {
+    'none': 'None',
+    'sunny': 'Sunny',
+    'raining': 'Raining',
+}
+
+_SOUND_PATHS = frozenset(Sound.__args__)  # type: ignore[attr-defined]
+
+
+def resolve_sound(sound: 'Sound | str') -> 'Sound':
+    if sound in _SOUND_PATHS:
+        return cast('Sound', sound)
+    mapped = SOUND_NAME_TO_PATH.get(sound)
+    if mapped is not None:
+        return mapped
+    if '.' not in sound:
+        raise ValueError(
+            f'Unknown sound {sound!r}. Pass a sound id like "note.pling", or a '
+            f'resource-pack sound key containing a dot.',
+        )
+    return cast('Sound', sound)
+
 
 __all__ = (
     'PlaySoundExpression',
-    'custom_sound',
+    'Weather',
     'play_sound',
+    'resolve_sound',
     'PlayerTime',
     'SetPlayerTimeExpression',
     'set_player_time',
@@ -23,10 +49,6 @@ if TYPE_CHECKING:
     from pyhtsw.execute.context import ExecutionContext
 
 
-def custom_sound(name: str) -> ALL_SOUNDS:
-    return cast(ALL_SOUNDS, name)
-
-
 @final
 class PlaySoundExpression(Expression):
     htsw_meta = ActionMeta(
@@ -34,27 +56,27 @@ class PlaySoundExpression(Expression):
         limit=25,
         effects=Effects.of(reads=(Resource.POSITION,), stream=Stream.SOUND),
         display_name='Play Sound',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
-    sound: ALL_SOUNDS
+    sound: str
     volume: float
     pitch: float
     coordinates: str | None
-    location: ALL_LOCATIONS
+    location: LocationName
     check_valid: bool
 
     def __init__(
         self,
-        sound: ALL_SOUNDS,
+        sound: 'Sound | str',
         volume: float = 0.7,
         pitch: float = 1.0,
         coordinates: str | None = None,
-        location: ALL_LOCATIONS = 'invokers_location',
+        location: LocationName = 'invokers_location',
         *,
         check_valid: bool = True,
     ) -> None:
-        self.sound = sound
+        self.sound = resolve_sound(sound) if check_valid else sound
         self.volume = volume
         if check_valid and (self.volume < 0.0 or self.volume > 2.0):
             raise ValueError('volume must be between 0.0 and 2.0')
@@ -87,11 +109,11 @@ class PlaySoundExpression(Expression):
     def cloned(
         self,
         *,
-        sound: ALL_SOUNDS | Missing = MISSING,
+        sound: 'Sound | str | Missing' = MISSING,
         volume: float | Missing = MISSING,
         pitch: float | Missing = MISSING,
         coordinates: str | None | Missing = MISSING,
-        location: ALL_LOCATIONS | Missing = MISSING,
+        location: LocationName | Missing = MISSING,
         check_valid: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -108,7 +130,7 @@ class PlaySoundExpression(Expression):
 
 
 def play_sound(
-    sound: ALL_SOUNDS,
+    sound: 'Sound | str',
     volume: float = 0.7,
     pitch: float = 1.0,
     location: Location | None = None,
@@ -121,7 +143,7 @@ def play_sound(
         volume=volume,
         pitch=pitch,
         coordinates=coordinates,
-        location=cast(ALL_LOCATIONS, keyword),
+        location=cast(LocationName, keyword),
     ).write()
 
 
@@ -142,7 +164,7 @@ class SetPlayerTimeExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.TIME,)),
         display_name='Set Player Time',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     time: int
@@ -185,21 +207,21 @@ class SetPlayerWeatherExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.WEATHER,)),
         display_name='Set Player Weather',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
-    weather: PLAYER_WEATHERS
+    weather: Weather
 
-    def __init__(self, weather: PLAYER_WEATHERS) -> None:
+    def __init__(self, weather: Weather) -> None:
         self.weather = weather
 
     def into_htsl(self) -> str:
-        return f'playerWeather {self.inline_quoted(self.weather)}'
+        return f'playerWeather {self.inline_quoted(WEATHER_TO_HTSW[self.weather])}'
 
     def cloned(
         self,
         *,
-        weather: PLAYER_WEATHERS | Missing = MISSING,
+        weather: Weather | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -209,5 +231,5 @@ class SetPlayerWeatherExpression(Expression):
         )
 
 
-def set_player_weather(weather: PLAYER_WEATHERS) -> None:
+def set_player_weather(weather: Weather) -> None:
     SetPlayerWeatherExpression(weather=weather).write()

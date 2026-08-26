@@ -9,7 +9,7 @@ from pyhtsw.declarations.item import (
     item_referenced_importables,
 )
 from pyhtsw.expression.condition.condition import Condition
-from pyhtsw.types import ITEM_CHECK_WHAT, ITEM_CHECK_WHERE, ITEM_REQUIRED_AMOUNT
+from pyhtsw.generated.enums import ItemAmount, ItemLocation, ItemProperty
 
 __all__ = (
     'HasItem',
@@ -26,16 +26,16 @@ class HasItem(Condition):
     )
 
     item: Item
-    what_to_check: ITEM_CHECK_WHAT
-    where_to_check: ITEM_CHECK_WHERE
-    required_amount: ITEM_REQUIRED_AMOUNT
+    what_to_check: ItemProperty
+    where_to_check: ItemLocation
+    required_amount: ItemAmount
 
     def __init__(
         self,
         item: Item,
-        what_to_check: ITEM_CHECK_WHAT = 'metadata',
-        where_to_check: ITEM_CHECK_WHERE = 'anywhere',
-        required_amount: ITEM_REQUIRED_AMOUNT = 'any_amount',
+        what_to_check: ItemProperty = 'metadata',
+        where_to_check: ItemLocation = 'anywhere',
+        required_amount: ItemAmount = 'any_amount',
     ) -> None:
         self.item = item
         self.what_to_check = what_to_check
@@ -63,9 +63,9 @@ class HasItem(Condition):
         self,
         *,
         item: Item | Missing = MISSING,
-        what_to_check: ITEM_CHECK_WHAT | Missing = MISSING,
-        where_to_check: ITEM_CHECK_WHERE | Missing = MISSING,
-        required_amount: ITEM_REQUIRED_AMOUNT | Missing = MISSING,
+        what_to_check: ItemProperty | Missing = MISSING,
+        where_to_check: ItemLocation | Missing = MISSING,
+        required_amount: ItemAmount | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -88,9 +88,9 @@ class IsItem(Condition):
         reads=frozenset((Resource.INVENTORY,)),
         display_name='Is Item',
         scoped_events=(
-            'Player Drop Item',
-            'Player Pick Up Item',
-            'Player Change Held Item',
+            'player_drop_item',
+            'player_pick_up_item',
+            'player_change_held_item',
         ),
     )
 

@@ -16,7 +16,7 @@ from pyhtsw import (
 )
 
 with Container() as container:
-    set_player_weather('Sunny')
+    set_player_weather('sunny')
     set_player_time(PlayerTime.NOON)
     set_player_time(1000)
     toggle_nametag_display(False)
@@ -60,10 +60,10 @@ assert raised, 'expected a TypeError for a stat playerTime'
 # event, so no real container could hold both.
 with Container(ignore_scope=True) as conditions:
     with IfAll(
-        HasPermission('Fly'),
-        HasPermission('Item: Mailbox'),
-        PortalType('Nether Portal'),
-        PortalType('End Portal'),
+        HasPermission('fly'),
+        HasPermission('item_mailbox'),
+        PortalType('nether_portal'),
+        PortalType('end_portal'),
         DamageAmount > 5,
         ~(DamageAmount == 0),
     ):
@@ -71,7 +71,7 @@ with Container(ignore_scope=True) as conditions:
 
 assert conditions.into_htsl() == (
     'if and (hasPermission "Fly", hasPermission "Item: Mailbox", '
-    'portal Nether_Portal, portal End_Portal, '
+    'portal nether_portal, portal end_portal, '
     'damageAmount > 5, !damageAmount == 0) {\n'
     '    chat "ok"\n'
     '}'

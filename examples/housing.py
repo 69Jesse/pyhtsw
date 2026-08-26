@@ -47,13 +47,13 @@ def enter() -> None:
 NPC(
     '&aShopkeeper',
     (8, 100, 8),
-    skin='Alex',
+    skin='alex',
     look_at_players=True,
     on_right_click=lambda: display_menu(shop),
 )
 
 
-@event('Player Join')
+@event('player_join')
 def on_join() -> None:
     give_item(wand)
     chat('&eWelcome! Right-click the wand or visit the shopkeeper.')

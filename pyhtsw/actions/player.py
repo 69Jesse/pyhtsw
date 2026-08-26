@@ -9,8 +9,8 @@ from pyhtsw.declarations.group import Group
 from pyhtsw.declarations.team import Team
 from pyhtsw.expression.expression import Expression
 from pyhtsw.expression.housing_type import NumericHousingType
-from pyhtsw.location import Location, resolve_location
-from pyhtsw.types import ALL_GAMEMODES, ALL_LOCATIONS, ALL_POTION_EFFECTS
+from pyhtsw.generated.enums import Gamemode, PotionEffect
+from pyhtsw.location import Location, LocationName, resolve_location
 
 __all__ = (
     'TeleportPlayerExpression',
@@ -57,17 +57,17 @@ class TeleportPlayerExpression(Expression):
         limit=5,
         effects=Effects.of(reads=(Resource.POSITION,), writes=(Resource.POSITION,)),
         display_name='Teleport Player',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     coordinates: str | None
-    location: ALL_LOCATIONS
+    location: LocationName
     prevent_teleport_inside_block: bool
 
     def __init__(
         self,
         coordinates: str | None = None,
-        location: ALL_LOCATIONS = 'custom_coordinates',
+        location: LocationName = 'custom_coordinates',
         prevent_teleport_inside_block: bool = False,
     ) -> None:
         self.coordinates = coordinates
@@ -87,7 +87,7 @@ class TeleportPlayerExpression(Expression):
         self,
         *,
         coordinates: str | None | Missing = MISSING,
-        location: ALL_LOCATIONS | Missing = MISSING,
+        location: LocationName | Missing = MISSING,
         prevent_teleport_inside_block: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -107,7 +107,7 @@ def teleport_player(
     keyword, coordinates = resolve_location(location)
     TeleportPlayerExpression(
         coordinates=coordinates,
-        location=cast(ALL_LOCATIONS, keyword),
+        location=cast(LocationName, keyword),
         prevent_teleport_inside_block=prevent_teleport_inside_block,
     ).write()
 
@@ -133,12 +133,12 @@ class SetGamemodeExpression(Expression):
         limit=1,
         effects=Effects.of(writes=(Resource.GAMEMODE,)),
         display_name='Set Gamemode',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
-    gamemode: ALL_GAMEMODES
+    gamemode: Gamemode
 
-    def __init__(self, gamemode: ALL_GAMEMODES) -> None:
+    def __init__(self, gamemode: Gamemode) -> None:
         self.gamemode = gamemode
 
     def into_htsl(self) -> str:
@@ -147,7 +147,7 @@ class SetGamemodeExpression(Expression):
     def cloned(
         self,
         *,
-        gamemode: ALL_GAMEMODES | Missing = MISSING,
+        gamemode: Gamemode | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -157,7 +157,7 @@ class SetGamemodeExpression(Expression):
         )
 
 
-def set_gamemode(gamemode: ALL_GAMEMODES) -> None:
+def set_gamemode(gamemode: Gamemode) -> None:
     SetGamemodeExpression(gamemode=gamemode).write()
 
 
@@ -173,7 +173,7 @@ class FullHealExpression(Expression):
             ),
         ),
         display_name='Full Heal',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def into_htsl(self) -> str:
@@ -218,10 +218,10 @@ class ApplyPotionEffectExpression(Expression):
         limit=22,
         effects=Effects.of(writes=(Resource.POTIONS,)),
         display_name='Apply Potion Effect',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
-    potion: ALL_POTION_EFFECTS
+    potion: PotionEffect
     duration: int
     level: int
     override_existing_effects: bool
@@ -229,7 +229,7 @@ class ApplyPotionEffectExpression(Expression):
 
     def __init__(
         self,
-        potion: ALL_POTION_EFFECTS,
+        potion: PotionEffect,
         duration: int = 60,
         level: int = 1,
         override_existing_effects: bool = False,
@@ -250,7 +250,7 @@ class ApplyPotionEffectExpression(Expression):
     def cloned(
         self,
         *,
-        potion: ALL_POTION_EFFECTS | Missing = MISSING,
+        potion: PotionEffect | Missing = MISSING,
         duration: int | Missing = MISSING,
         level: int | Missing = MISSING,
         override_existing_effects: bool | Missing = MISSING,
@@ -269,7 +269,7 @@ class ApplyPotionEffectExpression(Expression):
 
 
 def apply_potion_effect(
-    potion: ALL_POTION_EFFECTS,
+    potion: PotionEffect,
     duration: int = 60,
     level: int = 1,
     override_existing_effects: bool = False,
@@ -291,7 +291,7 @@ class ClearPotionEffectsExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.POTIONS,)),
         display_name='Clear All Potion Effects',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def into_htsl(self) -> str:
@@ -309,7 +309,7 @@ class GiveExperienceLevelsExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.EXPERIENCE,)),
         display_name='Give Experience Levels',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     levels: int
@@ -344,7 +344,7 @@ class ChangeVelocityExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.VELOCITY,)),
         display_name='Change Velocity',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     x: Checkable | NumericHousingType
@@ -396,17 +396,17 @@ class LaunchToTargetExpression(Expression):
         limit=5,
         effects=Effects.of(reads=(Resource.POSITION,), writes=(Resource.VELOCITY,)),
         display_name='Launch to Target',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     coordinates: str | None
-    location: ALL_LOCATIONS
+    location: LocationName
     strength: Checkable | int
 
     def __init__(
         self,
         coordinates: str | None = None,
-        location: ALL_LOCATIONS = 'custom_coordinates',
+        location: LocationName = 'custom_coordinates',
         strength: Checkable | int = 2,
     ) -> None:
         self.coordinates = coordinates
@@ -426,7 +426,7 @@ class LaunchToTargetExpression(Expression):
         self,
         *,
         coordinates: str | None | Missing = MISSING,
-        location: ALL_LOCATIONS | Missing = MISSING,
+        location: LocationName | Missing = MISSING,
         strength: Checkable | int | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -446,7 +446,7 @@ def launch_to_target(
     keyword, coordinates = resolve_location(location)
     LaunchToTargetExpression(
         coordinates=coordinates,
-        location=cast(ALL_LOCATIONS, keyword),
+        location=cast(LocationName, keyword),
         strength=strength,
     ).write()
 
@@ -458,16 +458,16 @@ class SetCompassTargetExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.COMPASS,)),
         display_name='Set Compass Target',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     coordinates: str | None
-    location: ALL_LOCATIONS
+    location: LocationName
 
     def __init__(
         self,
         coordinates: str | None = None,
-        location: ALL_LOCATIONS = 'custom_coordinates',
+        location: LocationName = 'custom_coordinates',
     ) -> None:
         self.coordinates = coordinates
         self.location = location
@@ -482,7 +482,7 @@ class SetCompassTargetExpression(Expression):
         self,
         *,
         coordinates: str | None | Missing = MISSING,
-        location: ALL_LOCATIONS | Missing = MISSING,
+        location: LocationName | Missing = MISSING,
     ) -> Self:
         return clone_with(
             self,
@@ -497,7 +497,7 @@ def set_compass_target(location: Location) -> None:
     keyword, coordinates = resolve_location(location)
     SetCompassTargetExpression(
         coordinates=coordinates,
-        location=cast(ALL_LOCATIONS, keyword),
+        location=cast(LocationName, keyword),
     ).write()
 
 
@@ -508,7 +508,7 @@ class ToggleNametagDisplayExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.NAMETAG,)),
         display_name='Toggle Nametag Display',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     display: bool
@@ -543,7 +543,7 @@ class SetPlayerTeamExpression(Expression):
         limit=1,
         effects=Effects.of(writes=(Resource.TEAM,)),
         display_name='Set Player Team',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     team: str
@@ -579,8 +579,8 @@ class ChangePlayerGroupExpression(Expression):
         effects=Effects.of(writes=(Resource.GROUP,)),
         display_name="Change Player's Group",
         forbidden_events=(
-            'Group Change',
-            'Player Quit',
+            'group_change',
+            'player_quit',
         ),
     )
 
@@ -623,7 +623,7 @@ class ParkourCheckpointExpression(Expression):
         limit=1,
         effects=Effects.of(reads=(Resource.POSITION,), writes=(Resource.PARKOUR,)),
         display_name='Parkour Checkpoint',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def into_htsl(self) -> str:
@@ -647,7 +647,7 @@ class FailParkourExpression(Expression):
             stream=Stream.TEXT,
         ),
         display_name='Fail Parkour',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     reason: str

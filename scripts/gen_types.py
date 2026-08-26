@@ -36,7 +36,17 @@ ENUMS = (
 )
 
 
+# Upstream misspellings the parser insists on: the sane name on our side, the
+# exact upstream string on the wire.
+SPELLING_FIXES = {
+    'Projectile Projection': 'projectile_protection',
+}
+
+
 def snake(value: str) -> str:
+    fixed = SPELLING_FIXES.get(value)
+    if fixed is not None:
+        return fixed
     return re.sub(r'[^A-Za-z0-9]+', '_', value).strip('_').lower()
 
 

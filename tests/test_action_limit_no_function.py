@@ -160,7 +160,7 @@ else:
 try:
     with Container() as container:
 
-        @event('Player Join')
+        @event('player_join')
         def _on_join() -> None:
             _spill(1400)
 
@@ -169,7 +169,7 @@ except ActionLimitError as error:
 else:
     raise AssertionError('expected an over-limit event to raise')
 
-assert 'event "event Player Join"' in message, message
+assert 'event "event player_join"' in message, message
 
 
 # === ignore_action_limits is still the way past it ===

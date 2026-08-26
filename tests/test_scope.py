@@ -62,7 +62,7 @@ with expect_exception(ScopeError):
 with expect_exception(ScopeError):
     with Container():
 
-        @event('Player Join')
+        @event('player_join')
         def _cancel_in_uncancellable() -> None:
             with IfAll(flag == 1):
                 cancel_event()
@@ -70,7 +70,7 @@ with expect_exception(ScopeError):
 
 with Container():
 
-    @event('Player Damage')
+    @event('player_damage')
     def _cancel_in_cancellable() -> None:
         with IfAll(flag == 1):
             cancel_event()
@@ -79,7 +79,7 @@ with Container():
 with expect_exception(ScopeError):
     with Container():
 
-        @event('Player Join')
+        @event('player_join')
         def _kill_in_event() -> None:
             with IfAll(flag == 1):
                 kill_player()
@@ -88,7 +88,7 @@ with expect_exception(ScopeError):
 with expect_exception(ScopeError):
     with Container():
 
-        @event('Player Join')
+        @event('player_join')
         def _lobby_in_event() -> None:
             with IfAll(flag == 1):
                 send_to_lobby('Housing')
@@ -98,14 +98,14 @@ with expect_exception(ScopeError):
     with Container():
         from pyhtsw import chat
 
-        @event('Player Quit')
+        @event('player_quit')
         def _chat_on_quit() -> None:
             chat('bye')
 
 
 with Container():
 
-    @event('Player Quit')
+    @event('player_quit')
     def _var_on_quit() -> None:
         flag.value = 1
 
@@ -116,7 +116,7 @@ with expect_exception(ScopeError):
 
         group = Group('Loop')
 
-        @event('Group Change')
+        @event('group_change')
         def _regroup() -> None:
             change_player_group(group)
 
@@ -150,7 +150,7 @@ with expect_exception(ScopeError):
 with Container():
     from pyhtsw import DamageCause as _DamageCause
 
-    @event('Player Damage')
+    @event('player_damage')
     def _damage_cause_in_event() -> None:
         with IfAll(_DamageCause('Fall')):
             flag.value = 1

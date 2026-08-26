@@ -60,7 +60,7 @@ class PlayerHealthPlaceholder(
         limit=5,
         effects=Effects.of(reads=(Resource.HEALTH,)),
         display_name='Change Health',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def __init__(self) -> None:
@@ -89,7 +89,7 @@ class PlayerHungerPlaceholder(
         limit=5,
         effects=Effects.of(reads=(Resource.HUNGER,)),
         display_name='Change Hunger Level',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def __init__(self) -> None:
@@ -117,7 +117,7 @@ class PlayerMaxHealthPlaceholder(
         limit=5,
         effects=Effects.of(reads=(Resource.MAX_HEALTH,)),
         display_name='Change Max Health',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def __init__(self) -> None:

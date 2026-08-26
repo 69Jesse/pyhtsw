@@ -34,7 +34,7 @@ class ChatExpression(Expression):
         limit=20,
         effects=Effects.of(stream=Stream.TEXT),
         display_name='Send a Chat Message',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     line: str
@@ -80,7 +80,7 @@ class DisplayTitleExpression(Expression):
         limit=5,
         effects=Effects.of(stream=Stream.TEXT),
         display_name='Display Title',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     title: Checkable | str
@@ -173,7 +173,7 @@ class DisplayActionBarExpression(Expression):
         limit=5,
         effects=Effects.of(stream=Stream.TEXT),
         display_name='Display Action Bar',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     text: Checkable | str
@@ -227,7 +227,7 @@ class DisplayMenuExpression(Expression):
         limit=10,
         effects=Effects.of(writes=(Resource.MENU,)),
         display_name='Display Menu',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     name: str

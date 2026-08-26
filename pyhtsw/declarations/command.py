@@ -5,7 +5,7 @@ from pyhtsw.compiler.block import NamedBlock
 from pyhtsw.compiler.container import get_current_container
 from pyhtsw.compiler.importable import CommandImportable
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
-from pyhtsw.types import ALL_COMMAND_MODES
+from pyhtsw.generated.enums import CommandMode
 
 __all__ = (
     'Command',
@@ -13,7 +13,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from pyhtsw.types import ALL_COMMAND_MODES
+    from pyhtsw.generated.enums import CommandMode
 
 
 class Command(Declared):
@@ -24,7 +24,7 @@ class Command(Declared):
     __htsw_kind__ = 'commands'
     __htsw_factory__ = '@command'
 
-    mode: 'declared_field[ALL_COMMAND_MODES | None]' = declared_field()
+    mode: 'declared_field[CommandMode | None]' = declared_field()
     required_priority: declared_field[int | None] = declared_field()
     listed: declared_field[bool | None] = declared_field()
 
@@ -32,7 +32,7 @@ class Command(Declared):
 def command(
     name: str,
     *,
-    mode: ALL_COMMAND_MODES | None = None,
+    mode: CommandMode | None = None,
     required_priority: int | None = None,
     listed: bool | None = None,
 ) -> Callable[[Callable[[], None]], Command]:

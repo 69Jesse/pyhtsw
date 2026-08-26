@@ -5,19 +5,18 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypedDict, cast, get_args
 
-from pyhtsw.types import (
-    ALL_ENCHANTMENTS,
-    ALL_HOUSING_MENU_TIERS,
-    ALL_ITEM_KEY_STRINGS,
-    ALL_ITEM_KEYS,
-    ENCHANTMENT_TO_ID,
-    LEATHER_ARMOR_KEYS,
-    PLAYER_SKULL_ITEM_KEY,
-    ColorType,
-)
-
 from pyhtsw.clone import MISSING, Missing
 from pyhtsw.config import HERE
+from pyhtsw.declarations.item_keys import (
+    ENCHANTMENT_TO_ID,
+    ColorType,
+    HousingMenuTier,
+    ItemKey,
+    ItemKeyName,
+    LeatherArmorKey,
+    PlayerSkullItemKey,
+)
+from pyhtsw.generated.enums import EnchantmentName
 from pyhtsw.nbt import NBT, NBTByte, NBTCompound, NBTInt, NBTList, NBTShort, NBTString
 from pyhtsw.utils.caller import caller_module
 from pyhtsw.utils.formatting import normalize_formatting, remove_formatting
@@ -32,12 +31,12 @@ __all__ = (
 
 
 class Enchantment:
-    name: ALL_ENCHANTMENTS
+    name: EnchantmentName
     level: int | None
 
     def __init__(
         self,
-        name: ALL_ENCHANTMENTS,
+        name: EnchantmentName,
         level: int | None = None,
     ) -> None:
         self.name = name
@@ -76,7 +75,7 @@ for _key, _data in ITEMS.items():
     else:
         KEY_BY_NAME_AND_DATA[(_data['name'], _data['data_value'])] = _key
 
-ENCHANTMENT_BY_ID: dict[int, ALL_ENCHANTMENTS] = {
+ENCHANTMENT_BY_ID: dict[int, EnchantmentName] = {
     v: k for k, v in ENCHANTMENT_TO_ID.items()
 }
 
@@ -112,7 +111,7 @@ _FIELD_DEFAULTS: dict[str, Any] = {
 }
 
 
-def normalize_item_key(key: ALL_ITEM_KEYS) -> str:
+def normalize_item_key(key: ItemKey) -> str:
     if isinstance(key, str):
         return key
     return key[0]
@@ -156,7 +155,7 @@ class Item:
     # `Item(..., importable=False)` keeps an item out of import.json.
     _promotable: bool
 
-    key: ALL_ITEM_KEY_STRINGS
+    key: ItemKeyName
     name: str | None
     lore: str | None
     count: int
@@ -166,7 +165,7 @@ class Item:
     color: ColorType
     skull_data: NBTCompound | None
     is_cookie_item: bool
-    housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None'
+    housing_menu_tier: 'HousingMenuTier | None'
     hide_flags: int | None
     hide_all_flags: bool
     hide_enchantments_flag: bool
@@ -177,7 +176,7 @@ class Item:
 
     def __init__(
         self,
-        key: ALL_ITEM_KEYS | Missing = MISSING,
+        key: ItemKey | Missing = MISSING,
         *,
         name: str | None | Missing = MISSING,
         lore: str | None | Missing = MISSING,
@@ -188,7 +187,7 @@ class Item:
         color: ColorType | Missing = MISSING,
         skull_data: NBTCompound | None | Missing = MISSING,
         is_cookie_item: bool | Missing = MISSING,
-        housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None | Missing' = MISSING,
+        housing_menu_tier: 'HousingMenuTier | None | Missing' = MISSING,
         hide_flags: int | None | Missing = MISSING,
         hide_all_flags: bool | Missing = MISSING,
         hide_enchantments_flag: bool | Missing = MISSING,
@@ -236,9 +235,9 @@ class Item:
         skull_value: Any = explicit['skull_data']
         if isinstance(resolved_key, tuple):
             string_key, packed = resolved_key
-            if string_key in get_args(LEATHER_ARMOR_KEYS):
+            if string_key in get_args(LeatherArmorKey):
                 color_value = packed
-            elif string_key in get_args(PLAYER_SKULL_ITEM_KEY):
+            elif string_key in get_args(PlayerSkullItemKey):
                 skull_value = packed
             else:
                 faulty_tuple_key = string_key
@@ -246,7 +245,7 @@ class Item:
         explicit['color'] = color_value
         explicit['skull_data'] = skull_value
 
-        self.key = cast(ALL_ITEM_KEY_STRINGS, resolved_key)
+        self.key = cast(ItemKeyName, resolved_key)
         for field, hard_default in _FIELD_DEFAULTS.items():
             value = explicit[field]
             setattr(self, field, hard_default if value is MISSING else value)
@@ -374,12 +373,12 @@ class Item:
     }
 
     @classmethod
-    def housing_menu(cls, tier: ALL_HOUSING_MENU_TIERS = 'OWNER') -> 'Item':
+    def housing_menu(cls, tier: HousingMenuTier = 'OWNER') -> 'Item':
         """Hypixel's Housing Menu item. Handing one out is how a player gets
         the menu without the permission that normally grants it."""
         key, name = cls._HOUSING_MENU_ITEMS[tier]
         return Item(
-            cast(ALL_ITEM_KEYS, key),
+            cast(ItemKey, key),
             name=name,
             housing_menu_tier=tier,
             hide_flags=255,
@@ -427,7 +426,7 @@ class Item:
         if isinstance(tags, NBTCompound):
             cls._extract_tags(tags, options)
 
-        return Item(cast(ALL_ITEM_KEYS, key), **options)
+        return Item(cast(ItemKey, key), **options)
 
     @staticmethod
     def _extract_tags(tags: NBTCompound, options: dict[str, Any]) -> None:
@@ -600,7 +599,7 @@ class Item:
 
     def cloned(
         self,
-        key: ALL_ITEM_KEYS | Missing = MISSING,
+        key: ItemKey | Missing = MISSING,
         *,
         name: str | None | Missing = MISSING,
         lore: str | None | Missing = MISSING,
@@ -611,7 +610,7 @@ class Item:
         color: ColorType | Missing = MISSING,
         skull_data: NBTCompound | None | Missing = MISSING,
         is_cookie_item: bool | Missing = MISSING,
-        housing_menu_tier: 'ALL_HOUSING_MENU_TIERS | None | Missing' = MISSING,
+        housing_menu_tier: 'HousingMenuTier | None | Missing' = MISSING,
         hide_flags: int | None | Missing = MISSING,
         hide_all_flags: bool | Missing = MISSING,
         hide_enchantments_flag: bool | Missing = MISSING,

@@ -9,7 +9,12 @@ from pyhtsw.declarations.region import Region
 from pyhtsw.declarations.team import Team
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.expression.condition.named_condition import NamedCondition
-from pyhtsw.types import ALL_GAMEMODES, ALL_PERMISSIONS, ALL_POTION_EFFECTS
+from pyhtsw.generated.enums import (
+    PERMISSION_TO_HTSW,
+    Gamemode,
+    Permission,
+    PotionEffect,
+)
 
 __all__ = (
     'IsFlyingCondition',
@@ -77,7 +82,7 @@ class CanPVPCondition(NamedCondition):
         limit=20,
         reads=frozenset(()),
         display_name='Can PvP',
-        scoped_events=('PvP State Change',),
+        scoped_events=('pvp_state_change',),
     )
 
     def __init__(self) -> None:
@@ -95,11 +100,11 @@ class IsGamemode(Condition):
         reads=frozenset((Resource.GAMEMODE,)),
     )
 
-    gamemode: ALL_GAMEMODES
+    gamemode: Gamemode
 
     def __init__(
         self,
-        gamemode: ALL_GAMEMODES,
+        gamemode: Gamemode,
     ) -> None:
         self.gamemode = gamemode
 
@@ -109,7 +114,7 @@ class IsGamemode(Condition):
     def cloned(
         self,
         *,
-        gamemode: ALL_GAMEMODES | Missing = MISSING,
+        gamemode: Gamemode | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -202,21 +207,23 @@ class HasPermission(Condition):
         reads=frozenset((Resource.GROUP,)),
     )
 
-    permission: ALL_PERMISSIONS
+    permission: Permission
 
     def __init__(
         self,
-        permission: ALL_PERMISSIONS,
+        permission: Permission,
     ) -> None:
         self.permission = permission
 
     def into_htsl_raw(self) -> str:
-        return f'hasPermission {self.inline_quoted(self.permission)}'
+        return (
+            f'hasPermission {self.inline_quoted(PERMISSION_TO_HTSW[self.permission])}'
+        )
 
     def cloned(
         self,
         *,
-        permission: ALL_PERMISSIONS | Missing = MISSING,
+        permission: Permission | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -276,11 +283,11 @@ class HasPotionEffect(Condition):
         reads=frozenset((Resource.POTIONS,)),
     )
 
-    effect: ALL_POTION_EFFECTS
+    effect: PotionEffect
 
     def __init__(
         self,
-        effect: ALL_POTION_EFFECTS,
+        effect: PotionEffect,
     ) -> None:
         self.effect = effect
 
@@ -290,7 +297,7 @@ class HasPotionEffect(Condition):
     def cloned(
         self,
         *,
-        effect: ALL_POTION_EFFECTS | Missing = MISSING,
+        effect: PotionEffect | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(

@@ -2,14 +2,14 @@ from typing import TYPE_CHECKING
 
 from pyhtsw.compiler.importable import TeamImportable
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
+from pyhtsw.generated.enums import HousingColor
 from pyhtsw.placeholders.base import PlaceholderCheckable
-from pyhtsw.types import ALL_HOUSING_COLORS
 
 __all__ = ('Team',)
 
 if TYPE_CHECKING:
+    from pyhtsw.generated.enums import HousingColor
     from pyhtsw.stats.team_stat import TeamStat
-    from pyhtsw.types import ALL_HOUSING_COLORS
 
 
 class Team(Declared):
@@ -17,7 +17,7 @@ class Team(Declared):
     __htsw_factory__ = 'Team'
 
     tag: declared_field[str | None] = declared_field()
-    color: 'declared_field[ALL_HOUSING_COLORS | None]' = declared_field()
+    color: 'declared_field[HousingColor | None]' = declared_field()
     friendly_fire: declared_field[bool | None] = declared_field()
 
     def __init__(
@@ -25,7 +25,7 @@ class Team(Declared):
         name: str,
         *,
         tag: str | None = None,
-        color: ALL_HOUSING_COLORS | None = None,
+        color: HousingColor | None = None,
         friendly_fire: bool | None = None,
     ) -> None:
         """Declare a team importable. A team that already exists in the house

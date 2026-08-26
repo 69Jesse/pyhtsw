@@ -2,32 +2,31 @@ from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from pyhtsw.types import (
-    ALL_CHAT_SPEEDS,
-    ALL_DEFAULT_GAMEMODES,
-    ALL_HOUSING_COLORS,
-    ALL_PERMISSIONS,
-)
-
 from pyhtsw.compiler.importable import GroupImportable
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
+from pyhtsw.generated.enums import (
+    ChatSpeed,
+    Gamemode,
+    HousingColor,
+    Permission,
+)
 
 __all__ = ('Group',)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from pyhtsw.types import (
-        ALL_CHAT_SPEEDS,
-        ALL_DEFAULT_GAMEMODES,
-        ALL_HOUSING_COLORS,
-        ALL_PERMISSIONS,
+    from pyhtsw.generated.enums import (
+        ChatSpeed,
+        Gamemode,
+        HousingColor,
+        Permission,
     )
 
 
 def _permissions_view(
-    permissions: 'dict[ALL_PERMISSIONS, bool] | None',
-) -> 'Mapping[ALL_PERMISSIONS, bool] | None':
+    permissions: 'dict[Permission, bool] | None',
+) -> 'Mapping[Permission, bool] | None':
     return None if permissions is None else MappingProxyType(permissions)
 
 
@@ -37,13 +36,14 @@ class Group(Declared):
 
     tag: declared_field[str | None] = declared_field()
     tag_shown_in_chat: declared_field[bool | None] = declared_field()
-    color: 'declared_field[ALL_HOUSING_COLORS | None]' = declared_field()
+    color: 'declared_field[HousingColor | None]' = declared_field()
     priority: declared_field[int | None] = declared_field()
-    permissions: 'declared_field[Mapping[ALL_PERMISSIONS, bool] | None]' = (
-        declared_field(transform=_permissions_view, readonly=True)
+    permissions: 'declared_field[Mapping[Permission, bool] | None]' = declared_field(
+        transform=_permissions_view,
+        readonly=True,
     )
-    chat_speed: 'declared_field[ALL_CHAT_SPEEDS | None]' = declared_field()
-    default_gamemode: 'declared_field[ALL_DEFAULT_GAMEMODES | None]' = declared_field()
+    chat_speed: 'declared_field[ChatSpeed | None]' = declared_field()
+    default_gamemode: 'declared_field[Gamemode | None]' = declared_field()
 
     def __init__(
         self,
@@ -51,13 +51,13 @@ class Group(Declared):
         *,
         tag: str | None = None,
         tag_shown_in_chat: bool | None = None,
-        color: ALL_HOUSING_COLORS | None = None,
+        color: HousingColor | None = None,
         priority: int | None = None,
-        allow: Sequence[ALL_PERMISSIONS] | None = None,
-        deny: Sequence[ALL_PERMISSIONS] | None = None,
-        permissions: Mapping[ALL_PERMISSIONS, bool] | None = None,
-        chat_speed: ALL_CHAT_SPEEDS | None = None,
-        default_gamemode: ALL_DEFAULT_GAMEMODES | None = None,
+        allow: Sequence[Permission] | None = None,
+        deny: Sequence[Permission] | None = None,
+        permissions: Mapping[Permission, bool] | None = None,
+        chat_speed: ChatSpeed | None = None,
+        default_gamemode: Gamemode | None = None,
     ) -> None:
         """Declare a group importable. A group that already exists in the house
         is referenced by its plain name instead."""
@@ -78,11 +78,11 @@ class Group(Declared):
 
 def _merge_permissions(
     name: str,
-    allow: Sequence[ALL_PERMISSIONS] | None,
-    deny: Sequence[ALL_PERMISSIONS] | None,
-    permissions: Mapping[ALL_PERMISSIONS, bool] | None,
-) -> dict[ALL_PERMISSIONS, bool] | None:
-    merged: dict[ALL_PERMISSIONS, bool] = dict(permissions or {})
+    allow: Sequence[Permission] | None,
+    deny: Sequence[Permission] | None,
+    permissions: Mapping[Permission, bool] | None,
+) -> dict[Permission, bool] | None:
+    merged: dict[Permission, bool] = dict(permissions or {})
     for permission in allow or ():
         merged[permission] = True
     for permission in deny or ():

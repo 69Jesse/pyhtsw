@@ -35,7 +35,7 @@ assert len(function_blocks) > 1, (
 
 with Container() as as_event:
 
-    @event('Player Join')
+    @event('player_join')
     def _on_join() -> None:
         build(COND)
 
@@ -83,7 +83,7 @@ try:
 
         @function('TooMany')
         def _too_many() -> None:
-            with IfAll(*[HasPermission('Fly') for _ in range(21)]):
+            with IfAll(*[HasPermission('fly') for _ in range(21)]):
                 chat('hi')
 except RuntimeError as exc:
     raised = 'exceeds the limit of 20' in str(exc)
@@ -96,7 +96,7 @@ with Container():
     @function('JustEnough')
     def _just_enough() -> None:
         with IfAll(
-            *[HasPermission('Fly') for _ in range(20)],
+            *[HasPermission('fly') for _ in range(20)],
             *[PlayerStat('x') > i for i in range(20)],
         ):
             chat('hi')

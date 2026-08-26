@@ -1,5 +1,9 @@
 from typing import Self, final
 
+from pyhtsw.actions._inventory_slots import (
+    INVENTORY_SLOT_TO_HTSW,
+    InventorySlot,
+)
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.compiler.schedule import Effects, Resource
@@ -10,12 +14,8 @@ from pyhtsw.declarations.item import (
     item_referenced_importables,
 )
 from pyhtsw.expression.expression import Expression
+from pyhtsw.generated.enums import EnchantmentName
 from pyhtsw.location import Location, resolve_location
-from pyhtsw.types import (
-    _INVENTORY_SLOTS_PRETTY_NAME_MAPPING,
-    ALL_ENCHANTMENTS,
-    INVENTORY_SLOTS,
-)
 
 __all__ = (
     'Layout',
@@ -55,7 +55,7 @@ class GiveItemExpression(Expression):
         limit=40,
         effects=Effects.of(reads=(Resource.INVENTORY,), writes=(Resource.INVENTORY,)),
         display_name='Give Item',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     item: Item
@@ -114,10 +114,10 @@ class GiveItemExpression(Expression):
 def give_item(
     item: Item,
     allow_multiple: bool = False,
-    inventory_slot: INVENTORY_SLOTS = 'first_slot',
+    inventory_slot: InventorySlot = 'first_slot',
     replace_existing_item: bool = False,
 ) -> None:
-    inventory_slot = _INVENTORY_SLOTS_PRETTY_NAME_MAPPING.get(
+    inventory_slot = INVENTORY_SLOT_TO_HTSW.get(
         inventory_slot,
         inventory_slot,
     )
@@ -136,7 +136,7 @@ class RemoveItemExpression(Expression):
         limit=40,
         effects=Effects.of(reads=(Resource.INVENTORY,), writes=(Resource.INVENTORY,)),
         display_name='Remove Item',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     item: Item
@@ -184,7 +184,7 @@ class DropItemExpression(Expression):
             ),
         ),
         display_name='Drop Item',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     item: Item
@@ -311,7 +311,7 @@ class EnchantHeldItemExpression(Expression):
         limit=24,
         effects=Effects.of(reads=(Resource.INVENTORY,), writes=(Resource.INVENTORY,)),
         display_name='Enchant Held Item',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     enchantment_name: str
@@ -340,7 +340,7 @@ class EnchantHeldItemExpression(Expression):
 
 
 def enchant_held_item(
-    enchantment: ALL_ENCHANTMENTS | Enchantment,
+    enchantment: EnchantmentName | Enchantment,
     level: int | None = None,
 ) -> None:
     if isinstance(enchantment, Enchantment):
@@ -361,7 +361,7 @@ class ApplyInventoryLayoutExpression(Expression):
         limit=5,
         effects=Effects.of(writes=(Resource.INVENTORY,)),
         display_name='Apply Inventory Layout',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     layout: Layout
@@ -397,7 +397,7 @@ class ResetInventoryExpression(Expression):
         limit=1,
         effects=Effects.of(writes=(Resource.INVENTORY,)),
         display_name='Reset Inventory',
-        forbidden_events=('Player Quit',),
+        forbidden_events=('player_quit',),
     )
 
     def into_htsl(self) -> str:

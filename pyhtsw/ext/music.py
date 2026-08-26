@@ -6,11 +6,11 @@ from typing import cast, get_args
 
 import mido
 import pynbs
-from pyhtsw.types import ALL_SOUNDS, ALL_SOUNDS_PRETTY_TO_RAW, ALL_SOUNDS_RAW
 
 from pyhtsw.actions.flow import PauseExecutionExpression
 from pyhtsw.actions.world import PlaySoundExpression
 from pyhtsw.expression.expression import Expression
+from pyhtsw.generated.enums import SOUND_NAME_TO_PATH, Sound
 from pyhtsw.utils.log import log
 
 __all__ = (
@@ -23,12 +23,12 @@ __all__ = (
     'midi_into_expressions',
 )
 
-CustomInstrumentResolver = Callable[[str], ALL_SOUNDS_RAW | None]
+CustomInstrumentResolver = Callable[[str], Sound | None]
 
 
 # NBS instrument ID -> Housing sound (raw)
 # 0-6 are 1.8.9 vanilla, 7-15 are 1.12+ (mapped to closest 1.8.9 equivalent)
-NBS_INSTRUMENT_TO_SOUND: dict[int, ALL_SOUNDS] = {
+NBS_INSTRUMENT_TO_SOUND: dict[int, Sound] = {
     0: 'note.harp',  # Piano
     1: 'note.bass',  # Double Bass
     2: 'note.bd',  # Bass Drum
@@ -48,7 +48,7 @@ NBS_INSTRUMENT_TO_SOUND: dict[int, ALL_SOUNDS] = {
 }
 
 # MIDI program number ranges -> Housing sound
-MIDI_PROGRAM_TO_SOUND: dict[range, ALL_SOUNDS] = {
+MIDI_PROGRAM_TO_SOUND: dict[range, Sound] = {
     range(0, 8): 'note.harp',  # Piano
     range(8, 16): 'note.pling',  # Chromatic Percussion
     range(16, 24): 'note.harp',  # Organ
@@ -67,7 +67,7 @@ MIDI_PROGRAM_TO_SOUND: dict[range, ALL_SOUNDS] = {
 }
 
 # MIDI drum note numbers (channel 10) -> Housing sound
-MIDI_DRUM_TO_SOUND: dict[int, ALL_SOUNDS] = {
+MIDI_DRUM_TO_SOUND: dict[int, Sound] = {
     35: 'note.bd',
     36: 'note.bd',  # Bass Drum
     38: 'note.snare',
@@ -94,15 +94,14 @@ def _normalize_sound_name(name: str) -> str:
 
 
 # Pretty names normalized like custom-instrument names, for direct lookup.
-_NORMALIZED_PRETTY_TO_RAW: dict[str, ALL_SOUNDS_RAW] = {
-    _normalize_sound_name(pretty): raw
-    for pretty, raw in ALL_SOUNDS_PRETTY_TO_RAW.items()
+_NORMALIZED_PRETTY_TO_RAW: dict[str, Sound] = {
+    _normalize_sound_name(pretty): raw for pretty, raw in SOUND_NAME_TO_PATH.items()
 }
-_ALL_RAW_SOUNDS: frozenset[str] = frozenset(get_args(ALL_SOUNDS_RAW))
+_ALL_RAW_SOUNDS: frozenset[str] = frozenset(get_args(Sound))
 
 
-def _build_unique_tokens() -> dict[str, ALL_SOUNDS_RAW]:
-    token_raws: dict[str, set[ALL_SOUNDS_RAW]] = {}
+def _build_unique_tokens() -> dict[str, Sound]:
+    token_raws: dict[str, set[Sound]] = {}
     for normalized_pretty, raw in _NORMALIZED_PRETTY_TO_RAW.items():
         for token in normalized_pretty.split('.'):
             if token:
@@ -112,12 +111,12 @@ def _build_unique_tokens() -> dict[str, ALL_SOUNDS_RAW]:
     }
 
 
-_UNIQUE_TOKEN_TO_RAW: dict[str, ALL_SOUNDS_RAW] = _build_unique_tokens()
+_UNIQUE_TOKEN_TO_RAW: dict[str, Sound] = _build_unique_tokens()
 
 _FUZZY_CUTOFF = 0.75
 
 
-def _fuzzy_match(normalized: str) -> ALL_SOUNDS_RAW | None:
+def _fuzzy_match(normalized: str) -> Sound | None:
     for token in normalized.split('.'):
         if not token:
             continue
@@ -135,7 +134,7 @@ def _fuzzy_match(normalized: str) -> ALL_SOUNDS_RAW | None:
 def _resolve_custom_instrument(
     name: str,
     resolver: CustomInstrumentResolver | None,
-) -> ALL_SOUNDS:
+) -> Sound:
     normalized = _normalize_sound_name(name)
     if resolver is not None:
         override = resolver(normalized)
@@ -143,7 +142,7 @@ def _resolve_custom_instrument(
             return override
     candidate = _NORMALIZED_PRETTY_TO_RAW.get(normalized, normalized)
     if candidate in _ALL_RAW_SOUNDS:
-        return cast(ALL_SOUNDS_RAW, candidate)
+        return cast(Sound, candidate)
     fuzzy = _fuzzy_match(normalized)
     if fuzzy is not None:
         log(f'\x1b[38;2;255;0;0mNote:\x1b[0m using {fuzzy} for custom sound {name!r}')
@@ -152,7 +151,7 @@ def _resolve_custom_instrument(
     return 'note.harp'
 
 
-def _midi_program_to_sound(program: int) -> ALL_SOUNDS:
+def _midi_program_to_sound(program: int) -> Sound:
     for r, sound in MIDI_PROGRAM_TO_SOUND.items():
         if program in r:
             return sound
@@ -181,7 +180,7 @@ def _midi_note_to_pitch(
 @dataclass
 class NoteEvent:
     housing_tick: int
-    sound: ALL_SOUNDS
+    sound: Sound
     volume: float
     pitch: float
 
@@ -263,7 +262,7 @@ def _events_from_nbs(
         builtin_count + inst.id: inst.name or '' for inst in song.instruments
     }
     # Resolved lazily on first use, so unused instruments never log a note.
-    custom_sounds: dict[int, ALL_SOUNDS] = {}
+    custom_sounds: dict[int, Sound] = {}
 
     for tick, chord in song:
         housing_tick = round(tick * 20 / tps)

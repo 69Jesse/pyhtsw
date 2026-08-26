@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING, Self, final
 
-from pyhtsw.types import ALL_DAMAGE_CAUSES, FISHING_ENVIRONMENTS, PORTAL_TYPES
-
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ConditionMeta
 from pyhtsw.declarations.item import (
@@ -12,6 +10,11 @@ from pyhtsw.declarations.item import (
 from pyhtsw.expression.condition.comparison_condition import ComparisonOperator
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
+from pyhtsw.generated.enums import (
+    DamageCauseName,
+    FishingEnvironmentName,
+    PortalTypeName,
+)
 
 __all__ = (
     'DamageAmountCondition',
@@ -37,7 +40,7 @@ class DamageAmountCondition(Condition):
         limit=20,
         reads=frozenset(()),
         display_name='Damage Amount',
-        scoped_events=('Player Damage',),
+        scoped_events=('player_damage',),
     )
 
     operator: ComparisonOperator
@@ -118,14 +121,14 @@ class DamageCause(Condition):
         limit=20,
         reads=frozenset(()),
         display_name='Damage Cause',
-        scoped_events=('Player Damage',),
+        scoped_events=('player_damage',),
     )
 
     damage_cause: str
 
     def __init__(
         self,
-        damage_cause: ALL_DAMAGE_CAUSES,
+        damage_cause: DamageCauseName,
     ) -> None:
         self.damage_cause = damage_cause
 
@@ -135,7 +138,7 @@ class DamageCause(Condition):
     def cloned(
         self,
         *,
-        damage_cause: ALL_DAMAGE_CAUSES | Missing = MISSING,
+        damage_cause: DamageCauseName | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -154,14 +157,14 @@ class FishingEnvironment(Condition):
         limit=20,
         reads=frozenset(()),
         display_name='Fishing Environment',
-        scoped_events=('Fish Caught',),
+        scoped_events=('fish_caught',),
     )
 
-    environment: FISHING_ENVIRONMENTS
+    environment: FishingEnvironmentName
 
     def __init__(
         self,
-        environment: FISHING_ENVIRONMENTS,
+        environment: FishingEnvironmentName,
     ) -> None:
         self.environment = environment
 
@@ -171,7 +174,7 @@ class FishingEnvironment(Condition):
     def cloned(
         self,
         *,
-        environment: FISHING_ENVIRONMENTS | Missing = MISSING,
+        environment: FishingEnvironmentName | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -190,26 +193,24 @@ class PortalType(Condition):
         limit=20,
         reads=frozenset(()),
         display_name='Portal Type',
-        scoped_events=('Player Enter Portal',),
+        scoped_events=('player_enter_portal',),
     )
 
-    portal: PORTAL_TYPES
+    portal: PortalTypeName
 
     def __init__(
         self,
-        portal: PORTAL_TYPES,
+        portal: PortalTypeName,
     ) -> None:
         self.portal = portal
 
     def into_htsl_raw(self) -> str:
-        # htsw's identifier form for this condition is unquoted and
-        # underscore-joined: `portal Nether_Portal`.
-        return f'portal {self.portal.replace(" ", "_")}'
+        return f'portal {self.portal}'
 
     def cloned(
         self,
         *,
-        portal: PORTAL_TYPES | Missing = MISSING,
+        portal: PortalTypeName | Missing = MISSING,
         inverted: bool | Missing = MISSING,
     ) -> Self:
         return clone_with(
@@ -228,7 +229,7 @@ class BlockType(Condition):
         limit=20,
         reads=frozenset(()),
         display_name='Block Type',
-        scoped_events=('Player Block Break',),
+        scoped_events=('player_block_break',),
     )
 
     block: Item

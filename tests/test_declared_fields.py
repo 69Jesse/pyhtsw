@@ -20,25 +20,25 @@ with Container():
         'VIP',
         tag='VIP',
         tag_shown_in_chat=True,
-        color='Gold',
+        color='gold',
         priority=5,
-        allow=['Fly'],
-        deny=['Ban'],
-        chat_speed='Slow 1s',
-        default_gamemode='ADVENTURE',
+        allow=['fly'],
+        deny=['ban'],
+        chat_speed='slow_1s',
+        default_gamemode='adventure',
     )
-    red = Team('Red', tag='RED', color='Dark Red', friendly_fire=False)
+    red = Team('Red', tag='RED', color='dark_red', friendly_fire=False)
 
     assert vip.priority == 5, vip.priority
     assert vip.tag == 'VIP'
     assert vip.tag_shown_in_chat is True
-    assert vip.color == 'Gold'
-    assert vip.chat_speed == 'Slow 1s'
-    assert vip.default_gamemode == 'ADVENTURE'
-    assert vip.permissions == {'Fly': True, 'Ban': False}, vip.permissions
+    assert vip.color == 'gold'
+    assert vip.chat_speed == 'slow_1s'
+    assert vip.default_gamemode == 'adventure'
+    assert vip.permissions == {'fly': True, 'ban': False}, vip.permissions
 
     assert red.tag == 'RED'
-    assert red.color == 'Dark Red'
+    assert red.color == 'dark_red'
     assert red.friendly_fire is False
 
     # Declared, but the field was left out: None, not an error.
@@ -49,11 +49,11 @@ with Container():
     # The returned mapping is a view, not the registered dict.
     raised = False
     try:
-        vip.permissions['Fly'] = False  # type: ignore[index]
+        vip.permissions['fly'] = False  # type: ignore[index]
     except TypeError:
         raised = True
     assert raised, 'expected permissions to be read-only'
-    assert vip.permissions == {'Fly': True, 'Ban': False}
+    assert vip.permissions == {'fly': True, 'ban': False}
 
     # Declaring the same name twice is a hard error, not a silent merge.
     raised = False
@@ -76,7 +76,7 @@ with Container():
 with Container() as container:
     wand = Item('blaze_rod', name='&aWand', importable_name='Wand')
     shop = Menu('Shop', 6)
-    smith = NPC('Smith', (1, 64, 2), skin='Steve', look_at_players=True)
+    smith = NPC('Smith', (1, 64, 2), skin='steve', look_at_players=True)
     spawn = Region('Spawn', ((0, 100, 0), (10, 110, 10)))
     squad = Team('Squad', tag='SQ')
     mods = Group('Mods', priority=9)
@@ -85,11 +85,11 @@ with Container() as container:
     def tick() -> None:
         chat('tick')
 
-    @command('warp', mode='Self', required_priority=3, listed=True)
+    @command('warp', mode='self', required_priority=3, listed=True)
     def warp() -> None:
         chat('warp')
 
-    @event('Player Join')
+    @event('player_join')
     def join() -> None:
         chat('hi')
 
@@ -107,21 +107,21 @@ with Container() as container:
     # ...and every one of them answers for its own declaration.
     assert shop.name == 'Shop' and shop.size == 6
     assert smith.name == 'Smith' and smith.pos == (1, 64, 2)
-    assert smith.skin == 'Steve' and smith.look_at_players is True
+    assert smith.skin == 'steve' and smith.look_at_players is True
     assert smith.hide_name_tag is None
     assert spawn.name == 'Spawn'
     assert spawn.bounds == ((0, 100, 0), (10, 110, 10))
     assert tick.name == 'Tick' and tick.repeat_ticks == 20
     assert tick.icon is wand
-    assert warp.name == 'warp' and warp.mode == 'Self'
+    assert warp.name == 'warp' and warp.mode == 'self'
     assert warp.required_priority == 3 and warp.listed is True
-    assert join.name == 'Player Join' and join.event == 'Player Join'
+    assert join.name == 'player_join' and join.event == 'player_join'
     assert wand.importable.name == 'Wand'
     assert wand.key == 'blaze_rod' and wand.name == '&aWand'
 
     # `.importable` is the declaration itself, for every kind.
     assert shop.importable is container.find_importable('menus', 'Shop')
-    assert join.importable is container.find_importable('events', 'Player Join')
+    assert join.importable is container.find_importable('events', 'player_join')
 
     smith.pos = (9.0, 65.0, 9.0)
     smith.hide_name_tag = True

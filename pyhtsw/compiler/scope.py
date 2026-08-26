@@ -25,14 +25,14 @@ class ScopeViolation(NamedTuple):
 
 CANCELLABLE_EVENTS: frozenset[str] = frozenset(
     {
-        'Player Death',
-        'Fish Caught',
-        'Player Damage',
-        'Player Drop Item',
-        'Player Pick Up Item',
-        'Player Change Held Item',
-        'Player Toggle Sneak',
-        'Player Toggle Flight',
+        'player_death',
+        'fish_caught',
+        'player_damage',
+        'player_drop_item',
+        'player_pick_up_item',
+        'player_change_held_item',
+        'player_toggle_sneak',
+        'player_toggle_flight',
     },
 )
 

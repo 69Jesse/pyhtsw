@@ -55,7 +55,7 @@ assert lines(htsl_of(read_in_between)) == [
 # Neither may a pause be crossed to reach the fold.
 def across_pause() -> None:
     coins.value += 8
-    pause_execution(ticks=1)
+    pause_execution(1)
     coins.value += 8
 
 

@@ -90,7 +90,7 @@ assert Resource.VOLATILE in effects_of(rolls[0]).writes
 # Nothing crosses a pause, in either direction.
 def paused() -> None:
     x.value += 1
-    pause_execution(ticks=1)
+    pause_execution(1)
     y.value += 1
 
 

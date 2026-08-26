@@ -52,7 +52,7 @@ def emit(rng: random.Random, *, allow_barriers: bool) -> None:
         elif kind == 'xp':
             give_experience_levels(rng.randint(1, 3))
         elif kind == 'pause':
-            pause_execution(ticks=1)
+            pause_execution(1)
         elif kind == 'sound':
             play_sound('note.pling')
 

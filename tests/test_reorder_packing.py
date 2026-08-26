@@ -100,7 +100,7 @@ def with_pause() -> None:
     for index in range(25):
         fill[index].value = index
     x.value += 1
-    pause_execution(ticks=1)
+    pause_execution(1)
     y.value += 1
 
 

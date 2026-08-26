@@ -100,7 +100,7 @@ class PauseExecutionExpression(Expression):
         )
 
 
-def pause_execution(*, ticks: int = 20) -> None:
+def pause_execution(ticks: int = 20) -> None:
     PauseExecutionExpression(ticks=ticks).write()
 
 

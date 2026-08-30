@@ -49,6 +49,9 @@ from pyhtsw.ext.compute_layout import (
 from pyhtsw.ext.format_time import (
     format_time_string as format_time_string,
 )
+from pyhtsw.ext.leaderboard import (
+    SortedTopN as SortedTopN,
+)
 from pyhtsw.ext.look_vector import (
     approximate_look_vector as approximate_look_vector,
 )

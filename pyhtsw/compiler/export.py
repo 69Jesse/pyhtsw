@@ -1,9 +1,10 @@
 from collections.abc import Callable, Sequence
 from types import ModuleType
-from typing import Any
+from typing import Any, Unpack
 
 from pyhtsw.compiler.container import Container
 from pyhtsw.compiler.importable import Importable
+from pyhtsw.compiler.settings import ContainerSettings
 from pyhtsw.declarations.function import Function
 
 type CallableNoArgs = Callable[[], Any]
@@ -13,6 +14,7 @@ type Exportable = Function | CallableNoArgs | Sequence[Exportable] | ModuleType
 def export(
     exportable: Exportable,
     name: str,
+    **settings: Unpack[ContainerSettings],
 ) -> None:
     """Gather every importable reachable from `exportable` — a module, a single
     importable handle (a `@function`/`@event` result or an
@@ -76,7 +78,7 @@ def export(
         else None
     )
 
-    with Container() as container:
+    with Container(**settings) as container:
         for apply in applies:
             apply()
     container.export(name, module_prefix=module_prefix)

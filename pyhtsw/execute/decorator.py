@@ -1,5 +1,7 @@
 from collections.abc import Callable
+from typing import Unpack
 
+from pyhtsw.compiler.settings import ContainerSettings
 from pyhtsw.execute.context import ExecutionContext
 from pyhtsw.execute.expressions.run_execution_expression import CallbackType
 from pyhtsw.expression.expression import Expression
@@ -16,21 +18,19 @@ _saved_execution_contexts: list[tuple[ExecutionContext, CallbackType]] = []
 
 def execute(
     *,
-    ignore_action_limits: bool = False,
-    allow_nested_expressions: bool = False,
     verbose: bool = False,
     expression_callback: Callable[[Expression], None] | None = None,
     pause_multiplier: float = 1.0,
     volume_multiplier: float = 0.1,
+    **settings: Unpack[ContainerSettings],
 ) -> Callable[[CallbackType], ExecutionContext]:
     def decorator(callback: CallbackType) -> ExecutionContext:
         context = ExecutionContext(
-            ignore_action_limits=ignore_action_limits,
-            allow_nested_expressions=allow_nested_expressions,
             verbose=verbose,
             expression_callback=expression_callback,
             pause_multiplier=pause_multiplier,
             volume_multiplier=volume_multiplier,
+            **settings,
         )
         _saved_execution_contexts.append((context, callback))
         return context

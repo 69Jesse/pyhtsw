@@ -3,10 +3,11 @@ import time
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
 from types import TracebackType
-from typing import TYPE_CHECKING, Literal, overload
+from typing import TYPE_CHECKING, Literal, Unpack, overload
 
 from pyhtsw.checkable import Checkable
 from pyhtsw.compiler.container import Container, override_write_expression
+from pyhtsw.compiler.settings import ContainerSettings
 from pyhtsw.execute.backend_type import (
     BackendType,
     backend_into_string,
@@ -60,17 +61,13 @@ class ExecutionContext(Container):
         self,
         *,
         players: PlayersArg = None,
-        ignore_action_limits: bool = False,
-        allow_nested_expressions: bool = False,
         verbose: bool = False,
         expression_callback: Callable[[Expression], None] | None = None,
         pause_multiplier: float = 1.0,
         volume_multiplier: float = 0.1,
+        **settings: Unpack[ContainerSettings],
     ) -> None:
-        super().__init__(
-            ignore_action_limits=ignore_action_limits,
-            allow_nested_expressions=allow_nested_expressions,
-        )
+        super().__init__(**settings)
         self.verbose = verbose
         self.expression_callback = expression_callback
         self.pause_multiplier = pause_multiplier

@@ -76,7 +76,8 @@ def create_raycast(
     icon: Item | None = None,
     on_hit_target: HitCallback | None = None,
     on_hit_sender: HitCallback | None = None,
-    conditions: ConditionsArg | None = None,
+    conditions_before_geometry: ConditionsArg | None = None,
+    conditions_after_geometry: ConditionsArg | None = None,
     hitbox_radius: float = 1.0,
     detect_headshots: bool = False,
     headshots_only: bool = False,
@@ -107,10 +108,22 @@ def create_raycast(
         Inlined for the caster after the cast resolves, in the *caster's*
         context. Always runs (he cast the ray); branch on `result.hit_count`
         inside it if you only care about hits.
-    conditions:
+    conditions_before_geometry / conditions_after_geometry:
         Extra requirements a target must satisfy to count as hit, evaluated in
-        the target's context (e.g. team checks, region checks, …). Accepts a
-        single `Condition`, an iterable of them, or a callable returning either.
+        the target's context (e.g. team checks, region checks, …). Each accepts
+        a single `Condition`, an iterable of them, or a callable returning
+        either. The two differ only in where they are emitted, and the choice
+        is purely a cost one — the observable outcome is the same.
+
+        *before* is checked first and exits the failing player on the spot, so
+        the ~30 actions of hit testing never run for him; it costs one extra
+        conditional plus the exit. *after* rides along in the hit test's own
+        conditional, costing nothing statically but running the whole ray
+        against every player in the house.
+
+        Filter on *before* when most of the house is ineligible (outside the
+        arena, wrong world, spectating); on *after* when the block is short of
+        conditionals or nearly everyone qualifies anyway.
     hitbox_radius:
         Radius (blocks) of the spherical hitbox around each target's torso.
         Compared as a squared value, so 1.0 ≈ a forgiving full-body hit.
@@ -156,6 +169,14 @@ def create_raycast(
             active.value = 0
             exit_function()
 
+        early_conditions = _gather_conditions(conditions_before_geometry)
+        if early_conditions:
+            with IfAny(*(~condition for condition in early_conditions)):
+                exit_function()
+
+        # Per-target scratch lives in temporaries (per-player, like any player
+        # stat) so repeated casts overwrite the same storage; only the
+        # cross-context outputs stay as named globals.
         offset_x = TemporaryStat().as_double()
         offset_y = TemporaryStat().as_double()
         offset_z = TemporaryStat().as_double()
@@ -204,7 +225,7 @@ def create_raycast(
         hit_conditions: list[Condition] = [perp2 <= dist2, ray_dist >= 0.0]
         if max_distance is not None:
             hit_conditions.append(ray_dist <= max_distance)
-        hit_conditions.extend(_gather_conditions(conditions))
+        hit_conditions.extend(_gather_conditions(conditions_after_geometry))
 
         needs_staging = detect_headshots or headshots_only or max_hits is not None
         if not needs_staging:

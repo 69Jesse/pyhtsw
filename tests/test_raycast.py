@@ -173,7 +173,7 @@ assert int(near.get_raw(marker)) == 1, near.get_raw(marker)
 assert int(far.get_raw(marker)) == 0, far.get_raw(marker)
 
 
-# === conditions: only targets satisfying the extra condition are hit. ===
+# === conditions_after_geometry: only targets satisfying it are hit. ===
 caster = ExecutionPlayer('caster')
 friend = ExecutionPlayer('friend')
 foe = ExecutionPlayer('foe')
@@ -191,7 +191,7 @@ with ExecutionContext(players=[caster, friend, foe]) as ctx:
     rc = create_raycast(
         'Ray',
         on_hit_target=lambda: marker.set(1),
-        conditions=lambda: eligible == 1,
+        conditions_after_geometry=lambda: eligible == 1,
     )
     rc.trigger()
 
@@ -199,7 +199,64 @@ assert int(friend.get_raw(marker)) == 1, friend.get_raw(marker)
 assert int(foe.get_raw(marker)) == 0, foe.get_raw(marker)
 
 
-# === conditions also accepts a bare Condition (no callable wrapper). ===
+# === conditions_before_geometry: an ineligible player leaves at once. ===
+caster = ExecutionPlayer('caster')
+friend = ExecutionPlayer('friend')
+foe = ExecutionPlayer('foe')
+marker = PlayerStat('m').as_long()
+in_map = PlayerStat('inmap').as_long()
+
+with ExecutionContext(players=[caster, friend, foe]) as ctx:
+    ctx.current_player = caster
+    place(caster, 0.0, TORSO_TO_EYE, 0.0, yaw=0.0)
+    place(friend, 0.0, TORSO_TO_EYE, 3.0)
+    place(foe, 0.0, TORSO_TO_EYE, 6.0)
+    friend.put(in_map, 1)
+    foe.put(in_map, 0)
+
+    rc = create_raycast(
+        'Ray',
+        on_hit_target=lambda: marker.set(1),
+        conditions_before_geometry=lambda: in_map == 1,
+    )
+    rc.trigger()
+
+assert int(friend.get_raw(marker)) == 1, friend.get_raw(marker)
+assert int(foe.get_raw(marker)) == 0, foe.get_raw(marker)
+assert registered_hits(ctx) == 1, registered_hits(ctx)
+
+
+# === Both sides combine; the before side gates first. ===
+caster = ExecutionPlayer('caster')
+both = ExecutionPlayer('both')
+filtered = ExecutionPlayer('filtered')
+marker = PlayerStat('m').as_long()
+in_map = PlayerStat('inmap').as_long()
+eligible = PlayerStat('eligible').as_long()
+
+with ExecutionContext(players=[caster, both, filtered]) as ctx:
+    ctx.current_player = caster
+    place(caster, 0.0, TORSO_TO_EYE, 0.0, yaw=0.0)
+    place(both, 0.0, TORSO_TO_EYE, 3.0)
+    place(filtered, 0.0, TORSO_TO_EYE, 6.0)
+    both.put(in_map, 1)
+    both.put(eligible, 1)
+    filtered.put(in_map, 0)
+    filtered.put(eligible, 1)
+
+    rc = create_raycast(
+        'Ray',
+        on_hit_target=lambda: marker.set(1),
+        conditions_before_geometry=in_map == 1,
+        conditions_after_geometry=[eligible == 1],
+    )
+    rc.trigger()
+
+assert int(both.get_raw(marker)) == 1, both.get_raw(marker)
+assert int(filtered.get_raw(marker)) == 0, filtered.get_raw(marker)
+
+
+# === conditions_after_geometry also accepts a bare Condition. ===
 caster = ExecutionPlayer('caster')
 friend = ExecutionPlayer('friend')
 foe = ExecutionPlayer('foe')
@@ -217,7 +274,7 @@ with ExecutionContext(players=[caster, friend, foe]) as ctx:
     rc = create_raycast(
         'Ray',
         on_hit_target=lambda: marker.set(1),
-        conditions=eligible == 1,
+        conditions_after_geometry=eligible == 1,
     )
     rc.trigger()
 
@@ -225,7 +282,7 @@ assert int(friend.get_raw(marker)) == 1, friend.get_raw(marker)
 assert int(foe.get_raw(marker)) == 0, foe.get_raw(marker)
 
 
-# === conditions also accepts an iterable of Conditions (all must hold). ===
+# === conditions_after_geometry also accepts an iterable (all must hold). ===
 caster = ExecutionPlayer('caster')
 both = ExecutionPlayer('both')
 one = ExecutionPlayer('one')
@@ -246,7 +303,7 @@ with ExecutionContext(players=[caster, both, one]) as ctx:
     rc = create_raycast(
         'Ray',
         on_hit_target=lambda: marker.set(1),
-        conditions=[flag_a == 1, flag_b == 1],
+        conditions_after_geometry=[flag_a == 1, flag_b == 1],
     )
     rc.trigger()
 

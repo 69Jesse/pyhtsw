@@ -6,15 +6,17 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, ClassVar, NamedTuple, NoReturn, Self
+from typing import TYPE_CHECKING, Any, NamedTuple, NoReturn, Self, Unpack
 
-from pyhtsw.config import (
-    get_cleanup_stale_files,
-    get_display_output,
-    get_global_export_disabled,
-    get_project_name,
-    get_projects_folder,
+from pyhtsw.compiler.settings import (
+    SETTING_NAMES,
+    ContainerSettings,
+    as_projects_folder,
+    check_house_uuid,
+    inherited_setting,
+    setting,
 )
+from pyhtsw.config import get_projects_folder
 from pyhtsw.logger import AntiSpamLogger
 from pyhtsw.utils.kebab import into_kebab
 from pyhtsw.utils.log import log
@@ -31,10 +33,16 @@ if TYPE_CHECKING:
 __all__ = (
     'Container',
     'get_current_container',
+    'get_global_container',
+    'configure',
+    'disable_global_export',
 )
 
 
 WRITE_EXPRESSION_OVERRIDE_STACK: list[Callable[['Expression'], None]] = []
+
+CONTAINERS: list['Container'] = []
+EXPORTED_ROOTS: set[Path] = set()
 
 
 def _format_nested_compound_error(
@@ -77,6 +85,10 @@ class ExpressionContext(NamedTuple):
     add_expression_to_container: bool = True
 
 
+def _overridden(explicit: bool | None, configured: bool) -> bool:
+    return configured if explicit is None else explicit
+
+
 class ActionLimitViolation(NamedTuple):
     name: str
     kind: 'ImportableKind'
@@ -84,8 +96,6 @@ class ActionLimitViolation(NamedTuple):
 
 
 class Container:
-    exported_names: ClassVar[set[str]] = set()
-
     logger: AntiSpamLogger
     blocks: list['Block']
     contexts: list[ExpressionContext]
@@ -96,21 +106,28 @@ class Container:
     item_plan: 'ItemPlan | None'
     _consumer_reserved: set[int]
     _action_limit_violations: list['ActionLimitViolation']
+    _settings: dict[str, Any]
 
     is_finalized: bool
-    ignore_action_limits: bool
-    ignore_scope: bool
-    allow_nested_expressions: bool
 
-    def __init__(
-        self,
-        *,
-        ignore_action_limits: bool = False,
-        ignore_scope: bool = False,
-        allow_nested_expressions: bool = False,
-    ) -> None:
+    project_name = setting[str | None](None)
+    auto_export = setting[bool](True)
+
+    house_uuid = inherited_setting[str | None](None, transform=check_house_uuid)
+    projects_folder = inherited_setting[Path | None](
+        None,
+        transform=as_projects_folder,
+    )
+    cleanup_stale_files = inherited_setting[bool](False)
+    display_output = inherited_setting[bool](False)
+    ignore_action_limits = inherited_setting[bool](False)
+    ignore_scope = inherited_setting[bool](False)
+    allow_nested_expressions = inherited_setting[bool](False)
+
+    def __init__(self, **settings: Unpack[ContainerSettings]) -> None:
         from pyhtsw.compiler.block import GlobalBlock
 
+        self._settings = {}
         self.logger = AntiSpamLogger()
         self.blocks = []
         self.add_block(GlobalBlock())
@@ -124,9 +141,17 @@ class Container:
         self._action_limit_violations = []
 
         self.is_finalized = False
-        self.allow_nested_expressions = allow_nested_expressions
-        self.ignore_action_limits = ignore_action_limits
-        self.ignore_scope = ignore_scope
+        self.configure(**settings)
+
+    def configure(self, **settings: Unpack[ContainerSettings]) -> Self:
+        for name, value in settings.items():
+            if name not in SETTING_NAMES:
+                raise TypeError(
+                    f'Unknown container setting "{name}". Valid settings are: '
+                    + ', '.join(sorted(SETTING_NAMES)),
+                )
+            setattr(self, name, value)
+        return self
 
     def has_importable(self, kind: str, name: str) -> bool:
         return (kind, name) in self.importables_by_key
@@ -254,7 +279,7 @@ class Container:
 
     @property
     def is_global(self) -> bool:
-        return self is CONTAINERS[0]
+        return bool(CONTAINERS) and self is CONTAINERS[0]
 
     def get_expressions_ref_in_context(self, *, go_back: int = 0) -> list['Expression']:
         if go_back >= len(self.contexts):
@@ -628,7 +653,10 @@ class Container:
         return '\n'.join(lines)
 
     def project_path(self, name: str) -> Path:
-        return get_projects_folder() / into_kebab(name)
+        folder = self.projects_folder
+        if folder is None:
+            folder = get_projects_folder()
+        return folder / into_kebab(name)
 
     def is_empty(self) -> bool:
         return all(block.is_empty() for block in self.blocks)
@@ -647,17 +675,26 @@ class Container:
             importables.insert(0, FunctionImportable(global_block, name=name))
         return importables
 
+    def resolve_project_name(self, name: str | None = None) -> str:
+        """One name-resolution rule for both the explicit and the exit-hook
+        export: what was asked for, then the container's own name, then the
+        script filename."""
+        return name or self.project_name or GLOBAL_NAME
+
     def export(
         self,
-        name: str,
+        name: str | None = None,
         *,
         module_prefix: tuple[str, ...] | None = None,
         house_uuid: str | None = None,
+        cleanup_stale_files: bool | None = None,
+        display_output: bool | None = None,
     ) -> None:
         from pyhtsw.compiler.importable import Project
         from pyhtsw.compiler.item_plan import plan_items
         from pyhtsw.compiler.module_export import export_project
-        from pyhtsw.config import get_house_uuid
+
+        name = self.resolve_project_name(name)
 
         if not self.is_finalized:
             raise RuntimeError(
@@ -677,22 +714,22 @@ class Container:
             )
             return
 
-        if name in self.exported_names:
+        root = self.project_path(name)
+        if root in EXPORTED_ROOTS:
             raise RuntimeError(
-                f'Container with name "{name}" has already been exported.'
+                f'A project has already been exported to "{root}" this run.'
                 + (
                     ' This is the global export, it is possible to disable the global export with "pyhtsw.disable_global_export()".'
                     if self.is_global
                     else ''
                 ),
             )
-        self.exported_names.add(name)
+        EXPORTED_ROOTS.add(root)
 
         log(
             f'\n\x1b[38;2;0;255;0mExporting {"global " * (self.is_global)}project named \x1b[38;2;255;0;0m{name}\x1b[0m',
         )
 
-        root = self.project_path(name)
         project = Project(root, self.item_plan)
         self.project = project
         CONTAINERS.append(self)
@@ -701,16 +738,16 @@ class Container:
                 project,
                 importables,
                 module_prefix,
-                house_uuid if house_uuid is not None else get_house_uuid(),
+                house_uuid if house_uuid is not None else self.house_uuid,
             )
         finally:
             CONTAINERS.pop()
             self.project = None
 
-        if get_cleanup_stale_files():
+        if _overridden(cleanup_stale_files, self.cleanup_stale_files):
             project.cleanup_stale()
 
-        if get_display_output():
+        if _overridden(display_output, self.display_output):
             for written in sorted(project.written_paths):
                 rel = written.relative_to(root).as_posix()
                 log(
@@ -815,11 +852,28 @@ GLOBAL_NAME = into_kebab(
     os.path.basename(sys.argv[0]).rsplit('.', 1)[0],
     default='project',
 )
-CONTAINERS: list[Container] = [Container()]
+CONTAINERS.append(Container())
 
 
 def get_current_container() -> Container:
     return CONTAINERS[-1]
+
+
+def get_global_container() -> Container:
+    """The container everything written outside an explicit `with Container():`
+    lands in, and the one every other container reads its unset settings from."""
+    return CONTAINERS[0]
+
+
+def configure(**settings: Unpack[ContainerSettings]) -> Container:
+    """Configure the global container: what a script written outside an explicit
+    `with Container():` exports, and what every other container inherits from."""
+    return get_global_container().configure(**settings)
+
+
+def disable_global_export(value: bool = True) -> None:
+    """Stop the exit hook from writing the global container's project."""
+    get_global_container().auto_export = not value
 
 
 EXCEPTION_OCCURRED = False
@@ -838,20 +892,7 @@ def exception_hook(
 def on_program_exit() -> None:
     if EXCEPTION_OCCURRED:
         return
-    container = get_current_container()
-    if not container.is_global:
-        raise RuntimeError(
-            'Program exited without exporting a non-global container. This should never happen.',
-        )
-
-    if not container.is_finalized:
-        container.finalize()
-    if get_global_export_disabled():
-        log(
-            '\x1b[38;2;255;0;0mGlobal export is disabled. No .htsl file will be written.\x1b[0m',
-        )
-    else:
-        container.export(get_project_name() or GLOBAL_NAME)
+    _export_global_container()
 
     from pyhtsw.execute.decorator import run_saved_execution_contexts
 
@@ -860,6 +901,23 @@ def on_program_exit() -> None:
     from pyhtsw.misc.sounds import SOUND_MIXER
 
     SOUND_MIXER.shutdown()
+
+
+def _export_global_container() -> None:
+    container = get_current_container()
+    if not container.is_global:
+        raise RuntimeError(
+            'Program exited without exporting a non-global container. This should never happen.',
+        )
+
+    if not container.is_finalized:
+        container.finalize()
+    if not container.auto_export:
+        log(
+            '\x1b[38;2;255;0;0mGlobal export is disabled. No .htsl file will be written.\x1b[0m',
+        )
+    else:
+        container.export()
 
 
 sys.excepthook = exception_hook

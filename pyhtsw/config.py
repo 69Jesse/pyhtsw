@@ -1,5 +1,4 @@
 import os
-import re
 from pathlib import Path
 
 from pyhtsw.utils.log import log
@@ -7,21 +6,24 @@ from pyhtsw.utils.log import log
 __all__ = (
     'set_projects_folder',
     'get_projects_folder',
-    'disable_global_export',
-    'get_global_export_disabled',
-    'set_display_output',
-    'get_display_output',
-    'set_cleanup_stale_files',
-    'get_cleanup_stale_files',
-    'set_project_name',
-    'get_project_name',
-    'set_house_uuid',
-    'get_house_uuid',
+    'resolve_projects_folder',
+    'remember_projects_folder',
 )
 
 
 HERE: Path = Path(__file__).parent
-CACHED_PROJECTS_FOLDER_PATH: Path = HERE / 'cached_projects_folder.txt'
+
+
+def _config_folder() -> Path:
+    if os.name == 'nt':
+        base = Path(os.getenv('APPDATA') or Path.home())
+    else:
+        base = Path(os.getenv('XDG_CONFIG_HOME') or (Path.home() / '.config'))
+    return base / 'pyhtsw'
+
+
+CACHED_PROJECTS_FOLDER_PATH: Path = _config_folder() / 'projects-folder.txt'
+LEGACY_CACHED_PROJECTS_FOLDER_PATH: Path = HERE / 'cached_projects_folder.txt'
 
 
 def _default_projects_folder() -> Path | None:
@@ -42,45 +44,72 @@ def _default_projects_folder() -> Path | None:
 _PROJECTS_FOLDER_OVERRIDE: Path | None = None
 
 
-def set_projects_folder(folder: Path | str, *, save: bool = True) -> None:
-    if isinstance(folder, str):
-        folder = Path(folder)
-    folder = folder.resolve()
-    folder.mkdir(parents=True, exist_ok=True)
+def set_projects_folder(folder: Path | str, *, save: bool = False) -> None:
+    """Point exports at `folder` for this run. Pass `save=True` to remember it
+    for future runs; the default deliberately leaves the cached folder alone, so
+    a test or benchmark cannot clobber the real one."""
+    folder = Path(folder).resolve()
 
     global _PROJECTS_FOLDER_OVERRIDE
     _PROJECTS_FOLDER_OVERRIDE = folder
 
-    if not save:
-        return
+    if save:
+        remember_projects_folder(folder)
 
+
+def remember_projects_folder(folder: Path | str) -> None:
+    """Write `folder` to the cache every future run reads."""
+    folder = Path(folder).resolve()
     new_content = folder.as_posix()
     content = (
-        CACHED_PROJECTS_FOLDER_PATH.read_text()
+        CACHED_PROJECTS_FOLDER_PATH.read_text(encoding='utf-8')
         if CACHED_PROJECTS_FOLDER_PATH.exists()
         else None
     )
     if content == new_content:
         return
-    CACHED_PROJECTS_FOLDER_PATH.write_text(new_content)
+    CACHED_PROJECTS_FOLDER_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CACHED_PROJECTS_FOLDER_PATH.write_text(new_content, encoding='utf-8')
     log(
         f'\nSaved your HTSW projects folder \x1b[38;2;0;255;0m{folder.as_posix()}\x1b[0m for future use at\n\x1b[38;2;0;255;0m{CACHED_PROJECTS_FOLDER_PATH}\x1b[0m',
     )
 
 
-def get_projects_folder() -> Path:
-    if _PROJECTS_FOLDER_OVERRIDE is not None:
-        return _PROJECTS_FOLDER_OVERRIDE
-    if CACHED_PROJECTS_FOLDER_PATH.exists():
-        raw_path = CACHED_PROJECTS_FOLDER_PATH.read_text().strip()
+def _cached_projects_folder() -> Path | None:
+    for path in (CACHED_PROJECTS_FOLDER_PATH, LEGACY_CACHED_PROJECTS_FOLDER_PATH):
+        if not path.exists():
+            continue
+        raw_path = path.read_text(encoding='utf-8').strip()
         if raw_path:
             return Path(raw_path)
+    return None
 
+
+def resolve_projects_folder() -> Path | None:
+    """The configured projects folder, or None if there is nothing to go on.
+    Pure: it neither prompts nor writes, so it is safe to call from anywhere."""
+    if _PROJECTS_FOLDER_OVERRIDE is not None:
+        return _PROJECTS_FOLDER_OVERRIDE
+    cached = _cached_projects_folder()
+    if cached is not None:
+        return cached
+    return _default_projects_folder()
+
+
+def get_projects_folder() -> Path:
+    """The projects folder to export into, asking for one if this machine has
+    never had it resolved. Prompts on stdin, so only the export path calls it."""
+    if _PROJECTS_FOLDER_OVERRIDE is not None:
+        return _PROJECTS_FOLDER_OVERRIDE
+    cached = _cached_projects_folder()
+    if cached is not None:
+        cached = cached.resolve()
+        remember_projects_folder(cached)
+        return cached
     default = _default_projects_folder()
     if default is not None:
         default = default.resolve()
-        default.mkdir(parents=True, exist_ok=True)
-        set_projects_folder(default)
+        remember_projects_folder(default)
         return default
 
     log('\x1b[38;2;255;0;0mCould not determine your HTSW projects folder.\x1b[0m')
@@ -93,81 +122,5 @@ def get_projects_folder() -> Path:
         if not raw_path:
             log('\x1b[38;2;255;0;0mPlease provide a valid path.\x1b[0m')
             continue
-        set_projects_folder(raw_path)
+        set_projects_folder(raw_path, save=True)
         return Path(raw_path).resolve()
-
-
-DISABLE_GLOBAL_EXPORT: bool = False
-
-
-def disable_global_export(value: bool = True) -> None:
-    global DISABLE_GLOBAL_EXPORT
-    DISABLE_GLOBAL_EXPORT = value
-
-
-def get_global_export_disabled() -> bool:
-    return DISABLE_GLOBAL_EXPORT
-
-
-DISPLAY_OUTPUT: bool = False
-
-
-def set_display_output(value: bool = True) -> None:
-    """On export, print every generated file's contents (`.htsl`, `import.json`,
-    `.snbt`) to the console."""
-    global DISPLAY_OUTPUT
-    DISPLAY_OUTPUT = value
-
-
-def get_display_output() -> bool:
-    return DISPLAY_OUTPUT
-
-
-CLEANUP_STALE_FILES: bool = False
-
-
-def set_cleanup_stale_files(value: bool = True) -> None:
-    """Opt in to deleting generated files (`.htsl`/`.snbt`/`import.json`) a prior
-    export wrote into this project's folder that are no longer produced. Off by
-    default; hand-placed files (e.g. `.txt`) are never touched either way."""
-    global CLEANUP_STALE_FILES
-    CLEANUP_STALE_FILES = value
-
-
-def get_cleanup_stale_files() -> bool:
-    return CLEANUP_STALE_FILES
-
-
-PROJECT_NAME: str | None = None
-
-
-def set_project_name(name: str) -> None:
-    """Name the global export. Call this once (e.g. in main.py); the program's
-    global container is then exported under this name instead of the script's
-    filename."""
-    global PROJECT_NAME
-    PROJECT_NAME = name
-
-
-def get_project_name() -> str | None:
-    return PROJECT_NAME
-
-
-HOUSE_UUID: str | None = None
-
-UUID_PATTERN = re.compile(
-    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-)
-
-
-def set_house_uuid(uuid: str) -> None:
-    """Bind exported projects to one specific house. Written as `houseUuid` in
-    the entry import.json only; htsw ignores the field in included files."""
-    global HOUSE_UUID
-    if UUID_PATTERN.match(uuid) is None:
-        raise ValueError(f'Not a valid house UUID: {uuid!r}')
-    HOUSE_UUID = uuid
-
-
-def get_house_uuid() -> str | None:
-    return HOUSE_UUID

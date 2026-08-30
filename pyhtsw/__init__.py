@@ -247,17 +247,26 @@ from pyhtsw.clone import (
     Missing as Missing,
 )
 from pyhtsw.compiler.container import (
-    CONTAINERS as CONTAINERS,
+    Container as Container,
 )
 from pyhtsw.compiler.container import (
-    Container as Container,
+    configure as configure,
+)
+from pyhtsw.compiler.container import (
+    disable_global_export as disable_global_export,
 )
 from pyhtsw.compiler.container import (
     get_current_container as get_current_container,
 )
+from pyhtsw.compiler.container import (
+    get_global_container as get_global_container,
+)
 from pyhtsw.compiler.export import export as export
 from pyhtsw.compiler.limits import ActionLimitError as ActionLimitError
 from pyhtsw.compiler.scope import ScopeError as ScopeError
+from pyhtsw.compiler.settings import (
+    ContainerSettings as ContainerSettings,
+)
 from pyhtsw.conditions.event import (
     BlockType as BlockType,
 )
@@ -325,28 +334,13 @@ from pyhtsw.conditions.player import (
     WithinRegion as WithinRegion,
 )
 from pyhtsw.config import (
-    disable_global_export as disable_global_export,
-)
-from pyhtsw.config import (
-    get_house_uuid as get_house_uuid,
-)
-from pyhtsw.config import (
-    get_project_name as get_project_name,
-)
-from pyhtsw.config import (
     get_projects_folder as get_projects_folder,
 )
 from pyhtsw.config import (
-    set_cleanup_stale_files as set_cleanup_stale_files,
+    remember_projects_folder as remember_projects_folder,
 )
 from pyhtsw.config import (
-    set_display_output as set_display_output,
-)
-from pyhtsw.config import (
-    set_house_uuid as set_house_uuid,
-)
-from pyhtsw.config import (
-    set_project_name as set_project_name,
+    resolve_projects_folder as resolve_projects_folder,
 )
 from pyhtsw.config import (
     set_projects_folder as set_projects_folder,

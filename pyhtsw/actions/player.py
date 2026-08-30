@@ -69,14 +69,13 @@ class TeleportPlayerExpression(Expression):
         prevent_teleport_inside_block: bool = False,
     ) -> None:
         self.location = ensure_location(location)
-        self.coordinates = self.location.render()[1]
         self.prevent_teleport_inside_block = prevent_teleport_inside_block
 
     def into_htsl(self) -> str:
-        line = f'tp {self.inline_quoted(type(self.location).keyword)}'
-        line += f' {self.inline_quoted(self.coordinates if self.coordinates is not None else "~ ~ ~")}'
-        line += f' {self.inline(self.prevent_teleport_inside_block)}'
-        return line
+        return (
+            f'tp {self.location.into_htsl()}'
+            f' {self.inline(self.prevent_teleport_inside_block)}'
+        )
 
     def cloned(
         self,
@@ -401,14 +400,10 @@ class LaunchToTargetExpression(Expression):
         strength: Checkable | int = 2,
     ) -> None:
         self.location = ensure_location(location)
-        self.coordinates = self.location.render()[1]
         self.strength = strength
 
     def into_htsl(self) -> str:
-        line = f'launchTarget {self.inline_quoted(type(self.location).keyword)}'
-        line += f' {self.inline_quoted(self.coordinates if self.coordinates is not None else "~ ~ ~")}'
-        line += f' {self.inline(self.strength)}'
-        return line
+        return f'launchTarget {self.location.into_htsl()} {self.inline(self.strength)}'
 
     def cloned(
         self,
@@ -450,13 +445,9 @@ class SetCompassTargetExpression(Expression):
         location: Location,
     ) -> None:
         self.location = ensure_location(location)
-        self.coordinates = self.location.render()[1]
 
     def into_htsl(self) -> str:
-        line = f'compassTarget {self.inline_quoted(type(self.location).keyword)}'
-        if self.coordinates is not None:
-            line += f' {self.inline_quoted(self.coordinates)}'
-        return line
+        return f'compassTarget {self.location.into_htsl()}'
 
     def cloned(
         self,

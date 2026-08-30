@@ -84,14 +84,13 @@ class PlaySoundExpression(Expression):
         self.location = ensure_location(
             location if location is not None else Location.invokers(),
         )
-        self.coordinates = self.location.render()[1]
         self.check_valid = check_valid
 
     def into_htsl(self) -> str:
-        line = f'sound {self.inline_quoted(self.sound)} {self.inline(self.volume)} {self.inline(self.pitch)} {self.inline_quoted(type(self.location).keyword)}'
-        if self.coordinates is not None:
-            line += f' {self.inline_quoted(self.coordinates)}'
-        return line
+        return (
+            f'sound {self.inline_quoted(self.sound)} {self.inline(self.volume)}'
+            f' {self.inline(self.pitch)} {self.location.into_htsl()}'
+        )
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
         from pyhtsw.misc.sounds import preview_sound

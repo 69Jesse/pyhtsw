@@ -345,6 +345,20 @@ LOBBY_TO_HTSW: dict[Lobby, str] = {
     'wool_games': 'Wool Games',
 }
 
+LocationName = Literal[
+    'house_spawn_location',
+    'invokers_location',
+    'current_location',
+    'custom_coordinates',
+]
+
+LOCATION_NAME_TO_HTSW: dict[LocationName, str] = {
+    'house_spawn_location': 'House Spawn Location',
+    'invokers_location': 'Invokers Location',
+    'current_location': 'Current Location',
+    'custom_coordinates': 'Custom Coordinates',
+}
+
 ItemProperty = Literal[
     'item_type',
     'metadata',

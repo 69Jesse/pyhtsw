@@ -25,14 +25,29 @@ from pyhtsw.generated.enums import (
     EVENT_NAME_TO_HTSW,
     GAMEMODE_TO_DEFAULT_GAMEMODE,
     HOUSING_COLOR_TO_HTSW,
+    LOCATION_NAME_TO_HTSW,
     NPC_SKIN_TO_HTSW,
     PERMISSION_TO_HTSW,
     EventName,
     NpcSkin,
 )
+from pyhtsw.location import (
+    CurrentLocation,
+    CustomLocation,
+    HouseSpawnLocation,
+    InvokersLocation,
+)
 
 CONTRACT = json.loads(
     (Path(__file__).parent / 'htsw_contract.json').read_text(encoding='utf-8'),
+)
+
+
+LOCATIONS = (
+    HouseSpawnLocation,
+    InvokersLocation,
+    CurrentLocation,
+    CustomLocation,
 )
 
 
@@ -52,6 +67,10 @@ assert list(PERMISSION_TO_HTSW.values()) == enums['permissions']
 assert list(EVENT_NAME_TO_HTSW) == list(literal_values(EventName))
 assert list(NPC_SKIN_TO_HTSW.values()) == enums['npcSkins']
 assert list(NPC_SKIN_TO_HTSW) == list(literal_values(NpcSkin))
+# Every concrete Location's keyword has to be one htsw's parser accepts -- a
+# hand-written LocationName is how `house_spawn` (upstream: House Spawn
+# Location) survived long enough to reach a real import.
+assert {location.keyword for location in LOCATIONS} == set(LOCATION_NAME_TO_HTSW)
 
 
 IMPORTABLES = (

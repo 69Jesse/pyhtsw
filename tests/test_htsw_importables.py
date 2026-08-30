@@ -62,8 +62,8 @@ except TypeError:
     raised = True
 assert raised, 'bare Location() should be rejected'
 
-assert Location.house_spawn().render() == ('house_spawn', None)
-assert Location.custom(1, 2, 3).render() == ('custom_coordinates', '1 2 3')
+assert Location.house_spawn().into_htsl() == '"house_spawn_location"'
+assert Location.custom(1, 2, 3).into_htsl() == '"custom_coordinates" "1 2 3"'
 
 
 # A declared item references by its declared name; a plain one is promoted to

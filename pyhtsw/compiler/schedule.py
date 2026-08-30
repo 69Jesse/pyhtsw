@@ -95,9 +95,15 @@ class _Collector:
         from pyhtsw.checkable import Checkable
         from pyhtsw.expression.binary_expression import BinaryExpression
         from pyhtsw.expression.compound_expression import CompoundExpression
+        from pyhtsw.location import Location
         from pyhtsw.placeholders.base import PlaceholderCheckable
         from pyhtsw.stats.stat import Stat
 
+        if isinstance(value, Location):
+            # A location's operands are read where it is used.
+            for operand in value.coordinate_values():
+                self.checkable(operand)
+            return
         if isinstance(value, CompoundExpression):
             # A compound really does run its inner statements (`abs()` and `%`
             # expand into one), so its writes are writes.

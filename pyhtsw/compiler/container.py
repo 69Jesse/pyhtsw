@@ -350,8 +350,22 @@ class Container:
                 expression,
                 BinaryExpression | CompoundExpression,
             )
-            direct_fields: list[tuple[str, int]] = []
+            # A location renders from its operands, so it is those that get
+            # substituted -- a rendered coordinate string kept beside them would
+            # be derived state going stale under the rewrite. Expanding them in
+            # place keeps one loop, and the holder says where to write back.
+            fields: list[tuple[object, str, object]] = []
             for key, value in expression._get_all_values().items():
+                if isinstance(value, Location):
+                    fields.extend(
+                        (value, name, getattr(value, name))
+                        for name in value.coordinate_fields()
+                    )
+                else:
+                    fields.append((expression, key, value))
+
+            computed_fields: list[tuple[object, str, int]] = []
+            for holder, key, value in fields:
                 if not handles_own_operands and isinstance(
                     value,
                     BinaryExpression | CompoundExpression,
@@ -360,15 +374,10 @@ class Container:
                         value.into_inside_string(),
                     )[0]
                     ids.setdefault(deferred_id, None)
-                    direct_fields.append((key, deferred_id))
+                    computed_fields.append((holder, key, deferred_id))
                 elif isinstance(value, str):
                     for deferred_id in deferred.find_deferred_ids(value):
                         ids.setdefault(deferred_id, None)
-                elif isinstance(value, Location):
-                    text = value.render()[1]
-                    if text is not None:
-                        for deferred_id in deferred.find_deferred_ids(text):
-                            ids.setdefault(deferred_id, None)
             if not ids:
                 index += 1
                 continue
@@ -381,14 +390,8 @@ class Container:
                         key,
                         deferred.substitute_deferred(value, placeholders),
                     )
-                elif isinstance(value, Location):
-                    text = value.render()[1]
-                    if text is not None and deferred.text_has_deferred(text):
-                        value.replace_deferred_text(
-                            deferred.substitute_deferred(text, placeholders),
-                        )
-            for key, deferred_id in direct_fields:
-                setattr(expression, key, editables[deferred_id])
+            for holder, key, deferred_id in computed_fields:
+                setattr(holder, key, editables[deferred_id])
             # The setup belongs to the statement that reads it, so it inherits
             # its strict-order region instead of being free to drift out of one.
             region = strict_order_region_of(expression)
@@ -422,6 +425,7 @@ class Container:
     def _pin_held_temps(self, expressions: list['Expression']) -> set[int]:
         from pyhtsw.compiler import deferred
         from pyhtsw.expression.expression import Expression
+        from pyhtsw.location import Location
         from pyhtsw.stats.temporary_stat import Number, TemporaryStat
 
         first: dict[Number, int] = {}
@@ -458,6 +462,9 @@ class Container:
                                     deferred.lookup_deferred(did).checkable,
                                     idx,
                                 )
+                        elif isinstance(value, Location):
+                            for stat in value.iter_referenced_stats():
+                                mark(stat, idx)
                 for nested in expression.nested_expressions_refs():
                     visit(nested)
 
@@ -538,6 +545,7 @@ class Container:
         numbers: set[int],
     ) -> None:
         from pyhtsw.checkable import Checkable
+        from pyhtsw.location import Location
         from pyhtsw.stats.stat import Stat
         from pyhtsw.stats.temporary_stat import TemporaryStat
 
@@ -556,6 +564,9 @@ class Container:
                 for value in expr._get_all_values().values():
                     if isinstance(value, str):
                         for ref in Checkable.iter_in_string(value):
+                            consider(ref)
+                    elif isinstance(value, Location):
+                        for ref in value.iter_referenced_stats():
                             consider(ref)
 
     def compute_reserved_temp_numbers(self) -> set[int]:

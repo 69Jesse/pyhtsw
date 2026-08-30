@@ -26,6 +26,7 @@ ENUMS = (
     ('NpcSkin', 'NPC_SKIN_TO_HTSW', 'npcSkins'),
     ('PotionEffect', 'POTION_EFFECT_TO_HTSW', 'potionEffects'),
     ('Lobby', 'LOBBY_TO_HTSW', 'lobbies'),
+    ('LocationName', 'LOCATION_NAME_TO_HTSW', 'locations'),
     ('ItemProperty', 'ITEM_PROPERTY_TO_HTSW', 'itemProperties'),
     ('ItemLocation', 'ITEM_LOCATION_TO_HTSW', 'itemLocations'),
     ('ItemAmount', 'ITEM_AMOUNT_TO_HTSW', 'itemAmounts'),

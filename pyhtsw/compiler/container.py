@@ -659,6 +659,12 @@ class Container:
         from pyhtsw.compiler.module_export import export_project
         from pyhtsw.config import get_house_uuid
 
+        if not self.is_finalized:
+            raise RuntimeError(
+                'Unable to export Container: Container is not finalized, so '
+                'every block is still empty. Either exit the container context '
+                'or call "finalize()" manually.',
+            )
         importables = self._collect_importables(name)
         # Replanned here rather than reusing finalize's: which module owns an
         # item decides where its .snbt is written, and a module may still be
@@ -838,7 +844,8 @@ def on_program_exit() -> None:
             'Program exited without exporting a non-global container. This should never happen.',
         )
 
-    container.finalize()
+    if not container.is_finalized:
+        container.finalize()
     if get_global_export_disabled():
         log(
             '\x1b[38;2;255;0;0mGlobal export is disabled. No .htsl file will be written.\x1b[0m',

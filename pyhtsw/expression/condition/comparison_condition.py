@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING, Self, final
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.compiler.registry import ConditionMeta
 from pyhtsw.expression.condition.condition import Condition
-from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
+from pyhtsw.expression.housing_type import (
+    HousingType,
+    check_value_length,
+    housing_type_as_rhs,
+)
 from pyhtsw.internal_type import InternalType
 
 if TYPE_CHECKING:
@@ -64,9 +68,12 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         from pyhtsw.checkable import Checkable
 
         def format_rhs(value: Checkable | HousingType) -> str:
-            if isinstance(value, Checkable):
-                return value.into_string_rhs()
-            return housing_type_as_rhs(value)
+            text = (
+                value.into_string_rhs()
+                if isinstance(value, Checkable)
+                else housing_type_as_rhs(value)
+            )
+            return check_value_length(text, field='The value compared against')
 
         lhs = self.left.into_condition_lhs()
         line = f'{lhs} {self.operator.value} {format_rhs(self.right)}'
@@ -75,7 +82,9 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
         # placeholder and health/maxHealth/hunger forms do not.
         fallback_value = self.left.get_formatted_fallback_value()
         if fallback_value is not None and self.left.condition_takes_fallback():
-            line += f' {fallback_value}'
+            line += (
+                f' {check_value_length(fallback_value, field="This fallback value")}'
+            )
 
         return line
 

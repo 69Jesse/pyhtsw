@@ -1,16 +1,40 @@
 from abc import abstractmethod
-from typing import Self
+from typing import ClassVar, Self
 
 from pyhtsw.directives.no_fallback_values import no_fallback_values
 from pyhtsw.editable import Editable
+from pyhtsw.execute.java_string import java_string_length
 from pyhtsw.expression.housing_type import HousingType
 from pyhtsw.expression.unset_expression import UnsetExpression
 from pyhtsw.internal_type import InternalType
 
-__all__ = ('Stat',)
+__all__ = ('Stat', 'NAME_MAX_LENGTH', 'StatNameError', 'check_stat_name')
+
+
+NAME_MAX_LENGTH = 16
+
+
+class StatNameError(ValueError):
+    """A name Housing would reject as a variable name."""
+
+
+def check_stat_name(name: str, *, kind: str = 'stat name') -> str:
+    if not name:
+        raise StatNameError(f'A {kind} cannot be empty.')
+    if ' ' in name:
+        raise StatNameError(f'A {kind} cannot contain spaces: {name!r}.')
+    length = java_string_length(name)
+    if length > NAME_MAX_LENGTH:
+        raise StatNameError(
+            f'The {kind} {name!r} is {length} characters, over the '
+            f'{NAME_MAX_LENGTH}-character limit Housing puts on a variable name.',
+        )
+    return name
 
 
 class Stat(Editable):
+    validates_name: ClassVar[bool] = True
+
     name: str
     auto_unset: bool
 
@@ -27,6 +51,8 @@ class Stat(Editable):
             internal_type=internal_type,
             fallback_value=fallback_value,
         )
+        if type(self).validates_name:
+            check_stat_name(name)
         self.name = name
         self.auto_unset = auto_unset
 

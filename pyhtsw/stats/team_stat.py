@@ -6,7 +6,7 @@ from pyhtsw.declarations.declared import declared_name
 from pyhtsw.expression.housing_type import HousingType, housing_type_from_string
 from pyhtsw.internal_type import InternalType
 from pyhtsw.stats.player_stat import _split_parts
-from pyhtsw.stats.stat import Stat
+from pyhtsw.stats.stat import Stat, check_stat_name
 
 if TYPE_CHECKING:
     from pyhtsw.declarations.team import Team
@@ -49,6 +49,8 @@ class TeamStat(
             auto_unset=auto_unset,
         )
         self.team = declared_name(team)
+        if self.team is not None:
+            check_stat_name(self.team, kind='team name')
 
     def into_hashable(self) -> tuple[object, ...]:
         return (

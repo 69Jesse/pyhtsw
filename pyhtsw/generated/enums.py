@@ -2238,3 +2238,12 @@ MinecraftItem = Literal[
     'record_11',
     'record_wait',
 ]
+
+UNSPAWNABLE_ITEMS: frozenset[MinecraftItem] = frozenset((
+    'mob_spawner',
+    'farmland',
+    'brown_mushroom_block',
+    'red_mushroom_block',
+    'command_block',
+    'command_block_minecart',
+))

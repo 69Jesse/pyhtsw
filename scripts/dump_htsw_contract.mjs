@@ -26,12 +26,13 @@ if (!repo) {
 
 const load = (rel) => import(pathToFileURL(join(repo, rel)).href);
 
-const [schema, limits, specs, helpers, constants] = await Promise.all([
+const [schema, limits, specs, helpers, constants, unspawnable] = await Promise.all([
     load('language/src/importjson/schemaSpec.ts'),
     load('language/src/types/limits.ts'),
     load('language/src/types/actionSpecs.ts'),
     load('language/src/htsl/parse/helpers.ts'),
     load('language/src/types/constants.ts'),
+    load('language/src/check/unspawnableItems.ts'),
 ]);
 
 const { IMPORT_JSON_SCHEMA, IMPORT_JSON_SCHEMA_DEFINITIONS: defs } = schema;
@@ -184,6 +185,9 @@ const contract = {
     },
     sounds: constants.SOUNDS.map(({ name, path }) => ({ name, path })),
     minecraftItems: constants.MINECRAFT_ITEMS.map((item) => item.name),
+    unspawnableItems: constants.MINECRAFT_ITEMS
+        .map((item) => item.name)
+        .filter((name) => unspawnable.isUnspawnableItem(name)),
     actionSpecs: specFields(ACTION_SPECS),
     conditionSpecs: specFields(CONDITION_SPECS),
     actionsToKws: { ...ACTIONS_TO_KWS },

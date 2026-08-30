@@ -18,6 +18,7 @@ from pyhtsw.expression.condition.conditional_expression import (
     ConditionalMode,
 )
 from pyhtsw.expression.expression import INDENT, Expression
+from pyhtsw.utils.bounds import check_bounds
 
 __all__ = (
     'ExitFunctionExpression',
@@ -76,7 +77,12 @@ class PauseExecutionExpression(Expression):
     ticks: int
 
     def __init__(self, ticks: int = 20) -> None:
-        self.ticks = ticks
+        self.ticks = check_bounds(
+            ticks,
+            field='pause_execution ticks',
+            minimum=1,
+            maximum=1000,
+        )
 
     def into_htsl(self) -> str:
         return f'pause {self.inline(self.ticks)}'

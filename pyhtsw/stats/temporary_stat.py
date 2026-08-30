@@ -51,6 +51,7 @@ class Number:
 
 @final
 class TemporaryStat(Stat):
+    validates_name: ClassVar[bool] = False
     name_prefix: ClassVar[str] = 'tmp'
 
     _number: Number

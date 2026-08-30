@@ -317,6 +317,11 @@ class Importable(ABC):
     def identifier(self) -> str:
         raise NotImplementedError
 
+    def unique_key(self) -> tuple[str, str] | None:
+        """A second field htsw rejects duplicates on, as (label, value).
+        Only NPCs have one: htsw identifies them by position, not name."""
+        return None
+
     def rename(self, name: str) -> None:
         """Change what `identifier()` returns. Go through
         `Container.rename_importable`, which keeps the name index in step."""
@@ -345,6 +350,10 @@ class FunctionImportable(Importable):
         repeat_ticks: int | None = None,
         icon: 'Item | None' = None,
     ) -> None:
+        if repeat_ticks is not None and not 4 <= repeat_ticks <= 18000:
+            raise ValueError(
+                f'Function "{name}": repeat_ticks {repeat_ticks} must be 4-18000.',
+            )
         self.block = block
         self.name = name
         self.repeat_ticks = repeat_ticks
@@ -694,6 +703,10 @@ class NpcImportable(Importable):
 
     def identifier(self) -> str:
         return self.name
+
+    def unique_key(self) -> tuple[str, str] | None:
+        x, y, z = self.pos
+        return ('position', f'{x},{y},{z}')
 
     def reexport(self) -> None:
         from pyhtsw.compiler.container import get_current_container

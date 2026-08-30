@@ -91,6 +91,7 @@ class Container:
     contexts: list[ExpressionContext]
     importables: list['Importable']
     importables_by_key: dict[tuple[str, str], 'Importable']
+    importables_by_unique_key: dict[tuple[str, str, str], 'Importable']
     project: 'Project | None'
     item_plan: 'ItemPlan | None'
     _consumer_reserved: set[int]
@@ -116,6 +117,7 @@ class Container:
         self.contexts = []
         self.importables = []
         self.importables_by_key = {}
+        self.importables_by_unique_key = {}
         self.project = None
         self.item_plan = None
         self._consumer_reserved = set()
@@ -183,6 +185,18 @@ class Container:
                 f'An importable of kind "{importable.kind}" named '
                 f'"{importable.identifier()}" already exists. Names must be unique.',
             )
+        unique = importable.unique_key()
+        if unique is not None:
+            label, value = unique
+            unique_key = (importable.kind, label, value)
+            existing = self.importables_by_unique_key.get(unique_key)
+            if existing is not None:
+                raise RuntimeError(
+                    f'An importable of kind "{importable.kind}" already uses '
+                    f'{label} "{value}" (it is "{existing.identifier()}"). '
+                    f'htsw rejects duplicates on this field.',
+                )
+            self.importables_by_unique_key[unique_key] = importable
         self.importables_by_key[key] = importable
         self.importables.append(importable)
 

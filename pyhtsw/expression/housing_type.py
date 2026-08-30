@@ -1,15 +1,24 @@
 import numpy as np
 
+from pyhtsw.execute.java_string import exceeds_java_length
+
 __all__ = (
     'NumericHousingType',
     'HousingType',
+    'VALUE_MAX_LENGTH',
+    'CHAT_INPUT_MAX_LENGTH',
     'housing_type_as_rhs',
     'housing_type_from_string',
+    'check_value_length',
+    'check_chat_input_length',
 )
 
 
 NumericHousingType = int | float
 HousingType = NumericHousingType | str
+
+VALUE_MAX_LENGTH = 32
+CHAT_INPUT_MAX_LENGTH = 256
 
 
 def housing_type_as_rhs(value: HousingType) -> str:
@@ -35,3 +44,24 @@ def housing_type_from_string(value: str) -> HousingType:
     except ValueError:
         pass
     return value
+
+
+def check_value_length(text: str, *, field: str) -> str:
+    length = exceeds_java_length(text, VALUE_MAX_LENGTH)
+    if length is None:
+        return text
+    raise ValueError(
+        f'{field} renders {length} characters, over the '
+        f'{VALUE_MAX_LENGTH}-character limit Housing puts on a value: {text}. '
+        f'Shorten the stat name, or drop the fallback with "with NoFallbackValues():".',
+    )
+
+
+def check_chat_input_length(text: str, *, field: str) -> str:
+    length = exceeds_java_length(text, CHAT_INPUT_MAX_LENGTH)
+    if length is None:
+        return text
+    raise ValueError(
+        f'{field} renders {length} characters, over the '
+        f'{CHAT_INPUT_MAX_LENGTH}-character limit Housing puts on a chat input.',
+    )

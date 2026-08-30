@@ -1,4 +1,5 @@
 from pyhtsw import Container, PlayerStat
+from pyhtsw.stats.stat import StatNameError
 
 with Container() as container:
     x = PlayerStat('x')
@@ -7,8 +8,15 @@ with Container() as container:
 assert container.into_htsl() == 'var "x" = 5 true', container.into_htsl()
 
 
-with Container() as container:
-    x = PlayerStat('with space')
-    x.value = 1
+# htsw's parseVarName rejects a space, an empty name and anything over 16
+# characters; all three are caught where the stat is constructed.
+for bad in ('with space', '', 'seventeen_chars_x'):
+    try:
+        PlayerStat(bad)
+    except StatNameError:
+        pass
+    else:
+        raise AssertionError(f'PlayerStat({bad!r}) should have been rejected')
 
-assert container.into_htsl() == 'var "with space" = 1 true', container.into_htsl()
+
+assert PlayerStat('sixteen_chars_xx').name == 'sixteen_chars_xx'

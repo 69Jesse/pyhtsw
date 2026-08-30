@@ -16,6 +16,7 @@ from pyhtsw.declarations.item import (
 from pyhtsw.expression.expression import Expression
 from pyhtsw.generated.enums import EnchantmentName
 from pyhtsw.location import Location, ensure_location
+from pyhtsw.utils.bounds import check_bounds
 
 __all__ = (
     'GiveItemExpression',
@@ -294,6 +295,12 @@ class EnchantHeldItemExpression(Expression):
             enchantment
             if isinstance(enchantment, Enchantment)
             else Enchantment(enchantment)
+        )
+        check_bounds(
+            self.enchantment.level,
+            field='enchant_held_item level',
+            minimum=1,
+            maximum=10,
         )
 
     def into_htsl(self) -> str:

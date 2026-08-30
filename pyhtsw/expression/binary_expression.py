@@ -29,7 +29,12 @@ from pyhtsw.execute.exception import (
 from pyhtsw.expression.compound_expression import CompoundExpression
 from pyhtsw.expression.condition.comparison_condition import ComparisonCondition
 from pyhtsw.expression.expression import Expression
-from pyhtsw.expression.housing_type import HousingType, housing_type_as_rhs
+from pyhtsw.expression.housing_type import (
+    VALUE_MAX_LENGTH,
+    HousingType,
+    check_value_length,
+    housing_type_as_rhs,
+)
 from pyhtsw.internal_type import InternalType
 from pyhtsw.logger import log
 from pyhtsw.stats.stat import Stat
@@ -46,7 +51,7 @@ __all__ = (
 )
 
 
-SET_STRING_MAX_LENGTH = 32
+SET_STRING_MAX_LENGTH = VALUE_MAX_LENGTH
 
 
 # Below this many BinaryExpression candidates the quadratic peephole scans are
@@ -970,21 +975,18 @@ class BinaryExpression[
         return register_deferred(self, include_fallback_value)
 
     def into_htsl(self) -> str:
+        field = 'The right-hand side of this assignment'
+
         def format_rhs(value: Checkable | HousingType) -> str:
             if isinstance(value, Checkable):
-                return value.into_string_rhs()
-            if isinstance(value, str) and len(value) > SET_STRING_MAX_LENGTH:
-                raise ValueError(
-                    f'rhs exceeds {SET_STRING_MAX_LENGTH} characters '
-                    f'({len(value)}): {value!r}',
-                )
+                return check_value_length(value.into_string_rhs(), field=field)
             if (
                 isinstance(value, str)
                 and no_type_casting()
                 and _is_single_placeholder(value)
             ):
-                return value
-            return housing_type_as_rhs(value)
+                return check_value_length(value, field=field)
+            return check_value_length(housing_type_as_rhs(value), field=field)
 
         def into_line(expr: Expression) -> str:
             if not isinstance(expr, BinaryExpression):

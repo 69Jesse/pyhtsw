@@ -1,5 +1,6 @@
 from pyhtsw.compiler.deferred import deferred_spans
 from pyhtsw.editable import Editable
+from pyhtsw.execute.java_string import java_string_length
 from pyhtsw.expression.binary_expression import SET_STRING_MAX_LENGTH
 from pyhtsw.stats.player_stat import PlayerStat
 from pyhtsw.utils.placeholders import get_placeholder_parts
@@ -39,27 +40,27 @@ def set_string(stat: Editable, value: str) -> None:
     stat's own) across as many ≤32-char assignments as needed. An oversized
     placeholder atom is offloaded into a short scratch stat first, then appended
     via its short reference, so long target names still fit the limit."""
-    if len(value) <= SET_STRING_MAX_LENGTH:
+    if java_string_length(value) <= SET_STRING_MAX_LENGTH:
         stat.value = value
         return
 
     if not _has_placeholders(value):
         raise ValueError(
-            f'set_string: value of {len(value)} chars has no '
+            f'set_string: value of {java_string_length(value)} chars has no '
             f'placeholders to shrink it under the {SET_STRING_MAX_LENGTH}-char limit',
         )
 
     self_ref = str(stat)
-    if len(self_ref) >= SET_STRING_MAX_LENGTH:
+    if java_string_length(self_ref) >= SET_STRING_MAX_LENGTH:
         raise ValueError(
-            f'set_string: stat self-reference {self_ref!r} is {len(self_ref)} '
+            f'set_string: stat self-reference {self_ref!r} is {java_string_length(self_ref)} '
             f'chars; no room for content within the '
             f'{SET_STRING_MAX_LENGTH}-char limit',
         )
 
     scratch = PlayerStat('t').as_string()
     scratch_ref = str(scratch)
-    continuation_budget = SET_STRING_MAX_LENGTH - len(self_ref)
+    continuation_budget = SET_STRING_MAX_LENGTH - java_string_length(self_ref)
 
     atoms = _atomize(value)
     index = 0

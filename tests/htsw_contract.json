@@ -3790,6 +3790,14 @@
     "record_11",
     "record_wait"
   ],
+  "unspawnableItems": [
+    "mob_spawner",
+    "farmland",
+    "brown_mushroom_block",
+    "red_mushroom_block",
+    "command_block",
+    "command_block_minecart"
+  ],
   "actionSpecs": {
     "actionBar": [
       {

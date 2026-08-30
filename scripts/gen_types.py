@@ -115,6 +115,9 @@ def render_enums(contract: dict) -> str:
     lines.append('')
     lines += literal_block('MinecraftItem', contract['minecraftItems'])
     lines.append('')
+    lines.append('UNSPAWNABLE_ITEMS: frozenset[MinecraftItem] = frozenset((')
+    lines += [f'    {value!r},' for value in contract['unspawnableItems']]
+    lines.append('))')
     return '\n'.join(lines)
 
 

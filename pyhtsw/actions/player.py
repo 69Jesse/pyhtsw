@@ -8,9 +8,13 @@ from pyhtsw.declarations.declared import declared_name
 from pyhtsw.declarations.group import Group
 from pyhtsw.declarations.team import Team
 from pyhtsw.expression.expression import Expression
-from pyhtsw.expression.housing_type import NumericHousingType
+from pyhtsw.expression.housing_type import (
+    NumericHousingType,
+    check_chat_input_length,
+)
 from pyhtsw.generated.enums import Gamemode, Lobby, PotionEffect
 from pyhtsw.location import Location, ensure_location
+from pyhtsw.utils.bounds import check_bounds
 
 __all__ = (
     'TeleportPlayerExpression',
@@ -227,8 +231,18 @@ class ApplyPotionEffectExpression(Expression):
         show_potion_icon: bool = False,
     ) -> None:
         self.potion = potion
-        self.duration = duration
-        self.level = level
+        self.duration = check_bounds(
+            duration,
+            field='apply_potion_effect duration',
+            minimum=1,
+            maximum=2592000,
+        )
+        self.level = check_bounds(
+            level,
+            field='apply_potion_effect level',
+            minimum=1,
+            maximum=10,
+        )
         self.override_existing_effects = override_existing_effects
         self.show_potion_icon = show_potion_icon
 
@@ -400,7 +414,12 @@ class LaunchToTargetExpression(Expression):
         strength: Checkable | int = 2,
     ) -> None:
         self.location = ensure_location(location)
-        self.strength = strength
+        self.strength = check_bounds(
+            strength,
+            field='launch_to_target strength',
+            minimum=0,
+            maximum=20,
+        )
 
     def into_htsl(self) -> str:
         return f'launchTarget {self.location.into_htsl()} {self.inline(self.strength)}'
@@ -625,7 +644,7 @@ class FailParkourExpression(Expression):
         self.reason = reason
 
     def into_htsl(self) -> str:
-        return f'failParkour {self.inline_quoted(self.reason)}'
+        return f'failParkour {self.inline_quoted(check_chat_input_length(self.reason, field="fail_parkour reason"))}'
 
     def cloned(
         self,

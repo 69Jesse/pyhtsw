@@ -62,9 +62,14 @@ class Checkable(BaseObject):
 
     @classmethod
     def iter_in_string(cls, text: str) -> Generator['Checkable']:
+        from pyhtsw.stats.stat import StatNameError
+
         for pattern, factory in cls.iter_pattern_factories():
             for match in pattern.finditer(text):
-                yield factory(match)
+                try:
+                    yield factory(match)
+                except StatNameError:
+                    continue
 
     internal_type: InternalType = InternalType.ANY
     fallback_value: HousingType | None

@@ -16,8 +16,9 @@ from pyhtsw.declarations.item_keys import (
     LeatherArmorKey,
     PlayerSkullItemKey,
 )
-from pyhtsw.generated.enums import EnchantmentName
+from pyhtsw.generated.enums import UNSPAWNABLE_ITEMS, EnchantmentName
 from pyhtsw.nbt import NBT, NBTByte, NBTCompound, NBTInt, NBTList, NBTShort, NBTString
+from pyhtsw.utils.bounds import check_bounds
 from pyhtsw.utils.caller import caller_module
 from pyhtsw.utils.formatting import normalize_formatting, remove_formatting
 from pyhtsw.utils.kebab import into_kebab
@@ -254,6 +255,8 @@ class Item:
             setattr(self, field, hard_default if value is MISSING else value)
 
         self._get_item_data()
+        self._check_spawnable()
+        check_bounds(self.count, field='Item count', minimum=0, maximum=64)
         if faulty_tuple_key is not None:
             raise ValueError(
                 f'Item key {faulty_tuple_key!r} does not take a tuple value',
@@ -585,6 +588,14 @@ class Item:
             result.put('tag', tags)
 
         return result
+
+    def _check_spawnable(self) -> None:
+        item_id = self._get_item_data()['name'].rpartition(':')[2]
+        if item_id in UNSPAWNABLE_ITEMS:
+            raise ValueError(
+                f'Hypixel refuses to spawn {self.key!r} (minecraft:{item_id}), '
+                f'so htsw cannot import it.',
+            )
 
     def _get_item_data(self) -> ItemJsonData:
         item = ITEMS.get(self.key, None)

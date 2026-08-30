@@ -6,7 +6,11 @@ from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.compiler.schedule import Effects, Resource, Stream
 from pyhtsw.declarations.menu import Menu
 from pyhtsw.expression.expression import Expression
-from pyhtsw.expression.housing_type import HousingType
+from pyhtsw.expression.housing_type import (
+    HousingType,
+    check_chat_input_length,
+)
+from pyhtsw.utils.bounds import check_bounds
 from pyhtsw.utils.formatting import formatting_to_ansi
 from pyhtsw.utils.log import log
 
@@ -27,6 +31,17 @@ if TYPE_CHECKING:
     from pyhtsw.execute.context import ExecutionContext
 
 
+def _or_reset(value: Checkable | str) -> Checkable | str:
+    return '&r' if isinstance(value, str) and not value else value
+
+
+def _chat_text(value: 'Checkable | str', *, field: str) -> 'Checkable | str':
+    value = _or_reset(value)
+    if isinstance(value, str):
+        check_chat_input_length(value, field=field)
+    return value
+
+
 @final
 class ChatExpression(Expression):
     htsw_meta = ActionMeta(
@@ -43,7 +58,7 @@ class ChatExpression(Expression):
         self.line = line
 
     def into_htsl(self) -> str:
-        return f'chat {self.inline_quoted(self.line)}'
+        return f'chat {self.inline_quoted(_chat_text(self.line, field="chat text"))}'
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
         log(
@@ -100,13 +115,29 @@ class DisplayTitleExpression(Expression):
     ) -> None:
         self.title = title
         self.subtitle = subtitle
-        self.fadein = fadein
-        self.stay = stay
-        self.fadeout = fadeout
+        self.fadein = check_bounds(
+            fadein,
+            field='display_title fadein',
+            minimum=0,
+            maximum=5,
+        )
+        self.stay = check_bounds(
+            stay,
+            field='display_title stay',
+            minimum=0,
+            maximum=10,
+        )
+        self.fadeout = check_bounds(
+            fadeout,
+            field='display_title fadeout',
+            minimum=0,
+            maximum=5,
+        )
 
     def into_htsl(self) -> str:
         return (
-            f'title {self.inline_quoted(self.title)} {self.inline_quoted(self.subtitle)}'
+            f'title {self.inline_quoted(_chat_text(self.title, field="display_title title"))}'
+            f' {self.inline_quoted(_chat_text(self.subtitle, field="display_title subtitle"))}'
             f' {self.inline(self.fadein)} {self.inline(self.stay)} {self.inline(self.fadeout)}'
         )
 
@@ -184,7 +215,7 @@ class DisplayActionBarExpression(Expression):
         self.text = text
 
     def into_htsl(self) -> str:
-        return f'actionBar {self.inline_quoted(self.text)}'
+        return f'actionBar {self.inline_quoted(_chat_text(self.text, field="display_action_bar text"))}'
 
     def raw_execute(self, context: 'ExecutionContext') -> None:
         log(

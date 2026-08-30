@@ -40,7 +40,6 @@ class _BitPackedBase:
     on_overflow: OnOverflow
     if_empty: IfEmptyInt
     if_present: IfPresent
-    width: int
 
     @property
     def bits(self) -> int:
@@ -49,6 +48,11 @@ class _BitPackedBase:
     @property
     def per_holder_capacity(self) -> int:
         return 64 // self.bits
+
+    @property
+    def width(self) -> int:
+        # `holders` is column-major here: one group per width-position.
+        return len(self.holders)
 
     def __init__(
         self,
@@ -94,7 +98,6 @@ class _BitPackedBase:
         per_position_factories = [_into_factory(item) for item in into_sequence(holder)]
         if not per_position_factories:
             raise ValueError(f'{type(self).__name__}: at least one holder is required')
-        width = len(per_position_factories)
 
         groups: list[tuple[Stat, ...]] = []
         for factory in per_position_factories:
@@ -120,7 +123,6 @@ class _BitPackedBase:
         self.real_capacity = real_capacity
         self.if_empty = if_empty
         self.if_present = if_present
-        self.width = width
 
     def _validate_overflow_capacity(
         self,
@@ -130,6 +132,29 @@ class _BitPackedBase:
         per_holder_capacity: int,
     ) -> None:
         pass
+
+    def _validate_front_override_capacity(
+        self,
+        *,
+        real_capacity: int,
+        n_holders: int,
+        per_holder_capacity: int,
+    ) -> None:
+        # Pushing the front drops the top slot of the top holder, so an
+        # `override_oldest` capacity that stops short of that slot would evict
+        # a value that is still inside the container.
+        if (
+            self.on_overflow == 'override_oldest'
+            and real_capacity != n_holders * per_holder_capacity
+        ):
+            raise ValueError(
+                f'{type(self).__name__}: on_overflow="override_oldest" '
+                f'requires real capacity ({real_capacity}) to equal n_holders '
+                f'* per_holder_capacity ({n_holders} * {per_holder_capacity} '
+                f'= {n_holders * per_holder_capacity}). Either drop '
+                f'capacity_is_exact or pick a capacity that is a '
+                f'multiple of {per_holder_capacity}.',
+            )
 
     def _check_value(self, v: Checkable | int) -> None:
         if isinstance(v, int) and (v < 0 or v > self.most):
@@ -213,29 +238,64 @@ class _BitPackedBase:
                     for o in outputs:
                         o.value = if_empty
 
-
-class IntStack(_BitPackedBase):
-    def _validate_overflow_capacity(
+    def _extract_at_back(
         self,
-        *,
-        real_capacity: int,
-        n_holders: int,
-        per_holder_capacity: int,
+        last: Editable,
+        holder_index: int,
+        outputs: Sequence[Editable],
     ) -> None:
-        if (
-            self.on_overflow == 'override_oldest'
-            and real_capacity != n_holders * per_holder_capacity
-        ):
-            raise ValueError(
-                f'IntStack: on_overflow="override_oldest" requires real '
-                f'capacity ({real_capacity}) to equal n_holders * '
-                f'per_holder_capacity ({n_holders} * {per_holder_capacity} '
-                f'= {n_holders * per_holder_capacity}). Either drop '
-                f'capacity_is_exact or pick a capacity that is a '
-                f'multiple of {per_holder_capacity}.',
-            )
+        bits = self.bits
+        base = holder_index * self.per_holder_capacity
+        slot_mask = (1 << bits) - 1
+        for w in range(self.width):
+            column = self.holders[w][holder_index]
+            shift = (last - base) * bits if base else last * bits
+            outputs[w].value = column.logical_rshift(shift)
+            outputs[w].value &= slot_mask
+            column.value -= outputs[w] << shift
 
-    def push(self, value: MaybeSequence[Checkable | int]) -> None:
+    def _drain_back(
+        self,
+        outputs: Sequence[Editable],
+        *,
+        if_empty: IfEmptyInt | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        if isinstance(if_empty, EllipsisType):
+            if_empty = self.if_empty
+        if isinstance(if_present, EllipsisType):
+            if_present = self.if_present
+
+        cap = self.per_holder_capacity
+        n = len(self.holders[0])
+        last = TemporaryStat().as_long()
+        last.value = self.counter
+        last.value -= 1
+
+        if n == 1:
+            with chunked(IfAll(self.counter > 0)):
+                self._extract_at_back(last, 0, outputs)
+                if if_present is not None:
+                    if_present()
+                self.counter.value -= 1
+        else:
+            for h in range(n):
+                upper = min((h + 1) * cap, self.real_capacity)
+                with chunked(IfAll(last >= h * cap, last < upper)):
+                    self._extract_at_back(last, h, outputs)
+            with chunked(IfAll(self.counter > 0)):
+                if if_present is not None:
+                    if_present()
+                self.counter.value -= 1
+        if if_empty is not None:
+            with Else:
+                if callable(if_empty):
+                    if_empty()
+                else:
+                    for o in outputs:
+                        o.value = if_empty
+
+    def _push_front(self, value: MaybeSequence[Checkable | int]) -> None:
         values = self._normalize_values(value, label='add')
 
         bits = self.bits
@@ -279,22 +339,7 @@ class IntStack(_BitPackedBase):
                     self.holders[w][0].value &= ~slot_mask
                     self.holders[w][0].value += values[w]
 
-    def pop(
-        self,
-        *,
-        output: MaybeSequence[Editable],
-        if_empty: IfEmptyInt | EllipsisType = ...,
-        if_present: IfPresent | EllipsisType = ...,
-    ) -> None:
-        self._drain_front(
-            self._normalize_outputs(output, label='remove'),
-            if_empty=if_empty,
-            if_present=if_present,
-        )
-
-
-class IntQueue(_BitPackedBase):
-    def push(self, value: MaybeSequence[Checkable | int]) -> None:
+    def _push_back(self, value: MaybeSequence[Checkable | int]) -> None:
         values = self._normalize_values(value, label='add')
 
         if self.on_overflow == 'override_oldest':
@@ -306,19 +351,6 @@ class IntQueue(_BitPackedBase):
                 self._overwrite_back(values)
 
         self._insert_at_back(values)
-
-    def pop(
-        self,
-        *,
-        output: MaybeSequence[Editable],
-        if_empty: IfEmptyInt | EllipsisType = ...,
-        if_present: IfPresent | EllipsisType = ...,
-    ) -> None:
-        self._drain_front(
-            self._normalize_outputs(output, label='remove'),
-            if_empty=if_empty,
-            if_present=if_present,
-        )
 
     def _insert_at_back(self, values: list[Checkable | int]) -> None:
         cap = self.per_holder_capacity
@@ -355,14 +387,124 @@ class IntQueue(_BitPackedBase):
             target.value += values[w] << shift
 
 
+class IntStack(_BitPackedBase):
+    def _validate_overflow_capacity(
+        self,
+        *,
+        real_capacity: int,
+        n_holders: int,
+        per_holder_capacity: int,
+    ) -> None:
+        self._validate_front_override_capacity(
+            real_capacity=real_capacity,
+            n_holders=n_holders,
+            per_holder_capacity=per_holder_capacity,
+        )
+
+    def push(self, value: MaybeSequence[Checkable | int]) -> None:
+        self._push_front(value)
+
+    def pop(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyInt | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_front(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+
+class IntQueue(_BitPackedBase):
+    def push(self, value: MaybeSequence[Checkable | int]) -> None:
+        self._push_back(value)
+
+    def pop(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyInt | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_front(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+
+class IntDeque(_BitPackedBase):
+    """A bit-packed double-ended queue.
+
+    Every operation is a handful of shift/mask actions, because a variable
+    shift distance is dynamic addressing - the thing a slot array can never
+    do. `on_overflow` reads relative to the end being pushed: the "oldest"
+    value is the one at the far end.
+    """
+
+    def _validate_overflow_capacity(
+        self,
+        *,
+        real_capacity: int,
+        n_holders: int,
+        per_holder_capacity: int,
+    ) -> None:
+        self._validate_front_override_capacity(
+            real_capacity=real_capacity,
+            n_holders=n_holders,
+            per_holder_capacity=per_holder_capacity,
+        )
+
+    def push_front(self, value: MaybeSequence[Checkable | int]) -> None:
+        self._push_front(value)
+
+    def push_back(self, value: MaybeSequence[Checkable | int]) -> None:
+        self._push_back(value)
+
+    def pop_front(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyInt | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_front(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+    def pop_back(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyInt | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_back(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+
 class _SlotContainerBase:
     holders: Sequence[Sequence[Stat]]
     counter: Stat
-    capacity: int
-    width: int
     on_overflow: OnOverflow
     if_empty: IfEmptyAny
     if_present: IfPresent
+
+    @property
+    def capacity(self) -> int:
+        return len(self.holders)
+
+    @property
+    def width(self) -> int:
+        return len(self.holders[0])
 
     def __init__(
         self,
@@ -377,7 +519,7 @@ class _SlotContainerBase:
             raise ValueError(f'{type(self).__name__}: holders must be non-empty')
 
         groups = [tuple(into_sequence(g)) for g in holders]
-        width = assert_same_widths(groups)
+        assert_same_widths(groups)
 
         seen: list[Stat] = []
         for group in groups:
@@ -392,8 +534,6 @@ class _SlotContainerBase:
 
         self.holders = groups
         self.counter = counter
-        self.capacity = len(groups)
-        self.width = width
         self.on_overflow = on_overflow
         self.if_empty = if_empty
         self.if_present = if_present
@@ -475,9 +615,7 @@ class _SlotContainerBase:
                     for o in outputs:
                         o.value = if_empty
 
-
-class Stack(_SlotContainerBase):
-    def push(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+    def _push_front(self, value: MaybeSequence[Checkable | HousingType]) -> None:
         values = self._normalize_values(value, label='add')
 
         if self.on_overflow == 'ignore':
@@ -498,22 +636,7 @@ class Stack(_SlotContainerBase):
             with Else:
                 self._write_at_slot(0, values)
 
-    def pop(
-        self,
-        *,
-        output: MaybeSequence[Editable],
-        if_empty: IfEmptyAny | EllipsisType = ...,
-        if_present: IfPresent | EllipsisType = ...,
-    ) -> None:
-        self._drain_front(
-            self._normalize_outputs(output, label='remove'),
-            if_empty=if_empty,
-            if_present=if_present,
-        )
-
-
-class Queue(_SlotContainerBase):
-    def push(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+    def _push_back(self, value: MaybeSequence[Checkable | HousingType]) -> None:
         values = self._normalize_values(value, label='add')
 
         if self.on_overflow == 'override_oldest':
@@ -568,6 +691,53 @@ class Queue(_SlotContainerBase):
                 self._write_at_slot(i, values)
                 self.counter.value += 1
 
+    def _drain_back(
+        self,
+        outputs: Sequence[Editable],
+        *,
+        if_empty: IfEmptyAny | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        if isinstance(if_empty, EllipsisType):
+            if_empty = self.if_empty
+        if isinstance(if_present, EllipsisType):
+            if_present = self.if_present
+
+        from pyhtsw.ext.array_read_write import _detect_pattern, array_read
+
+        last = TemporaryStat().as_long()
+        last.value = self.counter
+        last.value -= 1
+
+        composed = _detect_pattern(self.holders) is not None
+        if composed:
+            with chunked(IfAll(self.counter > 0)):
+                array_read(items=self.holders, index=last, output=outputs)
+                if if_present is not None:
+                    if_present()
+                self.counter.value -= 1
+        else:
+            for i in range(self.capacity):
+                with chunked(IfAll(self.counter == i + 1)):
+                    for w in range(self.width):
+                        outputs[w].value = self.holders[i][w]
+            with chunked(IfAll(self.counter > 0)):
+                if if_present is not None:
+                    if_present()
+                self.counter.value -= 1
+        if if_empty is not None:
+            with Else:
+                if callable(if_empty):
+                    if_empty()
+                else:
+                    for o in outputs:
+                        o.value = if_empty
+
+
+class Stack(_SlotContainerBase):
+    def push(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+        self._push_front(value)
+
     def pop(
         self,
         *,
@@ -576,6 +746,67 @@ class Queue(_SlotContainerBase):
         if_present: IfPresent | EllipsisType = ...,
     ) -> None:
         self._drain_front(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+
+class Queue(_SlotContainerBase):
+    def push(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+        self._push_back(value)
+
+    def pop(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyAny | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_front(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+
+class Deque(_SlotContainerBase):
+    """A double-ended queue over one Stat per slot.
+
+    Holds anything a Stat can - strings and doubles included - at the cost of
+    an O(capacity) shift on either front operation. `pop_back` moves nothing,
+    and `push_back` inherits `array_write`'s composed-name fast path, so the
+    back is the cheap end. `on_overflow` reads relative to the end being
+    pushed: the "oldest" value is the one at the far end.
+    """
+
+    def push_front(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+        self._push_front(value)
+
+    def push_back(self, value: MaybeSequence[Checkable | HousingType]) -> None:
+        self._push_back(value)
+
+    def pop_front(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyAny | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_front(
+            self._normalize_outputs(output, label='remove'),
+            if_empty=if_empty,
+            if_present=if_present,
+        )
+
+    def pop_back(
+        self,
+        *,
+        output: MaybeSequence[Editable],
+        if_empty: IfEmptyAny | EllipsisType = ...,
+        if_present: IfPresent | EllipsisType = ...,
+    ) -> None:
+        self._drain_back(
             self._normalize_outputs(output, label='remove'),
             if_empty=if_empty,
             if_present=if_present,

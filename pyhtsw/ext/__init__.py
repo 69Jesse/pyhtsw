@@ -111,6 +111,12 @@ from pyhtsw.ext.set_string import (
     set_string as set_string,
 )
 from pyhtsw.ext.stack_queue import (
+    Deque as Deque,
+)
+from pyhtsw.ext.stack_queue import (
+    IntDeque as IntDeque,
+)
+from pyhtsw.ext.stack_queue import (
     IntQueue as IntQueue,
 )
 from pyhtsw.ext.stack_queue import (

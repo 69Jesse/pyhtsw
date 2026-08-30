@@ -923,9 +923,11 @@ class StatArray[T: Editable](Sequence[MaybeSequence[T]]):
         self.items: list[MaybeSequence[T]] = list(items)
         if not self.items:
             raise ValueError('StatArray needs at least one item')
-        self.width = assert_same_widths(
-            [into_sequence(item) for item in self.items],
-        )
+        assert_same_widths([into_sequence(item) for item in self.items])
+
+    @property
+    def width(self) -> int:
+        return len(into_sequence(self.items[0]))
 
     def __len__(self) -> int:
         return len(self.items)

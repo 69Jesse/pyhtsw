@@ -14,12 +14,9 @@ from pyhtsw import (
     event,
     function,
     give_item,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-
 
 # Define every importable kind in a throwaway container (so nothing lands in the
 # global one); the handles below carry their importable for `export` to find.
@@ -76,7 +73,7 @@ module = SimpleNamespace(
     join=join,
     tick_again=tick,
 )
-pyhtsw.export(module, 'Module Export')
+pyhtsw.export(module, 'Module Export', projects_folder=tmp)
 
 root = tmp / 'module-export'
 data = json.loads((root / 'import.json').read_text())
@@ -117,7 +114,7 @@ def build_extra() -> None:
     chat('built by callback')
 
 
-pyhtsw.export([solo, build_extra], 'List Export')
+pyhtsw.export([solo, build_extra], 'List Export', projects_folder=tmp)
 list_data = json.loads((tmp / 'list-export' / 'import.json').read_text())
 names = {fn['name'] for fn in list_data['functions']}
 assert names == {'Solo', 'List Export'}, names  # callback wrapped under project name

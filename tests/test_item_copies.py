@@ -8,18 +8,16 @@ from pyhtsw import (
     chat,
     function,
     give_item,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
 
 
 def use() -> None:
     chat('used')
 
 
-with Container() as container:
+with Container(projects_folder=tmp) as container:
     WAND = Item('blaze_rod', name='&dWand', on_right_click=use)
     STACK = WAND.cloned(count=3)  # still a wand, three of them
     SAME = WAND.cloned(count=1)  # byte-identical: the same wand

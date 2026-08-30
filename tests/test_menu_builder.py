@@ -13,12 +13,9 @@ from pyhtsw import (
     Menu,
     chat,
     display_menu,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-
 
 Black = Item('black_stained_glass_pane', name=' ')
 Gray = Item('gray_stained_glass_pane', name=' ')
@@ -40,7 +37,7 @@ def build_page(title: str, greeting: str) -> Menu:
     return menu
 
 
-with Container() as container:
+with Container(projects_folder=tmp) as container:
     pages = [build_page(f'Page {i}', f'hello {i}') for i in range(3)]
 
     nav_menu = Menu('Nav', 3)

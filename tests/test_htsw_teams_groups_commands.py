@@ -11,15 +11,12 @@ from pyhtsw import (
     chat,
     command,
     set_player_team,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-
 
 # A declared team is the same Team value the actions already take.
-with Container() as container:
+with Container(projects_folder=tmp) as container:
     red = Team('Red', tag='RED', color='dark_red', friendly_fire=False)
     vip = Group(
         'VIP',
@@ -94,7 +91,7 @@ assert npc['skin'] == 'Alex'
 
 
 # houseUuid lands only on the entry import.json, and only when asked for.
-with Container() as plain:
+with Container(projects_folder=tmp) as plain:
 
     @command('noop')
     def _noop() -> None:

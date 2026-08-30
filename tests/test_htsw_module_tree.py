@@ -10,14 +10,11 @@ from pyhtsw import (
     chat,
     function,
     give_item,
-    set_projects_folder,
     trigger_function,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-
-with Container() as container:
+with Container(projects_folder=tmp) as container:
 
     @function('Ability')
     def ability() -> None:
@@ -137,7 +134,7 @@ dep.__htsw_importable__.module = 'other.dep'
 module = ModuleType('pkg.leaf')
 module.leaf = leaf  # type: ignore[attr-defined]
 module.dep = dep  # type: ignore[attr-defined]
-pyhtsw.export(module, 'Mod Root')
+pyhtsw.export(module, 'Mod Root', projects_folder=tmp)
 
 mod_root = tmp / 'mod-root'
 mod_data = json.loads((mod_root / 'import.json').read_text(encoding='utf-8'))

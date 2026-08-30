@@ -12,13 +12,10 @@ from pyhtsw import (
     event,
     function,
     give_item,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-
-with Container() as container:
+with Container(projects_folder=tmp) as container:
     wand = Item('blaze_rod', name='&aMagic Wand')
 
     @wand.on_right_click

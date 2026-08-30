@@ -407,8 +407,11 @@ ignores the field in included files.
 ```python
 import pyhtsw
 
-pyhtsw.set_house_uuid('3fcc64f4-0000-4000-8000-b517afa9958e')
+pyhtsw.configure(house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e')
 
-# or, per export, which wins over the global setting:
+# per container, which wins over the global one:
+container.house_uuid = '3fcc64f4-0000-4000-8000-b517afa9958e'
+
+# or per export, which wins over both:
 container.export('MyHouse', house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e')
 ```

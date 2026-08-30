@@ -10,13 +10,10 @@ from pyhtsw import (
     function,
     give_item,
     normalize_item,
-    set_projects_folder,
 )
 from pyhtsw.location import ensure_location
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-
 
 # Duplicate importable names raise.
 with Container():
@@ -37,7 +34,7 @@ with Container():
 
 
 # Top-level actions get wrapped into a function named after the project.
-with Container() as wrap:
+with Container(projects_folder=tmp) as wrap:
     chat('written outside any importable')
 wrap.export('Wrap Test')
 data = json.loads((tmp / 'wrap-test' / 'import.json').read_text())
@@ -68,7 +65,7 @@ assert Location.custom(1, 2, 3).into_htsl() == '"custom_coordinates" "1 2 3"'
 
 # A declared item references by its declared name; a plain one is promoted to
 # an items[] entry and referenced by a derived name, never by path.
-with Container() as c:
+with Container(projects_folder=tmp) as c:
     sword = Item('diamond_sword', name='&bSword')
 
     give_item(sword)  # by declared name

@@ -79,11 +79,12 @@ from core import constants  # noqa: F401
 from features import shop, combat  # noqa: F401
 from items import menus  # noqa: F401
 
-pyhtsw.set_project_name('my house')
+pyhtsw.configure(project_name='my house')
 ```
 
-`set_project_name(...)` names the global export (otherwise it is named after the
-script file). See [Exporting](./exporting.md).
+`project_name` names the global export (otherwise it is named after the script
+file). `pyhtsw.configure(...)` configures the global container; see
+[Exporting](./exporting.md) for the full list of settings.
 
 ## Cross-module references
 

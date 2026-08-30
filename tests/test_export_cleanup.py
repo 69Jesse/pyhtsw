@@ -5,14 +5,9 @@ from pyhtsw import (
     Container,
     chat,
     function,
-    set_cleanup_stale_files,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
-set_cleanup_stale_files()  # opt in — off by default
-
 root = tmp / 'cleanup-test'
 
 # Simulate a previous export plus user-placed files.
@@ -26,7 +21,7 @@ root = tmp / 'cleanup-test'
 (root / 'data' / 'config.txt').write_text('keep me too')
 
 
-with Container() as container:
+with Container(projects_folder=tmp, cleanup_stale_files=True) as container:
 
     @function('Foo')
     def foo() -> None:
@@ -58,5 +53,3 @@ remaining_owned = {
     if p.is_file() and (p.suffix in {'.htsl', '.snbt'} or p.name == 'import.json')
 }
 assert remaining_owned == {'import.json', 'functions/foo.htsl'}, remaining_owned
-
-set_cleanup_stale_files(False)  # reset the process-global flag for other tests

@@ -20,4 +20,5 @@ For anything beyond a one-off script, set the project up as a uv project — see
 
 Running a script writes an htsw project folder into your projects folder. By
 default this is `.minecraft/htsw/projects` (resolved per-OS). Override it with
-`set_projects_folder(path)`. See [Exporting](./exporting.md) for details.
+`set_projects_folder(path, save=True)`, which remembers it for future runs. See
+[Exporting](./exporting.md) for details.

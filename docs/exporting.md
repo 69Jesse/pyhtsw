@@ -6,25 +6,75 @@ Running a PyHTSW script builds a **project** and, on program exit, writes it as 
 folder into your projects folder. HTSW imports that folder.
 
 - Default projects folder: `.minecraft/htsw/projects` (resolved per-OS).
-- Override it:
+- Set it once for this machine:
 
 ```python
 from pyhtsw import set_projects_folder
 
-set_projects_folder('/path/to/.minecraft/htsw/projects')
+set_projects_folder('/path/to/.minecraft/htsw/projects', save=True)
 ```
 
-The chosen folder is cached so you only set it once. Pass `save=False` to point
-exports at a folder for the current run **without** writing it to that cache —
-handy for tests and benchmarks that must not disturb your real projects folder:
+`save=True` remembers the folder for future runs. Without it the folder applies
+to the current run only, so a test or benchmark can point exports somewhere
+harmless without disturbing your real projects folder. A single container can
+also name its own, which needs no global state at all:
 
 ```python
-set_projects_folder('/tmp/throwaway', save=False)
+with Container(projects_folder='/tmp/throwaway') as container:
+    ...
 ```
 
 The project name is derived from your script filename, or set it explicitly with
-`set_project_name('my house')` (call it once, e.g. in `main.py`). The folder is
-written to `<projects-folder>/<kebab-name>/`.
+`configure(project_name='my house')`. The folder is written to
+`<projects-folder>/<kebab-name>/`.
+
+## Configuration
+
+Everything about *how* a project is exported belongs to the container that is
+exported, and is spelled as a plain attribute, a constructor keyword, or a
+`configure(...)` call — whichever reads best:
+
+```python
+import pyhtsw
+
+pyhtsw.configure(
+    project_name='humanity',
+    house_uuid='b8e7bfe4-ab9e-4a58-9026-3aba9ab52b65',
+    cleanup_stale_files=True,
+)
+
+# the same thing, one field at a time
+container = pyhtsw.get_global_container()
+container.project_name = 'humanity'
+
+# or scoped to one container
+with pyhtsw.Container(project_name='side project') as side:
+    ...
+```
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `project_name` | script filename | Names the export |
+| `house_uuid` | `None` | Binds the entry `import.json` to one house |
+| `projects_folder` | machine setting | Where this container's project folder is written |
+| `cleanup_stale_files` | `False` | Delete generated files a previous export left behind |
+| `display_output` | `False` | Print every generated file to the console |
+| `auto_export` | `True` | Export on program exit (global container only) |
+| `ignore_action_limits` | `False` | Skip the action-limit check |
+| `ignore_scope` | `False` | Skip the scope check |
+| `allow_nested_expressions` | `False` | Permit nested if/random blocks |
+
+A container that sets nothing of its own reads through to the **global
+container**, so one `pyhtsw.configure(...)` at the top of `main.py` still answers
+for every sub-export. `project_name` is the exception: it is never inherited, or
+two containers would export over one another.
+
+`cleanup_stale_files` and `display_output` can also be passed to a single
+`export()` call, which wins over both:
+
+```python
+container.export('MyHouse', cleanup_stale_files=True, display_output=True)
+```
 
 ## Generated folder layout
 
@@ -105,4 +155,5 @@ diffing a build against a baseline taken *before* the change:
 ## Disabling export
 
 To build a project without writing anything (e.g. in tests), call
-`disable_global_export()` before exit.
+`disable_global_export()` before exit — shorthand for setting `auto_export` to
+`False` on the global container.

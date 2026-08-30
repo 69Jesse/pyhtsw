@@ -14,11 +14,9 @@ from pyhtsw import (
     chat,
     function,
     give_item,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
 
 
 def load(root: Path, relpath: str = 'import.json') -> dict:
@@ -29,7 +27,7 @@ def items_of(root: Path, relpath: str = 'import.json') -> dict[str, str]:
     return {item['name']: item['nbt'] for item in load(root, relpath).get('items', [])}
 
 
-with Container() as naming:
+with Container(projects_folder=tmp) as naming:
 
     @function('Names')
     def names() -> None:
@@ -66,7 +64,7 @@ assert '.snbt' not in text
 assert 'giveItem "Ticket x2"' in text
 
 
-with Container() as shared_c:
+with Container(projects_folder=tmp) as shared_c:
     coin = Item('gold_ingot', name='&6Coin')
     twin = Item('gold_ingot', name='&6Coin')  # equal NBT -> same file and name
     badge = Item('emerald', name='&aBadge')  # menu-only, never in an action
@@ -114,7 +112,7 @@ assert 'giveItem "Coin"' in pay_text
 assert 'hasItem "Coin"' in pay_text
 
 
-with Container() as opted:
+with Container(projects_folder=tmp) as opted:
 
     @function('Opted')
     def opted_fn() -> None:
@@ -146,7 +144,7 @@ elsewhere = types.ModuleType('fakepkg.alpha')
 elsewhere.__dict__['make'] = factory.make
 exec("WIDGET = make('stick', '&aWidget')", elsewhere.__dict__)  # noqa: S102
 
-with Container() as attributed:
+with Container(projects_folder=tmp) as attributed:
 
     @function('Use Widget')
     def use_widget() -> None:

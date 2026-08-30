@@ -8,14 +8,11 @@ from pyhtsw import (
     TemporaryStat,
     chat,
     function,
-    set_projects_folder,
 )
 
 tmp = Path(tempfile.mkdtemp())
-set_projects_folder(tmp, save=False)
 
-
-with Container() as container:
+with Container(projects_folder=tmp) as container:
 
     @function('Foo')
     def foo() -> None:

@@ -898,9 +898,9 @@ def on_program_exit() -> None:
 
     run_saved_execution_contexts()
 
-    from pyhtsw.misc.sounds import SOUND_MIXER
-
-    SOUND_MIXER.shutdown()
+    sounds = sys.modules.get('pyhtsw.misc.sounds')
+    if sounds is not None:
+        sounds.SOUND_MIXER.shutdown()
 
 
 def _export_global_container() -> None:

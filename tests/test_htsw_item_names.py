@@ -152,7 +152,7 @@ with Container(projects_folder=tmp) as attributed:
         give_item(elsewhere.WIDGET)
 
 
-use_widget.__htsw_importable__.module = 'fakepkg.consumer'
+use_widget.declaration().module = 'fakepkg.consumer'
 attributed.export('Attributed')
 attributed_root = tmp / 'attributed'
 

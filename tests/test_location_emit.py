@@ -9,6 +9,7 @@ from pyhtsw import (
     set_compass_target,
     teleport_player,
 )
+from pyhtsw.stats.stat import Stat
 
 # The keyword htsw's parser accepts, not the one that reads nicely: upstream
 # names it "House Spawn Location".
@@ -82,4 +83,5 @@ assert container.into_htsl() == (
     'var "tmp0" += 1.0 false\n'
     'tp "custom_coordinates" "%var.player/tmp0% 2 3" false'
 ), container.into_htsl()
+assert isinstance(computed.x, Stat), computed.x
 assert computed.x.name == 'tmp0', computed.x

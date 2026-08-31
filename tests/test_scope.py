@@ -143,7 +143,7 @@ with expect_exception(ScopeError):
 
         @function('Wrong Context')
         def _damage_cause_in_function() -> None:
-            with IfAll(DamageCause('Fall')):
+            with IfAll(DamageCause('fall')):
                 flag.value = 1
 
 
@@ -152,7 +152,7 @@ with Container():
 
     @event('player_damage')
     def _damage_cause_in_event() -> None:
-        with IfAll(_DamageCause('Fall')):
+        with IfAll(_DamageCause('fall')):
             flag.value = 1
 
 

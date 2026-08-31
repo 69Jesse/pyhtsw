@@ -1,3 +1,5 @@
+from typing import cast
+
 from pyhtsw import (
     Container,
     GlobalStat,
@@ -11,6 +13,7 @@ from pyhtsw import (
     send_to_lobby,
     trigger_function,
 )
+from pyhtsw.compiler.importable import EventName
 
 
 def emit(guard, event_name: str | None = None) -> str:
@@ -29,7 +32,7 @@ def emit(guard, event_name: str | None = None) -> str:
         if event_name is None:
             body()
         else:
-            event(event_name)(body)
+            event(cast('EventName', event_name))(body)
     return container.into_htsl()
 
 

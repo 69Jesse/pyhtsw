@@ -324,9 +324,7 @@ assert 'pr/index' in container.into_htsl()
 with Container():
     ray = create_position_raycast('IconCast', [(0, 1, 5)], icon=Item('bow'))
 
-assert ray.function.__htsw_importable__.icon == Item('bow'), (
-    ray.function.__htsw_importable__.icon
-)
+assert ray.function.icon == Item('bow'), ray.function.icon
 
 
 # === Oblique angles at long range. The projection identity needs |direction|²,
@@ -356,14 +354,14 @@ for _shape, _label in ((Sphere(1.0), 'Sphere(1.0)'), (Box(2.0), 'Box(2.0)')):
                 -math.sin(_pr),
                 math.cos(_yr) * math.cos(_pr),
             )
-            _centre = tuple(
+            _cx, _cy, _cz = (
                 (0.5, 1.62, 0.5)[_k] + _direction[_k] * _distance for _k in range(3)
             )
             with ExecutionContext() as ctx:
                 stand(ctx, yaw=_yaw, pitch=_pitch)
                 ray = create_position_raycast(
                     'Oblique',
-                    [RayTarget(*_centre)],
+                    [RayTarget(_cx, _cy, _cz)],
                     shape=_shape,
                     max_distance=None,
                 )

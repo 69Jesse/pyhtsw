@@ -47,11 +47,11 @@ with Container(projects_folder=tmp) as container:
 
 
 potion.__htsw_module__ = 'items.abilities'
-ability.__htsw_importable__.module = 'items.abilities'
-combat.__htsw_importable__.module = 'features.general.combat'
-cookie.__htsw_importable__.module = 'features.cookie'
-ping_a.__htsw_importable__.module = 'modx'
-ping_b.__htsw_importable__.module = 'mody'
+ability.declaration().module = 'items.abilities'
+combat.declaration().module = 'features.general.combat'
+cookie.declaration().module = 'features.cookie'
+ping_a.declaration().module = 'modx'
+ping_b.declaration().module = 'mody'
 
 container.export('Tree Demo')
 root = tmp / 'tree-demo'
@@ -128,8 +128,8 @@ with Container():
         chat('dep')
 
 
-leaf.__htsw_importable__.module = 'pkg.leaf'
-dep.__htsw_importable__.module = 'other.dep'
+leaf.declaration().module = 'pkg.leaf'
+dep.declaration().module = 'other.dep'
 
 module = ModuleType('pkg.leaf')
 module.leaf = leaf  # type: ignore[attr-defined]

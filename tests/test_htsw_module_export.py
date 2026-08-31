@@ -2,6 +2,7 @@ import json
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 
 import pyhtsw
 from pyhtsw import (
@@ -15,6 +16,7 @@ from pyhtsw import (
     function,
     give_item,
 )
+from pyhtsw.compiler.export import Exportable
 
 tmp = Path(tempfile.mkdtemp())
 
@@ -73,7 +75,7 @@ module = SimpleNamespace(
     join=join,
     tick_again=tick,
 )
-pyhtsw.export(module, 'Module Export', projects_folder=tmp)
+pyhtsw.export(cast(Exportable, module), 'Module Export', projects_folder=tmp)
 
 root = tmp / 'module-export'
 data = json.loads((root / 'import.json').read_text())
@@ -127,7 +129,7 @@ assert (
 # Nothing exportable -> a clear error.
 raised = False
 try:
-    pyhtsw.export(SimpleNamespace(), 'Empty Export')
+    pyhtsw.export(cast(Exportable, SimpleNamespace()), 'Empty Export')
 except ValueError:
     raised = True
 assert raised, 'expected a ValueError when there is nothing to export'

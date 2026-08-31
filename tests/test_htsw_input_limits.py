@@ -1,3 +1,5 @@
+from typing import cast
+
 from pyhtsw import (
     NPC,
     Container,
@@ -17,8 +19,9 @@ from pyhtsw import (
     launch_to_target,
     pause_execution,
 )
+from pyhtsw.declarations.item_keys import ItemKey
 from pyhtsw.execute.java_string import java_string_length
-from pyhtsw.stats.stat import StatNameError
+from pyhtsw.stats.stat import Stat, StatNameError
 
 
 def rejects(exc: type[Exception], label: str, call) -> None:
@@ -52,7 +55,8 @@ from pyhtsw.checkable import Checkable  # noqa: E402
 refs = list(
     Checkable.iter_in_string('%var.player/way_too_long_a_name% %var.player/ok%'),
 )
-assert [ref.name for ref in refs] == ['ok'], refs
+assert all(isinstance(ref, Stat) for ref in refs), refs
+assert [cast('Stat', ref).name for ref in refs] == ['ok'], refs
 
 
 def assign_over_limit() -> None:
@@ -135,7 +139,7 @@ for key in (
     'brown_mushroom_block',
     'red_mushroom_block',
 ):
-    rejects(ValueError, f'Item({key!r})', lambda k=key: Item(k))
+    rejects(ValueError, f'Item({key!r})', lambda k=key: Item(cast('ItemKey', k)))
 
 rejects(ValueError, 'Item count 65', lambda: Item('stone', count=65))
 assert Item('stone', count=64).count == 64

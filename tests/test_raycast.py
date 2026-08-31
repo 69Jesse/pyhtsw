@@ -406,9 +406,7 @@ assert after - before == 1, (before, after)
 with ExecutionContext(players=['caster']):
     rc = create_raycast('IconRay', icon=Item('bow'))
 
-assert rc.function.__htsw_importable__.icon == Item('bow'), (
-    rc.function.__htsw_importable__.icon
-)
+assert rc.function.icon == Item('bow'), rc.function.icon
 
 
 # === Oblique angles at long range, as in test_position_raycast: perp2 divides

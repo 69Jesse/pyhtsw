@@ -123,7 +123,7 @@ with Container() as container:
     assert shop.importable is container.find_importable('menus', 'Shop')
     assert join.importable is container.find_importable('events', 'player_join')
 
-    smith.pos = (9.0, 65.0, 9.0)
+    smith.pos = (9, 65, 9)
     smith.hide_name_tag = True
     spawn.bounds = ((1, 1, 1), (2, 2, 2))
     mods.priority = 11

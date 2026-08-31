@@ -81,6 +81,12 @@ class inherited_setting[T](setting[T]):
     """A setting that falls back to the global container instead of to its own
     default, so one `pyhtsw.configure(...)` still answers for every container."""
 
+    @overload
+    def __get__(self, obj: None, cls: type | None = None) -> 'setting[T]': ...
+
+    @overload
+    def __get__(self, obj: 'Container', cls: type | None = None) -> T: ...
+
     def __get__(
         self,
         obj: 'Container | None',

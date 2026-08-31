@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from pyhtsw.generated.enums import (
     CHAT_SPEED_TO_HTSW,
@@ -93,9 +93,9 @@ __all__ = (
 HEADER = '// Generated with PyHTSW (https://github.com/69Jesse/PyHTSW)'
 
 # A 0-arg handler (the importable has no runtime instance to hand back).
-Handler = Callable[[], Any]
+Handler = Callable[[], Any] | Callable[[Any], Any]
 
-EVENTS: tuple[str, ...] = tuple(EVENT_NAME_TO_HTSW)
+EVENTS: tuple[EventName, ...] = tuple(EVENT_NAME_TO_HTSW)
 
 
 Coord = tuple[int, int, int]
@@ -370,7 +370,7 @@ class FunctionImportable(Importable):
             repeat_ticks=self.repeat_ticks,
             icon=self.icon,
         )(_block_replayer(self.block))
-        value.__htsw_importable__.module = self.module
+        value.declaration().module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:
         entry: dict[str, Any] = {'name': self.name}
@@ -388,8 +388,9 @@ class FunctionImportable(Importable):
 
 class EventImportable(Importable):
     kind = 'events'
+    event: EventName
 
-    def __init__(self, block: 'Block', *, event: str) -> None:
+    def __init__(self, block: 'Block', *, event: EventName) -> None:
         self.block = block
         self.event = event
 
@@ -397,7 +398,7 @@ class EventImportable(Importable):
         return self.event
 
     def rename(self, name: str) -> None:
-        self.event = name
+        self.event = cast('EventName', name)
 
     def reexport(self) -> None:
         from pyhtsw.declarations.event import event
@@ -677,6 +678,7 @@ class NpcEquipment:
 
 class NpcImportable(Importable):
     kind = 'npcs'
+    skin: NpcSkin | None
 
     def __init__(
         self,
@@ -915,7 +917,7 @@ class CommandImportable(Importable):
             required_priority=self.required_priority,
             listed=self.listed,
         )(_block_replayer(self.block))
-        value.__htsw_importable__.module = self.module
+        value.declaration().module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:
         entry: dict[str, Any] = {'name': self.name}

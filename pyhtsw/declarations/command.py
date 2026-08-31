@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 from pyhtsw.compiler.block import NamedBlock
 from pyhtsw.compiler.container import get_current_container
@@ -11,9 +10,6 @@ __all__ = (
     'Command',
     'command',
 )
-
-if TYPE_CHECKING:
-    from pyhtsw.generated.enums import CommandMode
 
 
 class Command(Declared):

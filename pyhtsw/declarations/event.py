@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from pyhtsw.compiler.block import NamedBlock
 from pyhtsw.compiler.container import get_current_container
@@ -10,9 +10,6 @@ __all__ = (
     'Event',
     'event',
 )
-
-if TYPE_CHECKING:
-    from pyhtsw.compiler.importable import EventName
 
 
 class Event(Declared):

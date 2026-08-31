@@ -1,6 +1,5 @@
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
-from typing import TYPE_CHECKING
 
 from pyhtsw.compiler.importable import GroupImportable
 from pyhtsw.declarations.declared import Declared, declared_field, register_importable
@@ -12,16 +11,6 @@ from pyhtsw.generated.enums import (
 )
 
 __all__ = ('Group',)
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from pyhtsw.generated.enums import (
-        ChatSpeed,
-        Gamemode,
-        HousingColor,
-        Permission,
-    )
 
 
 def _permissions_view(

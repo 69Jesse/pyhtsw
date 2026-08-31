@@ -4,7 +4,7 @@ if TYPE_CHECKING:
     from pyhtsw.declarations.function import Function
     from pyhtsw.expression.condition.condition import Condition
     from pyhtsw.expression.expression import Expression
-    from pyhtsw.placeholders.base import PlaceholderEditable
+    from pyhtsw.placeholders.base import PlaceholderCheckable, PlaceholderEditable
 
 
 # The action containers htsw distinguishes when resolving a limit.
@@ -38,18 +38,18 @@ EVENT_CONDITIONAL_LIMIT = 25 + 15
 # every per-type limit to at least this; higher limits keep their value.
 RANDOM_FLOOR = 10
 
-_LIMITS: dict[type['Expression'] | type['PlaceholderEditable'], int] | None = None
+_LIMITS: dict[type['Expression'] | type['PlaceholderCheckable'], int] | None = None
 _CONDITION_LIMITS: dict[type['Condition'], int] | None = None
 
 
-def get_limits() -> dict[type['Expression'] | type['PlaceholderEditable'], int]:
+def get_limits() -> dict[type['Expression'] | type['PlaceholderCheckable'], int]:
     global _LIMITS
     if _LIMITS is not None:
         return _LIMITS
 
     from pyhtsw.compiler.registry import iter_action_types, iter_placeholder_types
 
-    limits: dict[type[Expression] | type[PlaceholderEditable], int] = {}
+    limits: dict[type[Expression] | type[PlaceholderCheckable], int] = {}
     for cls in (*iter_action_types(), *iter_placeholder_types()):
         meta = cls.__dict__.get('htsw_meta')
         if meta is not None and meta.limit is not None:

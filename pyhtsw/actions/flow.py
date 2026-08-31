@@ -270,9 +270,6 @@ class RandomContextManager(ContainerContextManager):
 
 Random = RandomContextManager()
 
-if TYPE_CHECKING:
-    from pyhtsw.expression.condition.condition import Condition
-
 
 @final
 class IfContextManager(ContainerContextManager):

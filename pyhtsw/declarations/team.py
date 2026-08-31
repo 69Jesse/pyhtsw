@@ -8,7 +8,6 @@ from pyhtsw.placeholders.base import PlaceholderCheckable
 __all__ = ('Team',)
 
 if TYPE_CHECKING:
-    from pyhtsw.generated.enums import HousingColor
     from pyhtsw.stats.team_stat import TeamStat
 
 

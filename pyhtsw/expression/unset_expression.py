@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Self, final
 
 from pyhtsw.clone import MISSING, Missing, clone_with
+from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.expression.expression import Expression
 
 if TYPE_CHECKING:
@@ -10,6 +11,14 @@ if TYPE_CHECKING:
 
 @final
 class UnsetExpression(Expression):
+    # htsw counts `var "x" unset` as a Change Variable, sharing one budget with
+    # `BinaryExpression`. `effects_of` special-cases this class before it reads
+    # the meta, so declaring one does not change scheduling.
+    htsw_meta = ActionMeta(
+        htsw_name='CHANGE_VAR',
+        limit=25,
+    )
+
     target: 'Stat'
 
     def __init__(self, target: 'Stat') -> None:

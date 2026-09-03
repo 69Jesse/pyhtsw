@@ -4,6 +4,7 @@ if TYPE_CHECKING:
     from pyhtsw.declarations.function import Function
     from pyhtsw.expression.condition.condition import Condition
     from pyhtsw.expression.expression import Expression
+    from pyhtsw.generated.names import ActionTypeName
     from pyhtsw.placeholders.base import PlaceholderCheckable, PlaceholderEditable
 
 
@@ -39,6 +40,7 @@ EVENT_CONDITIONAL_LIMIT = 25 + 15
 RANDOM_FLOOR = 10
 
 _LIMITS: dict[type['Expression'] | type['PlaceholderCheckable'], int] | None = None
+_LIMITS_BY_NAME: dict['ActionTypeName', int] | None = None
 _CONDITION_LIMITS: dict[type['Condition'], int] | None = None
 
 
@@ -56,6 +58,20 @@ def get_limits() -> dict[type['Expression'] | type['PlaceholderCheckable'], int]
             limits[cls] = meta.limit
     _LIMITS = limits
     return _LIMITS
+
+
+def get_limits_by_name() -> dict['ActionTypeName', int]:
+    global _LIMITS_BY_NAME
+    if _LIMITS_BY_NAME is not None:
+        return _LIMITS_BY_NAME
+
+    by_name: dict[ActionTypeName, int] = {}
+    for cls, limit in get_limits().items():
+        htsw_name = cls.__dict__['htsw_meta'].htsw_name
+        if htsw_name is not None:
+            by_name[htsw_name] = limit
+    _LIMITS_BY_NAME = by_name
+    return _LIMITS_BY_NAME
 
 
 def get_condition_limits() -> dict[type['Condition'], int]:
@@ -145,27 +161,47 @@ def check_all_condition_limits(expressions: list['Expression']) -> None:
             check_all_condition_limits(nested)
 
 
+type ActionKey = type[Expression] | type[PlaceholderEditable] | ActionTypeName
+
+
+def action_into_key(
+    cls: 'type[Expression] | type[PlaceholderEditable]',
+) -> ActionKey:
+    """Bucket an action by htsw's action *type*, not by its Python class.
+    `var "x" = 1` and `var "x" unset` are one CHANGE_VAR budget upstream, so
+    counting them apart lets a block ship at 26/25. A class with no
+    `htsw_name` keys on itself, which is what it did before."""
+    meta = cls.__dict__.get('htsw_meta')
+    if meta is not None and meta.htsw_name is not None:
+        return meta.htsw_name
+    return cls
+
+
 def get_limit(
-    cls: type['Expression'] | type['PlaceholderEditable'],
+    key: ActionKey,
     *,
     importable: ImportableKind = 'functions',
     nested: Nesting | None = None,
 ) -> int | None:
-    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
-
-    if cls is ConditionalExpression and importable == 'events' and nested is None:
+    resolved = key if isinstance(key, str) else action_into_key(key)
+    if resolved == 'CONDITIONAL' and importable == 'events' and nested is None:
         return EVENT_CONDITIONAL_LIMIT
-    limit = get_limits().get(cls)
+    limit = (
+        get_limits_by_name().get(resolved)
+        if isinstance(resolved, str)
+        else get_limits().get(resolved)
+    )
     if limit is not None and nested == 'random':
         return max(limit, RANDOM_FLOOR)
     return limit
 
 
 ActionCounts = dict[type['Expression'] | type['PlaceholderEditable'], int]
+KeyedCounts = dict[ActionKey, int]
 
 
 class Counter:
-    count: ActionCounts
+    count: KeyedCounts
     importable: ImportableKind
     nested: Nesting | None
 
@@ -183,11 +219,8 @@ class Counter:
         # flatten per expression happens at most once.
         self._memo = memo if memo is not None else {}
 
-    def limit_for(
-        self,
-        cls: type['Expression'] | type['PlaceholderEditable'],
-    ) -> int | None:
-        return get_limit(cls, importable=self.importable, nested=self.nested)
+    def limit_for(self, key: ActionKey) -> int | None:
+        return get_limit(key, importable=self.importable, nested=self.nested)
 
     def nested_counter(self, nested: Nesting) -> 'Counter':
         return Counter(self._memo, importable=self.importable, nested=nested)
@@ -241,14 +274,24 @@ class Counter:
         self._memo[key] = counts
         return counts
 
-    def increment(self, expression: 'Expression') -> None:
+    def keyed_counts(self, expression: 'Expression') -> KeyedCounts:
+        """`action_counts` folded onto htsw's action types. Two classes sharing
+        an `htsw_name` share one budget, so they have to be summed before the
+        limit is applied rather than checked apart."""
+        counts: KeyedCounts = {}
         for cls, amount in self.action_counts(expression).items():
-            self.count[cls] = self.count.get(cls, 0) + amount
+            key = action_into_key(cls)
+            counts[key] = counts.get(key, 0) + amount
+        return counts
+
+    def increment(self, expression: 'Expression') -> None:
+        for key, amount in self.keyed_counts(expression).items():
+            self.count[key] = self.count.get(key, 0) + amount
 
     def would_exceed(self, expression: 'Expression') -> bool:
-        for cls, amount in self.action_counts(expression).items():
-            limit = self.limit_for(cls)
-            if limit is not None and self.count.get(cls, 0) + amount > limit:
+        for key, amount in self.keyed_counts(expression).items():
+            limit = self.limit_for(key)
+            if limit is not None and self.count.get(key, 0) + amount > limit:
                 return True
         return False
 

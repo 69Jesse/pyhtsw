@@ -118,15 +118,15 @@ instead of a default-argument dance.
 
 ### Item
 
-`Item(...)` builds a value; `importable_name=` declares it as an `items[]`
-entry up front, so actions reference it by name and htsw lists it in the
-Project view. An item given a click handler declares itself either way. See
+`Item(...)` builds a value; `.declare()` declares it as an `items[]` entry up
+front, so actions reference it by name and htsw lists it in the Project view. An
+item given a click handler declares itself either way. See
 [Items](./items.md) for the full field list and how names are derived.
 
 ```python
 from pyhtsw import Item, chat, give_item
 
-wand = Item('blaze_rod', name='&dWand', importable_name='Wand')
+wand = Item('blaze_rod', name='&dWand').declare()
 
 
 @wand.on_click
@@ -137,8 +137,10 @@ def cast() -> None:
 give_item(wand)
 ```
 
-- `importable_name=` overrides the derived htsw name; without it the name comes
-  from the display name with formatting stripped (`&dWand` -> `Wand`).
+- `.declare(name)` overrides the derived htsw name; `.declare()` derives it
+  from the display name with formatting stripped (`&dWand` -> `Wand`), falling
+  back to the vanilla item title when the item has no display name.
+  It returns the item, so it chains off the constructor.
 - Two items that render the same SNBT are one item to htsw, so the second one
   shares the first's entry rather than registering a duplicate.
 

@@ -148,8 +148,8 @@ def _resolve_click_handlers(
 class Item:
     __htsw_module__: 'str | None'
     # The items[] entry this item declares, when it has one: an interactive
-    # item, or one given an explicit `importable_name`. A plain item has none
-    # until the export-time plan promotes it.
+    # item, or one `declare()` was called on. A plain item has none until the
+    # export-time plan promotes it.
     __htsw_importable__: 'ItemImportable | None'
     # Filled in by the export-time item plan (see pyhtsw/item_plan.py): the htsw
     # name this instance is referenced by, and the module its .snbt is written
@@ -202,7 +202,6 @@ class Item:
         on_click: 'ItemHandler | None' = None,
         on_left_click: 'ItemHandler | None' = None,
         on_right_click: 'ItemHandler | None' = None,
-        importable_name: str | None = None,
         importable: bool = True,
     ) -> None:
         self.__htsw_module__ = caller_module()
@@ -270,27 +269,34 @@ class Item:
         self._left_click_handler = left_fn
         self._right_click_handler = right_fn
         self._importable_name: str | None = None
-        if left_fn is not None or right_fn is not None or importable_name is not None:
-            self._declare(importable_name)
+        if left_fn is not None or right_fn is not None:
+            self.declare()
 
-    def _declare(self, importable_name: str | None = None) -> None:
+    def declare(self, name: str | None = None) -> 'Item':
+        """Give this item its own items[] entry, so htsw writes its .snbt and
+        the project tree shows it. Without a `name` it takes `derived_name()`.
+        Returns the item, so `Item(...).declare()` reads as one expression."""
+        existing = self.__htsw_importable__
+        if existing is not None:
+            if name is None or name == existing.name:
+                return self
+            if existing.item is self:
+                self._rename_importable(existing, name)
+                return self
+            # This item only borrowed a twin's entry; asking for a name is
+            # asking for one of its own, so register rather than rename theirs.
+            self.__htsw_importable__ = None
         left_fn = self._left_click_handler
         right_fn = self._right_click_handler
-        name = importable_name
         if name is None:
-            if self.name is None:
-                raise TypeError(
-                    'An interactive Item (with on_click/on_left_click/'
-                    'on_right_click) needs a "name" or "importable_name".',
-                )
             twin = _registered_twin(self, left_fn, right_fn)
             if twin is not None:
                 # htsw identifies an item by its NBT, so the twin already is
                 # this entry - point at it rather than registering a duplicate.
                 self._importable_name = twin.name
                 self.__htsw_importable__ = twin
-                return
-            name = _free_item_name(remove_formatting(self.name).strip(), self.count)
+                return self
+            name = _free_item_name(self.derived_name(), self.count)
         self._importable_name = name
         self.__htsw_importable__ = _register_item_instance_importable(
             name,
@@ -299,6 +305,17 @@ class Item:
             right_fn,
             module=self.__htsw_module__,
         )
+        return self
+
+    def _rename_importable(self, importable: 'ItemImportable', name: str) -> None:
+        from pyhtsw.compiler.container import get_current_container
+
+        get_current_container().rename_importable(importable, name)
+        self._importable_name = name
+        for side in ('left', 'right'):
+            block = getattr(importable, side)
+            if block is not None:
+                block._name = f'{name} {side}'
 
     @property
     def importable(self) -> 'ItemImportable':
@@ -306,8 +323,8 @@ class Item:
         if self.__htsw_importable__ is None:
             raise RuntimeError(
                 f'Item "{self.derived_name()}" declares no items[] entry, so '
-                f'it has no importable to read. Give it a click handler or an '
-                f'"importable_name" to declare one.',
+                f'it has no importable to read. Call "declare()" or give it a '
+                f'click handler.',
             )
         return self.__htsw_importable__
 
@@ -322,7 +339,7 @@ class Item:
             setattr(self, f'_{side}_click_handler', func)
         importable = self.__htsw_importable__
         if importable is None:
-            self._declare()
+            self.declare()
             return
         # Already an items[] entry (a named item, or a twin it shares with) - it
         # just gains the action list. htsw identifies an item by its NBT, so a
@@ -635,7 +652,6 @@ class Item:
         on_click: 'ItemHandler | None | Missing' = MISSING,
         on_left_click: 'ItemHandler | None | Missing' = MISSING,
         on_right_click: 'ItemHandler | None | Missing' = MISSING,
-        importable_name: str | None = None,
     ) -> 'Item':
         """Returns a copy of the item, overriding only the given values. The
         click handlers come along unless you replace them; pass `None` to make
@@ -677,7 +693,6 @@ class Item:
             importable=self._promotable,
             on_left_click=left,
             on_right_click=right,
-            importable_name=importable_name,
             **resolved,
         )
 
@@ -735,7 +750,7 @@ def _free_item_name(base: str, count: int) -> str:
     taken = get_current_container().importables_by_key
     if ('items', base) not in taken:
         return base
-    sized = base if count <= 1 else f'{base} x{count}'
+    sized = base if count <= 1 or base.endswith(f' x{count}') else f'{base} x{count}'
     if ('items', sized) not in taken:
         return sized
     index = 2

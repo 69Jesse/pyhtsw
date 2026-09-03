@@ -29,7 +29,7 @@ with Container():
     def on_right() -> None:
         chat('used the wand')
 
-    border = Item('black_stained_glass_pane', name=' ', importable_name='Border')
+    border = Item('black_stained_glass_pane', name=' ').declare('Border')
 
     shop = Menu('Shop', 6)
     shop.place(border, x=0)

@@ -74,7 +74,7 @@ with Container():
 
 
 with Container() as container:
-    wand = Item('blaze_rod', name='&aWand', importable_name='Wand')
+    wand = Item('blaze_rod', name='&aWand').declare()
     shop = Menu('Shop', 6)
     smith = NPC('Smith', (1, 64, 2), skin='steve', look_at_players=True)
     spawn = Region('Spawn', ((0, 100, 0), (10, 110, 10)))
@@ -171,15 +171,13 @@ with Container() as container:
     first = Item(
         'blaze_rod',
         name='&aRecord',
-        importable_name='Record1',
         on_right_click=lambda: chat('one'),
-    )
+    ).declare('Record1')
     second = Item(
         'blaze_rod',
         name='&aRecord',
-        importable_name='Record2',
         on_right_click=lambda: chat('two'),
-    )
+    ).declare('Record2')
 
     names = [i.identifier() for i in container.importables if i.kind == 'items']
     assert names == ['Record1', 'Record2'], names
@@ -192,3 +190,15 @@ with Container() as container:
     # Without a name, an interactive item derives one from its display name.
     derived = Item('stick', name='&eTorch', on_click=lambda: chat('lit'))
     assert derived.importable.name == 'Torch', derived.importable.name
+
+    # No display name either - the vanilla item title carries the entry.
+    titled = Item('gold_ingot').declare()
+    assert titled.importable.name == 'Gold Ingot', titled.importable.name
+    stacked = Item('emerald', count=4).declare()
+    assert stacked.importable.name == 'Emerald x4', stacked.importable.name
+
+    # declare() returns the item, and renames an entry the item owns.
+    renamed = Item('bone', name='&fBone', on_click=lambda: chat('woof'))
+    assert renamed.declare('Good Boy') is renamed
+    assert renamed.importable.name == 'Good Boy', renamed.importable.name
+    assert ('items', 'Bone') not in container.importables_by_key

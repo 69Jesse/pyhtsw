@@ -1,8 +1,8 @@
 # Items
 
 An `Item` describes a Minecraft item stack. `Item(...)` builds a value;
-`importable_name=` (or a click handler) registers it as an importable under a
-name of its own (see [Importables](./importables.md)).
+`.declare()` (or a click handler) registers it as an importable under a name of
+its own (see [Importables](./importables.md)).
 
 ```python
 from pyhtsw import Item, Enchantment
@@ -30,7 +30,7 @@ from pyhtsw import give_item, Item
 
 
 # A declared item -> referenced by its declared htsw name
-reward = Item('gold_ingot', name='&6Reward', importable_name='Reward')
+reward = Item('gold_ingot', name='&6Reward').declare('Reward')
 give_item(reward)
 
 # A plain item -> promoted to an items[] entry with a derived name
@@ -40,9 +40,10 @@ give_item(Item('apple'))
 give_item(Item.from_path('items/some-item.snbt'))
 ```
 
-- `importable_name=` names the item up front, so every reference to it uses
-  that name. An item given a click handler declares itself too, under the
-  derived name.
+- `.declare()` names the item up front, so every reference to it uses that
+  name, and it returns the item so the call chains off the constructor. Pass a
+  name to choose one; without it the name is derived. An item given a click
+  handler declares itself too.
 - A plain `Item(...)` is given a name and an `items[]` entry of its own at
   export, so htsw lists it in the Project view and can open it in the Item
   Editor. Its `.snbt` is written under the module that built it.

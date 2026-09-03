@@ -28,7 +28,7 @@ my-house/
   items/                  # item/menu definitions
   assets/                 # data files (.nbs, .snbt, .json)
   tools/                  # scripts that do NOT emit htsw (scrapers, generators)
-  tests/                  # standalone checks (see the Simulator page)
+  tests/                  # standalone checks (see the Emulation page)
 ```
 
 Split large files by concern rather than letting one module grow unbounded.

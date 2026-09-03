@@ -4,7 +4,7 @@ from contextlib import redirect_stdout
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     IfAll,
     PlayerStat,
     TemporaryStat,
@@ -32,19 +32,19 @@ assert htsl.splitlines()[-1] == 'chat "%var.player/tmp0 0%"', htsl
 
 
 # Same thing, executed: chat must read 123, not somestatx + 456.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     tmp0 = PlayerStat('tmp0').as_long()
     tmp1 = PlayerStat('tmp1').as_long()
     somestatx = PlayerStat('somestatx').as_long()
-    ctx.put(somestatx, 1000, ignore_warning=True)
-    ctx.put(tmp1, 0, ignore_warning=True)
+    house.put(somestatx, 1000, ignore_warning=True)
+    house.put(tmp1, 0, ignore_warning=True)
     tmp0.value = 123
     tmp1.value += somestatx + 456
 
     def check_tmp0(_t=tmp0) -> None:
-        assert int(ctx.get_raw(_t)) == 123, int(ctx.get_raw(_t))
+        assert int(house.get_raw(_t)) == 123, int(house.get_raw(_t))
 
-    ctx.assert_all(check_tmp0)
+    house.assert_all(check_tmp0)
 
 
 with Container() as container:
@@ -65,23 +65,23 @@ computed_lines = [ln for ln in htsl.splitlines() if 'x 0%' in ln or 'y 0%' in ln
 assert all(not re.search(r'"tmp[0-4]"', ln) for ln in computed_lines), htsl
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     tmp0 = PlayerStat('tmp0').as_long()
     cond = PlayerStat('cond').as_long()
     a = PlayerStat('a').as_long()
     b = PlayerStat('b').as_long()
-    ctx.put(cond, 1, ignore_warning=True)
-    ctx.put(a, 7, ignore_warning=True)
-    ctx.put(b, 3, ignore_warning=True)
+    house.put(cond, 1, ignore_warning=True)
+    house.put(a, 7, ignore_warning=True)
+    house.put(b, 3, ignore_warning=True)
     tmp0.value = 999
     with IfAll(cond == 1):
         # a computed temp inside the body must not clobber the outer tmp0
         b.value = a + b + 100
 
     def check_outer(_t=tmp0) -> None:
-        assert int(ctx.get_raw(_t)) == 999, int(ctx.get_raw(_t))
+        assert int(house.get_raw(_t)) == 999, int(house.get_raw(_t))
 
-    ctx.assert_all(check_outer)
+    house.assert_all(check_outer)
 
 
 with Container() as container:
@@ -101,10 +101,10 @@ assert all('"tmp0"' in ln for ln in write_lines), htsl  # all writes hit tmp0 to
 # Executed: the f-string read sees the written value.
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
         t = TemporaryStat().as_long()
-        ctx.put(a, 5, ignore_warning=True)
+        house.put(a, 5, ignore_warning=True)
         t.value = a
         t.value += 100
         chat(f'{t}')
@@ -131,13 +131,13 @@ assert len(names) == 3 and len(set(names)) == 3, last
 
 
 # A typeless held temp can be created and typed lazily, like any stat.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
     scratch = TemporaryStat()  # no type yet
-    ctx.put(x, -9, ignore_warning=True)
+    house.put(x, -9, ignore_warning=True)
     scratch.as_long().value = abs(x)
 
     def check_abs(_s=scratch) -> None:
-        assert int(ctx.get_raw(_s.as_long())) == 9, int(ctx.get_raw(_s.as_long()))
+        assert int(house.get_raw(_s.as_long())) == 9, int(house.get_raw(_s.as_long()))
 
-    ctx.assert_all(check_abs)
+    house.assert_all(check_abs)

@@ -2,7 +2,7 @@ import math
 import random
 from typing import Literal
 
-from pyhtsw import ExecutionContext, PlayerStat
+from pyhtsw import EmulatedHouse, PlayerStat
 from pyhtsw.ext import approximate_sin_cos
 
 
@@ -11,11 +11,11 @@ def assert_sin_cos_close(
     *,
     certain_x_in_range: Literal[90, 180] | None = None,
 ) -> None:
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         x = PlayerStat('x').as_double()
         sin_out = PlayerStat('sin').as_double()
         cos_out = PlayerStat('cos').as_double()
-        ctx.put(x, deg)
+        house.put(x, deg)
         approximate_sin_cos(
             x,
             assign_to_sin=sin_out,
@@ -23,8 +23,8 @@ def assert_sin_cos_close(
             certain_x_in_range=certain_x_in_range,
         )  # type: ignore
 
-    actual_sin = float(ctx.get_raw(sin_out))
-    actual_cos = float(ctx.get_raw(cos_out))
+    actual_sin = float(house.get_raw(sin_out))
+    actual_cos = float(house.get_raw(cos_out))
     expected_sin = math.sin(math.radians(deg))
     expected_cos = math.cos(math.radians(deg))
     err_sin = abs(actual_sin - expected_sin)
@@ -54,11 +54,11 @@ for _ in range(20):
 
 
 # sin_sign / cos_sign flip the output
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_double()
     sin_out = PlayerStat('sin').as_double()
     cos_out = PlayerStat('cos').as_double()
-    ctx.put(x, 30.0)
+    house.put(x, 30.0)
     approximate_sin_cos(
         x,
         assign_to_sin=sin_out,
@@ -69,7 +69,7 @@ with ExecutionContext() as ctx:
     )
 
 # With sin_sign=-1 / cos_sign=-1 the output approximates -sin(30) / -cos(30).
-actual_sin = float(ctx.get_raw(sin_out))
-actual_cos = float(ctx.get_raw(cos_out))
+actual_sin = float(house.get_raw(sin_out))
+actual_cos = float(house.get_raw(cos_out))
 assert abs(actual_sin - (-math.sin(math.radians(30)))) < 0.02, actual_sin
 assert abs(actual_cos - (-math.cos(math.radians(30)))) < 0.02, actual_cos

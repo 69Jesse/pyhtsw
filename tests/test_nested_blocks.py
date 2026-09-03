@@ -4,7 +4,7 @@ import pyhtsw.compiler.container
 from pyhtsw import (
     Container,
     Else,
-    ExecutionContext,
+    EmulatedHouse,
     IfAll,
     IfAny,
     PlayerStat,
@@ -99,26 +99,26 @@ with Container() as container:
 container.into_htsl()
 
 
-# ExecutionContext with allow_nested_expressions=False (default) still raises
+# EmulatedHouse with allow_nested_expressions=False (default) still raises
 with expect_exception(SyntaxError):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         x = PlayerStat('x').as_long()
-        ctx.put(x, 10, ignore_warning=True)
+        house.put(x, 10, ignore_warning=True)
         with IfAll(x > 0):
             with IfAll(x > 5):
                 chat('nope')
 
 
-# ExecutionContext with allow_nested_expressions=True bypasses the check
-with ExecutionContext(allow_nested_expressions=True) as ctx:
+# EmulatedHouse with allow_nested_expressions=True bypasses the check
+with EmulatedHouse(allow_nested_expressions=True) as house:
     x = PlayerStat('x').as_long()
     y = PlayerStat('y').as_long()
-    ctx.put(x, 10, ignore_warning=True)
+    house.put(x, 10, ignore_warning=True)
     with IfAll(x > 0):
         with IfAll(x > 5):
             y.value = 1
 
-assert int(ctx.get(y)) == 1, ctx.get(y)
+assert int(house.get(y)) == 1, house.get(y)
 
 
 # A single IfAll inside a function body is legal: the body is its own HTSL
@@ -261,12 +261,12 @@ container.into_htsl()
 
 
 # allow_nested_expressions bypasses the check and the modulo still simulates
-with ExecutionContext(allow_nested_expressions=True) as ctx:
+with EmulatedHouse(allow_nested_expressions=True) as house:
     x = PlayerStat('x').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(x, 250, ignore_warning=True)
+    house.put(x, 250, ignore_warning=True)
     out.value = 0
     with IfAll(x > 0):
         out.value = x % 100
 
-assert int(ctx.get_raw(out)) == 50, ctx.get_raw(out)
+assert int(house.get_raw(out)) == 50, house.get_raw(out)

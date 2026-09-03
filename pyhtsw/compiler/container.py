@@ -820,14 +820,14 @@ class ContainerContextManager(ABC):
             # blocks opened before the boundary must not count. Only consider
             # contexts opened after the most recent block boundary.
             boundary = -1
-            for index, ctx in enumerate(container.contexts):
-                if ctx.parent_expression is None:
+            for index, house in enumerate(container.contexts):
+                if house.parent_expression is None:
                     boundary = index
             open_nestables = [
-                ctx
-                for ctx in container.contexts[boundary + 1 :]
-                if ctx.parent_expression is not None
-                and not ctx.parent_expression.can_be_nested()
+                house
+                for house in container.contexts[boundary + 1 :]
+                if house.parent_expression is not None
+                and not house.parent_expression.can_be_nested()
             ]
             if open_nestables:
                 raise SyntaxError(
@@ -894,9 +894,9 @@ def on_program_exit() -> None:
         return
     _export_global_container()
 
-    from pyhtsw.execute.decorator import run_saved_execution_contexts
+    from pyhtsw.execute.decorator import run_saved_emulations
 
-    run_saved_execution_contexts()
+    run_saved_emulations()
 
     sounds = sys.modules.get('pyhtsw.misc.sounds')
     if sounds is not None:

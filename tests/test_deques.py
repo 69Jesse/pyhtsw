@@ -2,14 +2,14 @@ from collections import deque
 
 from helpers import expect_exception
 
-from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw import Container, EmulatedHouse, PlayerStat
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 from pyhtsw.ext.stack_queue import Deque, IntDeque
 
 # === IntDeque: the four operations ===
 
 # push_back then pop_front is FIFO; push_front then pop_front is LIFO.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = IntDeque(
         holder=PlayerStat('h').as_long(),
         counter=PlayerStat('c').as_long(),
@@ -21,12 +21,12 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_front(output=out)
 
     def check_fifo() -> None:
-        assert int(ctx.get(out)) == 1
+        assert int(house.get(out)) == 1
 
-    ctx.assert_all(check_fifo)
+    house.assert_all(check_fifo)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = IntDeque(
         holder=PlayerStat('h').as_long(),
         counter=PlayerStat('c').as_long(),
@@ -38,14 +38,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_front(output=out)
 
     def check_lifo() -> None:
-        assert int(ctx.get(out)) == 2
+        assert int(house.get(out)) == 2
 
-    ctx.assert_all(check_lifo)
+    house.assert_all(check_lifo)
 
 
 # pop_back takes the far end whichever way the values went in.
 for _pusher in ('push_front', 'push_back'):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         d = IntDeque(
             holder=PlayerStat('h').as_long(),
             counter=PlayerStat('c').as_long(),
@@ -58,9 +58,9 @@ for _pusher in ('push_front', 'push_back'):
         _expected = 1 if _pusher == 'push_front' else 3
 
         def check_pop_back(_e: int = _expected, _o=out) -> None:
-            assert int(ctx.get(_o)) == _e
+            assert int(house.get(_o)) == _e
 
-        ctx.assert_all(check_pop_back)
+        house.assert_all(check_pop_back)
 
 
 # === IntDeque against a real deque ===
@@ -99,7 +99,7 @@ for _most, _capacity in ((255, None), (255, 16), (1023, 12)):
         else:
             expected_pops.append(model.popleft() if model else -1)
 
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         d = IntDeque(
             holder=lambda i: PlayerStat(f'h{i}').as_long(),
             counter=PlayerStat('c').as_long(),
@@ -116,16 +116,16 @@ for _most, _capacity in ((255, None), (255, 16), (1023, 12)):
                 taken += 1
 
         def check_script(_o: list = outs, _e: list = expected_pops) -> None:
-            assert [int(ctx.get(s)) for s in _o] == _e, (
-                [int(ctx.get(s)) for s in _o],
+            assert [int(house.get(s)) for s in _o] == _e, (
+                [int(house.get(s)) for s in _o],
                 _e,
             )
 
-        ctx.assert_all(check_script)
+        house.assert_all(check_script)
 
 
 # A popped slot is cleared, so a later push_back does not OR into stale bits.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = IntDeque(
         holder=PlayerStat('h').as_long(),
         counter=PlayerStat('c').as_long(),
@@ -138,14 +138,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_back(output=b)
 
     def check_cleared() -> None:
-        assert int(ctx.get(a)) == 255
-        assert int(ctx.get(b)) == 1
+        assert int(house.get(a)) == 255
+        assert int(house.get(b)) == 1
 
-    ctx.assert_all(check_cleared)
+    house.assert_all(check_cleared)
 
 
 # The same, across a holder boundary.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = IntDeque(
         holder=lambda i: PlayerStat(f'h{i}').as_long(),
         counter=PlayerStat('c').as_long(),
@@ -160,13 +160,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_back(output=out)
 
     def check_cross_holder() -> None:
-        assert int(ctx.get(out)) == 4
+        assert int(house.get(out)) == 4
 
-    ctx.assert_all(check_cross_holder)
+    house.assert_all(check_cross_holder)
 
 
 # Popping an empty deque writes the if_empty default.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = IntDeque(
         holder=PlayerStat('h').as_long(),
         counter=PlayerStat('c').as_long(),
@@ -176,9 +176,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_back(output=out)
 
     def check_empty_back() -> None:
-        assert int(ctx.get(out)) == -1
+        assert int(house.get(out)) == -1
 
-    ctx.assert_all(check_empty_back)
+    house.assert_all(check_empty_back)
 
 
 # === IntDeque overflow policies ===
@@ -198,7 +198,7 @@ def full_deque(policy: str) -> IntDeque:
 
 
 # push_front on a full deque with override_oldest drops the back.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = full_deque('override_oldest')
     outs = [PlayerStat(f'o{i}').as_long() for i in range(8)]
     d.push_front(9)
@@ -206,13 +206,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         d.pop_front(output=outs[_i])
 
     def check_front_override() -> None:
-        assert [int(ctx.get(s)) for s in outs] == [9, 1, 2, 3, 4, 5, 6, 7]
+        assert [int(house.get(s)) for s in outs] == [9, 1, 2, 3, 4, 5, 6, 7]
 
-    ctx.assert_all(check_front_override)
+    house.assert_all(check_front_override)
 
 
 # push_back on a full deque with override_oldest drops the front.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = full_deque('override_oldest')
     outs = [PlayerStat(f'o{i}').as_long() for i in range(8)]
     d.push_back(9)
@@ -220,13 +220,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         d.pop_front(output=outs[_i])
 
     def check_back_override() -> None:
-        assert [int(ctx.get(s)) for s in outs] == [2, 3, 4, 5, 6, 7, 8, 9]
+        assert [int(house.get(s)) for s in outs] == [2, 3, 4, 5, 6, 7, 8, 9]
 
-    ctx.assert_all(check_back_override)
+    house.assert_all(check_back_override)
 
 
 # override_newest overwrites the pushing end instead of evicting anything.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = full_deque('override_newest')
     outs = [PlayerStat(f'o{i}').as_long() for i in range(8)]
     d.push_back(9)
@@ -234,12 +234,12 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         d.pop_front(output=outs[_i])
 
     def check_newest_back() -> None:
-        assert [int(ctx.get(s)) for s in outs] == [1, 2, 3, 4, 5, 6, 7, 9]
+        assert [int(house.get(s)) for s in outs] == [1, 2, 3, 4, 5, 6, 7, 9]
 
-    ctx.assert_all(check_newest_back)
+    house.assert_all(check_newest_back)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = full_deque('override_newest')
     outs = [PlayerStat(f'o{i}').as_long() for i in range(8)]
     d.push_front(9)
@@ -247,9 +247,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         d.pop_front(output=outs[_i])
 
     def check_newest_front() -> None:
-        assert [int(ctx.get(s)) for s in outs] == [9, 2, 3, 4, 5, 6, 7, 8]
+        assert [int(house.get(s)) for s in outs] == [9, 2, 3, 4, 5, 6, 7, 8]
 
-    ctx.assert_all(check_newest_front)
+    house.assert_all(check_newest_front)
 
 
 # override_oldest needs a capacity that fills its holders exactly.
@@ -267,7 +267,7 @@ with expect_exception(ValueError):
 # === Deque (slot-based) ===
 
 # Strings survive all four operations.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = Deque(
         holders=[PlayerStat(f's{i}').as_string() for i in range(4)],
         counter=PlayerStat('c').as_long(),
@@ -282,11 +282,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_back(output=rc)
 
     def check_strings() -> None:
-        assert str(ctx.get_raw(ra)) == 'first'
-        assert str(ctx.get_raw(rb)) == 'last'
-        assert str(ctx.get_raw(rc)) == 'mid'
+        assert str(house.get_raw(ra)) == 'first'
+        assert str(house.get_raw(rb)) == 'last'
+        assert str(house.get_raw(rc)) == 'mid'
 
-    ctx.assert_all(check_strings)
+    house.assert_all(check_strings)
 
 
 # Slot-based, against the same oracle. Long slots take array_read's fast path
@@ -308,7 +308,7 @@ for _typed in ('long', 'string'):
         else:
             expected_pops.append(model.popleft() if model else -1)
 
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         if _typed == 'long':
             slots = [PlayerStat(f'q{i}').as_long() for i in range(limit)]
             outs = [PlayerStat(f'o{i}').as_long() for i in range(len(expected_pops))]
@@ -333,14 +333,14 @@ for _typed in ('long', 'string'):
             _e: list = expected_pops,
             _c=_cast,
         ) -> None:
-            got = [_c(ctx.get_raw(s)) for s in _o]
+            got = [_c(house.get_raw(s)) for s in _o]
             assert got == [_c(v) for v in _e], (got, _e)
 
-        ctx.assert_all(check_slot_script)
+        house.assert_all(check_slot_script)
 
 
 # Width > 1: every column travels together.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     d = Deque(
         holders=[
             (PlayerStat(f'n{i}').as_string(), PlayerStat(f'v{i}').as_long())
@@ -354,10 +354,10 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     d.pop_back(output=(name, value))
 
     def check_width() -> None:
-        assert str(ctx.get_raw(name)) == 'alpha'
-        assert int(ctx.get(value)) == 1
+        assert str(house.get_raw(name)) == 'alpha'
+        assert int(house.get(value)) == 1
 
-    ctx.assert_all(check_width)
+    house.assert_all(check_width)
 
 
 # A duplicated slot stat is rejected, as for Stack/Queue.

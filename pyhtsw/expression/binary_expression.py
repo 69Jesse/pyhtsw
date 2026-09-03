@@ -20,12 +20,12 @@ from pyhtsw.execute.backend_type import (
     into_backend_type,
     is_default_backend,
 )
-from pyhtsw.execute.context import ExecutionContext
 from pyhtsw.execute.exception import (
     MismatchedTypeException,
     NotANumberException,
     descriptive_backend_type,
 )
+from pyhtsw.execute.house import EmulatedHouse
 from pyhtsw.expression.compound_expression import CompoundExpression
 from pyhtsw.expression.condition.comparison_condition import ComparisonCondition
 from pyhtsw.expression.expression import Expression
@@ -1038,7 +1038,7 @@ class BinaryExpression[
     @staticmethod
     def execute_assignment_expression(
         expression: AssignmentExpression,
-        context: 'ExecutionContext',
+        context: 'EmulatedHouse',
     ) -> None:
         right_value = BinaryExpression._resolve_assignment_rhs(
             expression.right,
@@ -1174,7 +1174,7 @@ class BinaryExpression[
     @staticmethod
     def _resolve_assignment_rhs(
         rhs: 'Checkable | HousingType',
-        context: 'ExecutionContext',
+        context: 'EmulatedHouse',
     ) -> BackendType:
         from pyhtsw.execute.value_parser import parse_string, parse_value
 
@@ -1192,14 +1192,14 @@ class BinaryExpression[
     def _store_assignment_result(
         left: Editable,
         result: BackendType,
-        context: 'ExecutionContext',
+        context: 'EmulatedHouse',
     ) -> None:
         if isinstance(left, Stat) and left.auto_unset and is_default_backend(result):
             context.pop(left)
             return
         context.put(left, result, ignore_warning=True)
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         for expr in self.into_executable_expressions():
             if not isinstance(expr, BinaryExpression):
                 expr.execute(context)

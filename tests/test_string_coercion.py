@@ -1,4 +1,4 @@
-from pyhtsw import ExecutionContext, PlayerStat
+from pyhtsw import EmulatedHouse, PlayerStat
 
 
 def append_x(suffix: str, value: int) -> str:
@@ -6,18 +6,18 @@ def append_x(suffix: str, value: int) -> str:
     If the suffix coerced the value to a number it is swallowed, so 'x' lands
     right after the number."""
     captured: dict[str, object] = {}
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         n = PlayerStat('n').as_long()
         s = PlayerStat('s').as_string()
         out = PlayerStat('out').as_string()
-        ctx.put(n, value, ignore_warning=True)
+        house.put(n, value, ignore_warning=True)
         s.value = f'{n}{suffix}'
         out.value = f'{s}x'
 
         def grab(_o=out) -> None:
-            captured['v'] = ctx.get_raw(_o)
+            captured['v'] = house.get_raw(_o)
 
-        ctx.run(grab)
+        house.run(grab)
     return str(captured['v'])
 
 
@@ -35,11 +35,11 @@ assert append_x('s', 9) == '9sx', append_x('s', 9)
 
 
 # A non-numeric base is never coerced, even ending in 'd'.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     out = PlayerStat('out').as_string()
     out.value = 'load'
 
     def keep_string(_o=out) -> None:
-        assert ctx.get_raw(_o) == 'load', ctx.get_raw(_o)
+        assert house.get_raw(_o) == 'load', house.get_raw(_o)
 
-    ctx.assert_all(keep_string)
+    house.assert_all(keep_string)

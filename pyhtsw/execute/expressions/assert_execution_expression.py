@@ -9,7 +9,7 @@ from pyhtsw.expression.condition.conditional_expression import ConditionalMode
 from pyhtsw.utils.callback import call_with_optional_arg
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 __all__ = ('AssertExecutionExpression',)
@@ -19,7 +19,7 @@ class AssertExecutionExpression(ExecutionExpression):
     conditions: tuple[
         Condition
         | Callable[[], Condition | None]
-        | Callable[['ExecutionContext'], Condition | None],
+        | Callable[['EmulatedHouse'], Condition | None],
         ...,
     ]
     mode: ConditionalMode
@@ -30,7 +30,7 @@ class AssertExecutionExpression(ExecutionExpression):
         conditions: tuple[
             Condition
             | Callable[[], Condition | None]
-            | Callable[['ExecutionContext'], Condition | None],
+            | Callable[['EmulatedHouse'], Condition | None],
             ...,
         ],
         *,
@@ -47,7 +47,7 @@ class AssertExecutionExpression(ExecutionExpression):
         conditions: tuple[
             Condition
             | Callable[[], Condition | None]
-            | Callable[['ExecutionContext'], Condition | None],
+            | Callable[['EmulatedHouse'], Condition | None],
             ...,
         ]
         | Missing = MISSING,
@@ -84,7 +84,7 @@ class AssertExecutionExpression(ExecutionExpression):
 
     def throw(
         self,
-        context: 'ExecutionContext',
+        context: 'EmulatedHouse',
         *,
         failed_conditions: list['Condition'],
     ) -> NoReturn:
@@ -113,7 +113,7 @@ class AssertExecutionExpression(ExecutionExpression):
             + '\n'.join(map(descriptive_condition, failed_conditions)),
         )
 
-    def flattened_conditions(self, context: 'ExecutionContext') -> list['Condition']:
+    def flattened_conditions(self, context: 'EmulatedHouse') -> list['Condition']:
         flattened: list[Condition] = []
         for cond in self.conditions:
             if callable(cond):
@@ -126,7 +126,7 @@ class AssertExecutionExpression(ExecutionExpression):
                 flattened.append(cond)  # type: ignore
         return flattened
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         conditions = self.flattened_conditions(context)
         if self.mode == ConditionalMode.ALL:
             for condition in conditions:

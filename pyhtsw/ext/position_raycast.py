@@ -37,7 +37,7 @@ TargetCallback = Callable[[int, 'RayTarget'], Any]
 
 # Below this the ray is parallel enough to a slab plane that its reciprocal is
 # meaningless; nudging keeps the division finite and the sign intact. Chosen to
-# survive the simulator's 3-decimal placeholder rounding.
+# survive the emulator's 3-decimal placeholder rounding.
 EPSILON = 0.001
 NO_LIMIT = 1_000_000.0
 

@@ -7,7 +7,7 @@ from pyhtsw.utils.callback import call_with_optional_arg
 from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 __all__ = ('PrintExecutionExpression',)
@@ -15,7 +15,7 @@ __all__ = ('PrintExecutionExpression',)
 
 class PrintExecutionExpression(ExecutionExpression):
     values: tuple[
-        object | Callable[[], object] | Callable[['ExecutionContext'], object],
+        object | Callable[[], object] | Callable[['EmulatedHouse'], object],
         ...,
     ]
     cast: bool
@@ -23,7 +23,7 @@ class PrintExecutionExpression(ExecutionExpression):
     def __init__(
         self,
         values: tuple[
-            object | Callable[[], object] | Callable[['ExecutionContext'], object],
+            object | Callable[[], object] | Callable[['EmulatedHouse'], object],
             ...,
         ],
         *,
@@ -32,7 +32,7 @@ class PrintExecutionExpression(ExecutionExpression):
         self.values = values
         self.cast = cast
 
-    def flattened_values(self, context: 'ExecutionContext') -> tuple[object, ...]:
+    def flattened_values(self, context: 'EmulatedHouse') -> tuple[object, ...]:
         flattened = []
         for value in self.values:
             if callable(value):
@@ -41,7 +41,7 @@ class PrintExecutionExpression(ExecutionExpression):
                 flattened.append(value)
         return tuple(flattened)
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         line = ' '.join(map(str, self.flattened_values(context)))
         log(context.get(line, cast=self.cast, output='string'))
 
@@ -49,7 +49,7 @@ class PrintExecutionExpression(ExecutionExpression):
         self,
         *,
         values: tuple[
-            object | Callable[[], object] | Callable[['ExecutionContext'], object],
+            object | Callable[[], object] | Callable[['EmulatedHouse'], object],
             ...,
         ]
         | Missing = MISSING,

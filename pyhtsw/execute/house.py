@@ -26,7 +26,7 @@ from pyhtsw.execute.expressions.run_execution_expression import (
     CallbackType,
     RunExecutionExpression,
 )
-from pyhtsw.execute.player import ExecutionPlayer
+from pyhtsw.execute.player import EmulatedPlayer
 from pyhtsw.execute.schedulers import ActionScheduler, DelayedActionScheduler
 from pyhtsw.execute.signal import ExitSignal, PauseSignal
 from pyhtsw.expression.condition.condition import Condition
@@ -39,13 +39,13 @@ from pyhtsw.utils.warn import warn
 if TYPE_CHECKING:
     from pyhtsw.declarations.function import Function
 
-__all__ = ('ExecutionContext',)
+__all__ = ('EmulatedHouse',)
 
 
-type PlayersArg = int | Iterable[str | ExecutionPlayer] | None
+type PlayersArg = int | Iterable[str | EmulatedPlayer] | None
 
 
-class ExecutionContext(Container):
+class EmulatedHouse(Container):
     verbose: bool
     expression_callback: Callable[[Expression], None] | None
     pause_multiplier: float
@@ -53,8 +53,8 @@ class ExecutionContext(Container):
 
     started_execution: bool
     global_mapping: dict[tuple[object, ...], BackendType]
-    players: list[ExecutionPlayer]
-    current_player: ExecutionPlayer
+    players: list[EmulatedPlayer]
+    current_player: EmulatedPlayer
     schedulers: list[ActionScheduler]
 
     def __init__(
@@ -96,12 +96,12 @@ class ExecutionContext(Container):
 
     def add_player(
         self,
-        player: 'str | ExecutionPlayer | None' = None,
-    ) -> ExecutionPlayer:
+        player: 'str | EmulatedPlayer | None' = None,
+    ) -> EmulatedPlayer:
         resolved = (
-            player if isinstance(player, ExecutionPlayer) else ExecutionPlayer(player)
+            player if isinstance(player, EmulatedPlayer) else EmulatedPlayer(player)
         )
-        resolved.context = self
+        resolved.house = self
         self.players.append(resolved)
         if resolved.name is not None:
             from pyhtsw.placeholders.player import PlayerName
@@ -110,7 +110,7 @@ class ExecutionContext(Container):
         return resolved
 
     @contextmanager
-    def using_player(self, player: ExecutionPlayer) -> Generator[None]:
+    def using_player(self, player: EmulatedPlayer) -> Generator[None]:
         previous = self.current_player
         self.current_player = player
         try:
@@ -181,7 +181,7 @@ class ExecutionContext(Container):
     def _mapping_for(
         self,
         key: Checkable,
-        player: ExecutionPlayer | None,
+        player: EmulatedPlayer | None,
     ) -> dict[tuple[object, ...], BackendType]:
         if key.is_execution_player_scoped():
             return (player if player is not None else self.current_player).mapping
@@ -192,7 +192,7 @@ class ExecutionContext(Container):
         self,
         key: Checkable,
         *,
-        player: ExecutionPlayer | None = ...,
+        player: EmulatedPlayer | None = ...,
     ) -> BackendType | None: ...
 
     @overload
@@ -201,7 +201,7 @@ class ExecutionContext(Container):
         key: Checkable,
         *,
         default: BackendType,
-        player: ExecutionPlayer | None = ...,
+        player: EmulatedPlayer | None = ...,
     ) -> BackendType: ...
 
     def _get_raw(
@@ -209,7 +209,7 @@ class ExecutionContext(Container):
         key: Checkable,
         *,
         default: BackendType | None = None,
-        player: ExecutionPlayer | None = None,
+        player: EmulatedPlayer | None = None,
     ) -> BackendType | None:
         value = self._mapping_for(key, player).get(key.into_hashable())
         if value is not None:
@@ -224,7 +224,7 @@ class ExecutionContext(Container):
         key: Checkable,
         *,
         default: HousingType | None = None,
-        player: ExecutionPlayer | None = None,
+        player: EmulatedPlayer | None = None,
     ) -> HousingType:
         if default is None:
             default = key.internal_type.default_housing_type()
@@ -249,7 +249,7 @@ class ExecutionContext(Container):
         self,
         text: str,
         *,
-        player: ExecutionPlayer | None = None,
+        player: EmulatedPlayer | None = None,
     ) -> str:
         for pattern, factory in Checkable.iter_pattern_factories():
 
@@ -300,7 +300,7 @@ class ExecutionContext(Container):
         key: str,
         *,
         default: BackendType,
-        player: ExecutionPlayer | None = None,
+        player: EmulatedPlayer | None = None,
     ) -> BackendType:
         seen: set[str] = set()
         while key not in seen:
@@ -327,7 +327,7 @@ class ExecutionContext(Container):
         *,
         cast: bool = True,
         output: Literal['regular'] = ...,
-        player: ExecutionPlayer | None = ...,
+        player: EmulatedPlayer | None = ...,
     ) -> HousingType: ...
 
     @overload
@@ -337,7 +337,7 @@ class ExecutionContext(Container):
         *,
         cast: bool = True,
         output: Literal['backend'],
-        player: ExecutionPlayer | None = ...,
+        player: EmulatedPlayer | None = ...,
     ) -> BackendType: ...
 
     @overload
@@ -347,7 +347,7 @@ class ExecutionContext(Container):
         *,
         cast: bool = True,
         output: Literal['string'],
-        player: ExecutionPlayer | None = ...,
+        player: EmulatedPlayer | None = ...,
     ) -> str: ...
 
     def get(
@@ -356,7 +356,7 @@ class ExecutionContext(Container):
         *,
         cast: bool = True,
         output: Literal['regular', 'backend', 'string'] = 'regular',
-        player: ExecutionPlayer | None = None,
+        player: EmulatedPlayer | None = None,
     ) -> HousingType | BackendType | str:
         if isinstance(key, Checkable):
             key = key.into_string_rhs()
@@ -384,7 +384,7 @@ class ExecutionContext(Container):
         value: HousingType | BackendType,
         *,
         ignore_warning: bool = False,
-        player: ExecutionPlayer | None = None,
+        player: EmulatedPlayer | None = None,
     ) -> None:
         if not ignore_warning and any(not block.is_empty() for block in self.blocks):
             warn(
@@ -392,7 +392,7 @@ class ExecutionContext(Container):
             )
         self._mapping_for(key, player)[key.into_hashable()] = into_backend_type(value)
 
-    def pop(self, key: Checkable, *, player: ExecutionPlayer | None = None) -> None:
+    def pop(self, key: Checkable, *, player: EmulatedPlayer | None = None) -> None:
         self._mapping_for(key, player).pop(key.into_hashable(), None)
 
     def execute_function(
@@ -410,7 +410,7 @@ class ExecutionContext(Container):
             with self.using_player(player):
                 self._invoke_function(function, player)
 
-    def _invoke_function(self, function: 'Function', player: ExecutionPlayer) -> None:
+    def _invoke_function(self, function: 'Function', player: EmulatedPlayer) -> None:
         cooldowns = player.functions_on_cooldown_for_ticks
         if function.name in cooldowns:
             if self.verbose:
@@ -424,7 +424,7 @@ class ExecutionContext(Container):
             log(
                 f'Function \x1b[38;2;255;0;0m"{function.name}"\x1b[0m has no expressions '
                 'to execute. If this is unexpected, consider using the '
-                '\x1b[38;2;255;0;0mexecute\x1b[0m decorator so it is finalized first.',
+                '\x1b[38;2;255;0;0memulate\x1b[0m decorator so it is finalized first.',
             )
             return
         function.block.execute_all_expressions(self)
@@ -437,7 +437,7 @@ class ExecutionContext(Container):
 
     def print(
         self,
-        *values: object | Callable[[], object] | Callable[['ExecutionContext'], object],
+        *values: object | Callable[[], object] | Callable[['EmulatedHouse'], object],
         cast: bool = False,
     ) -> None:
         self.write_or_execute(
@@ -451,7 +451,7 @@ class ExecutionContext(Container):
         self,
         *conditions: Condition
         | Callable[[], Condition | None]
-        | Callable[['ExecutionContext'], Condition | None],
+        | Callable[['EmulatedHouse'], Condition | None],
         message: object = None,
     ) -> None:
         self.write_or_execute(
@@ -466,7 +466,7 @@ class ExecutionContext(Container):
         self,
         *conditions: Condition
         | Callable[[], Condition | None]
-        | Callable[['ExecutionContext'], Condition | None],
+        | Callable[['EmulatedHouse'], Condition | None],
         message: object = None,
     ) -> None:
         self.write_or_execute(

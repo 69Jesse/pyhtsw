@@ -5,7 +5,7 @@ from contextlib import redirect_stdout
 from pyhtsw import (
     Container,
     Else,
-    ExecutionContext,
+    EmulatedHouse,
     GlobalStat,
     IfAll,
     PlayerStat,
@@ -14,11 +14,11 @@ from pyhtsw import (
     function,
 )
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_double()
     out = PlayerStat('out').as_double()
     t = TemporaryStat().as_double()
-    ctx.put(x, -69.0, ignore_warning=True)
+    house.put(x, -69.0, ignore_warning=True)
     with IfAll(x >= 0.0):
         t.value = x
     with Else:
@@ -26,9 +26,9 @@ with ExecutionContext() as ctx:
     out.value = t + 90.0
 
     def check_branch(_o=out) -> None:
-        assert abs(float(ctx.get_raw(_o)) - 381.0) < 1e-6, float(ctx.get_raw(_o))
+        assert abs(float(house.get_raw(_o)) - 381.0) < 1e-6, float(house.get_raw(_o))
 
-    ctx.assert_all(check_branch)
+    house.assert_all(check_branch)
 
 
 with Container() as container:
@@ -56,10 +56,10 @@ assert write_name == read_name, (write_name, read_name, htsl)
 
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
         t = TemporaryStat().as_long()
-        ctx.put(a, 3, ignore_warning=True)
+        house.put(a, 3, ignore_warning=True)
         t.value = a
         t.value *= 10
         chat(f'first {t}')
@@ -69,24 +69,24 @@ assert buf.getvalue().count('30') == 2, buf.getvalue()
 
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         x = PlayerStat('x').as_long()
         t = TemporaryStat().as_long()
-        ctx.put(x, 4, ignore_warning=True)
+        house.put(x, 4, ignore_warning=True)
         t.value = 100
         chat(f'{t} and {x + 1}')
 assert '100 and 5' in buf.getvalue(), buf.getvalue()
 
 
 def _expect(build, expected: float) -> None:
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         out = PlayerStat('out').as_long()
         build(out)
 
         def verify(_o=out, _e=expected) -> None:
-            assert int(ctx.get_raw(_o)) == _e, (int(ctx.get_raw(_o)), _e)
+            assert int(house.get_raw(_o)) == _e, (int(house.get_raw(_o)), _e)
 
-        ctx.assert_all(verify)
+        house.assert_all(verify)
 
 
 def _self_mod(out) -> None:
@@ -114,34 +114,34 @@ _expect(_abs, 42)
 _expect(_shift, 16)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
     scratch = TemporaryStat()  # no type yet
-    ctx.put(x, 8, ignore_warning=True)
+    house.put(x, 8, ignore_warning=True)
     scratch.as_long().value = x
     scratch.as_long().value += 2
     out = PlayerStat('out').as_long()
     out.value = scratch.as_long()
 
     def check_typeless(_o=out) -> None:
-        assert int(ctx.get_raw(_o)) == 10, int(ctx.get_raw(_o))
+        assert int(house.get_raw(_o)) == 10, int(house.get_raw(_o))
 
-    ctx.assert_all(check_typeless)
+    house.assert_all(check_typeless)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     s = TemporaryStat().as_string()
     s.value = 'ab'
     out = PlayerStat('out').as_string()
     out.value = s
 
     def check_string(_o=out) -> None:
-        assert ctx.get_raw(_o) == 'ab', repr(ctx.get_raw(_o))
+        assert house.get_raw(_o) == 'ab', repr(house.get_raw(_o))
 
-    ctx.assert_all(check_string)
+    house.assert_all(check_string)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     g = GlobalStat('g').as_long()
     t = TemporaryStat().as_long()
     t.value = 7
@@ -149,12 +149,12 @@ with ExecutionContext() as ctx:
     g.value = t
 
     def check_global(_g=g) -> None:
-        assert int(ctx.get_raw(_g)) == 12, int(ctx.get_raw(_g))
+        assert int(house.get_raw(_g)) == 12, int(house.get_raw(_g))
 
-    ctx.assert_all(check_global)
+    house.assert_all(check_global)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     temps = [TemporaryStat().as_long() for _ in range(10)]
     for i, temp in enumerate(temps):
         temp.value = i * 100
@@ -162,9 +162,9 @@ with ExecutionContext() as ctx:
     out.value = temps[0] + temps[9]
 
     def check_ten(_o=out) -> None:
-        assert int(ctx.get_raw(_o)) == 900, int(ctx.get_raw(_o))
+        assert int(house.get_raw(_o)) == 900, int(house.get_raw(_o))
 
-    ctx.assert_all(check_ten)
+    house.assert_all(check_ten)
 
 
 with Container() as container:

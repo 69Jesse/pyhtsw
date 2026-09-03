@@ -1,4 +1,4 @@
-from pyhtsw import Container, ExecutionContext, PlayerStat, Preserved
+from pyhtsw import Container, EmulatedHouse, PlayerStat, Preserved
 from pyhtsw.expression.binary_expression import BinaryExpression
 
 
@@ -42,13 +42,13 @@ assert counts.get(BinaryExpression, 0) == 1, counts
 
 
 # Preserved expressions still execute normally.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     stat = PlayerStat('pv2').as_long()
     with Preserved():
         stat.value = 40
         stat.value += 2
 
     def check() -> None:
-        assert int(ctx.get(stat)) == 42
+        assert int(house.get(stat)) == 42
 
-    ctx.assert_all(check)
+    house.assert_all(check)

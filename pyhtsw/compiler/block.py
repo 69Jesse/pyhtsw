@@ -16,7 +16,7 @@ from pyhtsw.utils.log import log
 if TYPE_CHECKING:
     from pyhtsw.compiler.container import Container
     from pyhtsw.declarations.item import Item
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.expression.expression import Expression
 
 
@@ -210,7 +210,7 @@ class Block(BaseObject):
             self.reorder_for_limits()
             self.fix_action_limits(container, index)
 
-    def execute_all_expressions(self, context: 'ExecutionContext') -> None:
+    def execute_all_expressions(self, context: 'EmulatedHouse') -> None:
         from pyhtsw.execute.signal import ExitSignal, PauseSignal
         from pyhtsw.stats.temporary_stat import reserved_temp_numbers
 
@@ -229,7 +229,7 @@ class Block(BaseObject):
             except PauseSignal as sig:
                 context.schedule_continuation(sig.continuation, sig.ticks)
 
-    def execute(self, context: 'ExecutionContext') -> None:
+    def execute(self, context: 'EmulatedHouse') -> None:
         pass  # Do nothing on purpose, since most of the time this is but a definition
 
 
@@ -257,7 +257,7 @@ class GlobalBlock(Block):
     def get_name(self) -> str:
         return 'Rename Me !!!'
 
-    def execute(self, context: 'ExecutionContext') -> None:
+    def execute(self, context: 'EmulatedHouse') -> None:
         self.execute_all_expressions(context)
 
 

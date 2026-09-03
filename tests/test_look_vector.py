@@ -1,6 +1,6 @@
 import math
 
-from pyhtsw import ExecutionContext, PlayerStat, disable_global_export
+from pyhtsw import EmulatedHouse, PlayerStat, disable_global_export
 from pyhtsw.ext import approximate_look_vector
 from pyhtsw.placeholders.player import PlayerPositionPitch, PlayerPositionYaw
 
@@ -10,9 +10,9 @@ TOLERANCE = 0.002
 
 
 def assert_look_close(yaw: float, pitch: float) -> None:
-    with ExecutionContext() as ctx:
-        ctx.current_player.put(PlayerPositionYaw, yaw)
-        ctx.current_player.put(PlayerPositionPitch, pitch)
+    with EmulatedHouse() as house:
+        house.current_player.put(PlayerPositionYaw, yaw)
+        house.current_player.put(PlayerPositionPitch, pitch)
         vx = PlayerStat('vx').as_double()
         vy = PlayerStat('vy').as_double()
         vz = PlayerStat('vz').as_double()
@@ -24,9 +24,9 @@ def assert_look_close(yaw: float, pitch: float) -> None:
     expected_y = -math.sin(pitch_r)
     expected_z = math.cos(yaw_r) * math.cos(pitch_r)
 
-    got_x = float(ctx.get_raw(vx))
-    got_y = float(ctx.get_raw(vy))
-    got_z = float(ctx.get_raw(vz))
+    got_x = float(house.get_raw(vx))
+    got_y = float(house.get_raw(vy))
+    got_z = float(house.get_raw(vz))
 
     assert abs(got_x - expected_x) < TOLERANCE, (yaw, pitch, 'x', got_x, expected_x)
     assert abs(got_y - expected_y) < TOLERANCE, (yaw, pitch, 'y', got_y, expected_y)
@@ -56,11 +56,11 @@ for _yaw in (-135.0, -45.0, 30.0, 60.0, 120.0):
 
 # A non-default yaw/pitch source can be supplied (e.g. stored angles) — here a
 # pair of player stats standing in for the executing player's facing.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     stored_yaw = PlayerStat('stored_yaw').as_double()
     stored_pitch = PlayerStat('stored_pitch').as_double()
-    ctx.current_player.put(stored_yaw, 90.0)
-    ctx.current_player.put(stored_pitch, 0.0)
+    house.current_player.put(stored_yaw, 90.0)
+    house.current_player.put(stored_pitch, 0.0)
     vx = PlayerStat('vx').as_double()
     vy = PlayerStat('vy').as_double()
     vz = PlayerStat('vz').as_double()
@@ -73,5 +73,5 @@ with ExecutionContext() as ctx:
     )
 
 # yaw 90 faces -X.
-assert abs(float(ctx.get_raw(vx)) - (-1.0)) < TOLERANCE, ctx.get_raw(vx)
-assert abs(float(ctx.get_raw(vz)) - 0.0) < TOLERANCE, ctx.get_raw(vz)
+assert abs(float(house.get_raw(vx)) - (-1.0)) < TOLERANCE, house.get_raw(vx)
+assert abs(float(house.get_raw(vz)) - 0.0) < TOLERANCE, house.get_raw(vz)

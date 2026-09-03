@@ -1,8 +1,8 @@
-from pyhtsw import ExecutionContext, chat, execute, function
+from pyhtsw import EmulatedHouse, chat, emulate, function
 
-with ExecutionContext():
+with EmulatedHouse():
 
-    @function('execute decorator test')
+    @function('emulate decorator test')
     def func() -> None:
         chat('hello from the test function')
 
@@ -12,8 +12,8 @@ with ExecutionContext():
 
 
 # Exiting the context above finalized the block, running its callback. The
-# `execute` callback runs even later (atexit), so it sees the populated block.
-@execute()
+# `emulate` callback runs even later (atexit), so it sees the populated block.
+@emulate()
 def run() -> None:
     assert func.block is not None
     assert not func.block.is_empty(), func.block

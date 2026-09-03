@@ -88,7 +88,7 @@ class Checkable(BaseObject):
         return (self.__class__,)
 
     def is_execution_player_scoped(self) -> bool:
-        """Whether this key's simulated value is stored per-player (a `var`/
+        """Whether this key's emulated value is stored per-player (a `var`/
         `%player.…%`) rather than shared across everyone (a `globalvar`)."""
         return False
 

@@ -1,13 +1,13 @@
 import io
 from contextlib import redirect_stdout
 
-from pyhtsw import ExecutionContext, PlayerStat
+from pyhtsw import EmulatedHouse, PlayerStat
 
 # Plain text
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
-        ctx.print('hello')
+    with EmulatedHouse() as house:
+        house.print('hello')
 
 output = buf.getvalue()
 assert 'hello' in output, output
@@ -16,10 +16,10 @@ assert 'hello' in output, output
 # Stat reference is substituted with the put value
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         x = PlayerStat('x').as_long()
-        ctx.put(x, 42)
-        ctx.print('value:', x)
+        house.put(x, 42)
+        house.print('value:', x)
 
 output = buf.getvalue()
 assert 'value:' in output, output
@@ -29,10 +29,10 @@ assert '42' in output, output
 # Multiple prints all show up
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
-        ctx.print('first')
-        ctx.print('second')
-        ctx.print('third')
+    with EmulatedHouse() as house:
+        house.print('first')
+        house.print('second')
+        house.print('third')
 
 output = buf.getvalue()
 assert 'first' in output, output
@@ -45,12 +45,12 @@ assert output.index('first') < output.index('second') < output.index('third')
 # Computed values are printed after the writes finish
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         x = PlayerStat('x').as_long()
         y = PlayerStat('y').as_long()
-        ctx.put(x, 10)
+        house.put(x, 10)
         y.value = x + 5
-        ctx.print('y =', y)
+        house.print('y =', y)
 
 output = buf.getvalue()
 assert '15' in output, output

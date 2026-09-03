@@ -37,7 +37,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -52,7 +52,7 @@ class ExitFunctionExpression(Expression):
     def into_htsl(self) -> str:
         return 'exit'
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         from pyhtsw.execute.signal import ExitSignal
 
         raise ExitSignal()
@@ -63,7 +63,7 @@ def exit_function() -> None:
 
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -87,7 +87,7 @@ class PauseExecutionExpression(Expression):
     def into_htsl(self) -> str:
         return f'pause {self.inline(self.ticks)}'
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         from pyhtsw.execute.signal import PauseSignal
 
         raise PauseSignal(self.ticks)
@@ -127,7 +127,7 @@ def cancel_event() -> None:
 
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -155,7 +155,7 @@ class TriggerFunctionExpression(Expression):
     def referenced_importables(self) -> list[tuple[str, str]]:
         return [('functions', self.function.name)]
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         context.execute_function(
             self.function,
             all_players=self.trigger_for_all_players,
@@ -188,7 +188,7 @@ def trigger_function(
 
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -221,7 +221,7 @@ class RandomExpression(Expression):
         for expr in self.expressions:
             yield from expr.walk_expressions()
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         # A Random action runs exactly *one* of its actions, chosen uniformly —
         # it is a list of alternatives, not a block. With a single action inside
         # it is therefore deterministic, which is what makes it usable as a way

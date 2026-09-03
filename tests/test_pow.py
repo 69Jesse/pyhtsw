@@ -1,6 +1,6 @@
 from helpers import expect_exception
 
-from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw import Container, EmulatedHouse, PlayerStat
 
 # x ** 0 -> integer 1, no expressions written
 with Container() as container:
@@ -66,12 +66,12 @@ with Container():
 
 for base in [0, 1, 2, 3, 5, -3, 7]:
     for exp in [2, 3, 4, 5, 6]:
-        with ExecutionContext() as ctx:
+        with EmulatedHouse() as house:
             x = PlayerStat('x').as_long()
             y = PlayerStat('y').as_long()
-            ctx.put(x, base)
+            house.put(x, base)
             y.value = x**exp
 
-        actual = int(ctx.get_raw(y))
+        actual = int(house.get_raw(y))
         expected = base**exp
         assert actual == expected, f'{base}**{exp}: got {actual}, expected {expected}'

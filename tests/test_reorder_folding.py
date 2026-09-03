@@ -2,7 +2,7 @@ from collections.abc import Callable
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     PlayerStat,
     chat,
     function,
@@ -97,13 +97,13 @@ assert 'chat "hello"' in folded, folded
 
 
 # The folded program computes what the unfolded one did.
-with ExecutionContext() as ctx:
-    ctx.put(coins, 100, ignore_warning=True)
-    ctx.put(gems, 0, ignore_warning=True)
+with EmulatedHouse() as house:
+    house.put(coins, 100, ignore_warning=True)
+    house.put(gems, 0, ignore_warning=True)
     separated()
 
     def check() -> None:
-        assert int(ctx.get(coins)) == 116, ctx.get(coins)
-        assert int(ctx.get(gems)) == 3, ctx.get(gems)
+        assert int(house.get(coins)) == 116, house.get(coins)
+        assert int(house.get(gems)) == 3, house.get(gems)
 
-    ctx.assert_all(check)
+    house.assert_all(check)

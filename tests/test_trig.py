@@ -2,7 +2,7 @@ import math
 import random
 import re
 
-from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw import Container, EmulatedHouse, PlayerStat
 from pyhtsw.expression.binary_expression import BinaryExpression
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 from pyhtsw.ext import (
@@ -25,13 +25,13 @@ random.seed(20260821)
 
 
 def run_one(build, put_values):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         stats = {name: PlayerStat(name).as_double() for name in put_values}
         out = PlayerStat('out').as_double()
         for name, v in put_values.items():
-            ctx.put(stats[name], v)
+            house.put(stats[name], v)
         build(stats, out)
-    return float(ctx.get_raw(out))
+    return float(house.get_raw(out))
 
 
 for _ in range(24):
@@ -190,16 +190,16 @@ _names = set(re.findall(r'tmp\d+', container.into_htsl()))
 assert len(_names) <= 3, _names
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     for _i in range(16):
-        ctx.put(PlayerStat(f'tmp{_i}'), 999_999 + _i, ignore_warning=True)
+        house.put(PlayerStat(f'tmp{_i}'), 999_999 + _i, ignore_warning=True)
     for _i in range(4):
-        ctx.put(PlayerStat(f'hw{_i}_0'), -12345, ignore_warning=True)
-        ctx.put(PlayerStat(f'hw{_i}_500'), -54321, ignore_warning=True)
-        ctx.put(PlayerStat(f'sw{_i}_0'), 'garbage', ignore_warning=True)
+        house.put(PlayerStat(f'hw{_i}_0'), -12345, ignore_warning=True)
+        house.put(PlayerStat(f'hw{_i}_500'), -54321, ignore_warning=True)
+        house.put(PlayerStat(f'sw{_i}_0'), 'garbage', ignore_warning=True)
 
     _angle = PlayerStat('ang').as_double()
-    ctx.put(_angle, 37.0)
+    house.put(_angle, 37.0)
     _s = PlayerStat('cs').as_double()
     _c = PlayerStat('cc').as_double()
     _h = PlayerStat('ch').as_double()
@@ -213,7 +213,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_chain() -> None:
         # The pair's ~0.008 amplitude error propagates through atan2 as up to
         # ~0.6 degrees; the chain checks composition, not fresh accuracy.
-        assert abs(float(ctx.get_raw(_h)) - 1.0) < 0.02, ctx.get_raw(_h)
-        assert abs(float(ctx.get_raw(_r)) - 37.0) < 0.75, ctx.get_raw(_r)
+        assert abs(float(house.get_raw(_h)) - 1.0) < 0.02, house.get_raw(_h)
+        assert abs(float(house.get_raw(_r)) - 37.0) < 0.75, house.get_raw(_r)
 
-    ctx.assert_all(check_chain)
+    house.assert_all(check_chain)

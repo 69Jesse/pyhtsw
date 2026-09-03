@@ -1,6 +1,6 @@
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     NoFallbackValues,
     NoOptimization,
     NoTypeCasting,
@@ -57,18 +57,18 @@ with NoTypeCasting():
 assert htsl == 'var "s" = "Alice" true', htsl
 
 
-# NoTypeCasting in the simulator: a Python-`str` placeholder rhs goes through
+# NoTypeCasting in the emulator: a Python-`str` placeholder rhs goes through
 # the native fullmatch path instead of the cast pipeline, so the lhs keeps
 # the source type. With the flag off, `c` would store long 123.
 with NoTypeCasting():
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').with_auto_unset(False)
         a.value = 123.0
         c = PlayerStat('c').with_auto_unset(False)
         c.value = f'{a}'
 
-assert isinstance(ctx.get_raw(c), float), type(ctx.get_raw(c))
-assert ctx.get_raw(c) == 123.0, ctx.get_raw(c)
+assert isinstance(house.get_raw(c), float), type(house.get_raw(c))
+assert house.get_raw(c) == 123.0, house.get_raw(c)
 
 
 # NoFallbackValues alone: typed-stat placeholders render without the

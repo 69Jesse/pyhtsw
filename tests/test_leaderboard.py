@@ -3,7 +3,7 @@ from contextlib import redirect_stdout
 
 from helpers import expect_exception
 
-from pyhtsw import Container, ExecutionContext, GlobalStat, PlayerStat
+from pyhtsw import Container, EmulatedHouse, GlobalStat, PlayerStat
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
 from pyhtsw.ext.leaderboard import KEY_LIMIT, SortedTopN
 
@@ -29,32 +29,32 @@ def build(capacity: int = CAPACITY, **kwargs: object) -> SortedTopN:
     )
 
 
-def names_of(board: SortedTopN, ctx: ExecutionContext) -> list[str]:
-    return [str(ctx.get_raw(slot[0])) for slot in board.slots]
+def names_of(board: SortedTopN, house: EmulatedHouse) -> list[str]:
+    return [str(house.get_raw(slot[0])) for slot in board.slots]
 
 
-def keys_of(board: SortedTopN, ctx: ExecutionContext) -> list[int]:
-    return [int(ctx.get_raw(slot[3])) for slot in board.slots]
+def keys_of(board: SortedTopN, house: EmulatedHouse) -> list[int]:
+    return [int(house.get_raw(slot[3])) for slot in board.slots]
 
 
 # === Ordering ===
 
 # Entries land in ascending key order regardless of insertion order.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     for name, ms in (('c', 3000), ('a', 1000), ('d', 4000), ('b', 2000)):
         board.insert((name, f'{ms}ms', 0, ms))
 
     def check_sorted(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx) == ['a', 'b', 'c', 'd', '---']
-        assert keys_of(_b, ctx)[:4] == [1000, 2000, 3000, 4000]
+        assert names_of(_b, house) == ['a', 'b', 'c', 'd', '---']
+        assert keys_of(_b, house)[:4] == [1000, 2000, 3000, 4000]
 
-    ctx.assert_all(check_sorted)
+    house.assert_all(check_sorted)
 
 
 # A full board evicts the worst entry, and a row that misses changes nothing.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     for i, ms in enumerate((1000, 2000, 3000, 4000, 5000)):
@@ -63,44 +63,44 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     board.insert(('slow', 't', 0, 9000))
 
     def check_evicted(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx) == ['a', 'b', 'mid', 'c', 'd']
+        assert names_of(_b, house) == ['a', 'b', 'mid', 'c', 'd']
 
-    ctx.assert_all(check_evicted)
+    house.assert_all(check_evicted)
 
 
 # Ties keep the older entry ahead of the newer one.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     board.insert(('first', 't', 0, 500))
     board.insert(('second', 't', 0, 500))
 
     def check_tie(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx)[:2] == ['first', 'second']
+        assert names_of(_b, house)[:2] == ['first', 'second']
 
-    ctx.assert_all(check_tie)
+    house.assert_all(check_tie)
 
 
 # All four columns travel together when a row shifts.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     board.insert(('slowpoke', '9.99', 7, 9000))
     board.insert(('speedy', '1.11', 2, 1000))
 
     def check_columns(_b: SortedTopN = board) -> None:
-        assert str(ctx.get_raw(_b.slots[0][1])) == '1.11'
-        assert int(ctx.get_raw(_b.slots[0][2])) == 2
-        assert str(ctx.get_raw(_b.slots[1][1])) == '9.99'
-        assert int(ctx.get_raw(_b.slots[1][2])) == 7
+        assert str(house.get_raw(_b.slots[0][1])) == '1.11'
+        assert int(house.get_raw(_b.slots[0][2])) == 2
+        assert str(house.get_raw(_b.slots[1][1])) == '9.99'
+        assert int(house.get_raw(_b.slots[1][2])) == 7
 
-    ctx.assert_all(check_columns)
+    house.assert_all(check_columns)
 
 
 # === Identity / dedupe ===
 
 # A better time replaces the player's own row instead of adding a second one.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     board.insert(('bob', 't', 0, 5000), identity='bob')
@@ -108,14 +108,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     board.insert(('bob', 't', 0, 1000), identity='bob')
 
     def check_dedupe(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx) == ['bob', 'amy', '---', '---', '---']
-        assert keys_of(_b, ctx)[:2] == [1000, 3000]
+        assert names_of(_b, house) == ['bob', 'amy', '---', '---', '---']
+        assert keys_of(_b, house)[:2] == [1000, 3000]
 
-    ctx.assert_all(check_dedupe)
+    house.assert_all(check_dedupe)
 
 
 # A worse time from a player already on the board is ignored entirely.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     board.insert(('bob', 'good', 1, 1000), identity='bob')
@@ -123,16 +123,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     board.insert(('bob', 'bad', 9, 8000), identity='bob')
 
     def check_ignored(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx)[:2] == ['bob', 'amy']
-        assert keys_of(_b, ctx)[0] == 1000
-        assert str(ctx.get_raw(_b.slots[0][1])) == 'good'
-        assert int(ctx.get_raw(_b.slots[0][2])) == 1
+        assert names_of(_b, house)[:2] == ['bob', 'amy']
+        assert keys_of(_b, house)[0] == 1000
+        assert str(house.get_raw(_b.slots[0][1])) == 'good'
+        assert int(house.get_raw(_b.slots[0][2])) == 1
 
-    ctx.assert_all(check_ignored)
+    house.assert_all(check_ignored)
 
 
 # Improving inside a full board keeps every other row, and nothing is evicted.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     for i, ms in enumerate((1000, 2000, 3000, 4000, 5000)):
@@ -140,57 +140,57 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     board.insert(('e', 't', 0, 1500), identity='e')
 
     def check_full_improve(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx) == ['a', 'e', 'b', 'c', 'd']
+        assert names_of(_b, house) == ['a', 'e', 'b', 'c', 'd']
 
-    ctx.assert_all(check_full_improve)
+    house.assert_all(check_full_improve)
 
 
 # Without an identity the same player can hold several rows.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     board.insert(('bob', 't', 0, 5000))
     board.insert(('bob', 't', 0, 1000))
 
     def check_no_identity(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx)[:2] == ['bob', 'bob']
+        assert names_of(_b, house)[:2] == ['bob', 'bob']
 
-    ctx.assert_all(check_no_identity)
+    house.assert_all(check_no_identity)
 
 
 # === Descending ===
 
 # order='descending' ranks the highest key first.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build(order='descending')
     board.seed()
     for name, score in (('low', 10), ('high', 900), ('mid', 400)):
         board.insert((name, 't', 0, score))
 
     def check_descending(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx)[:3] == ['high', 'mid', 'low']
+        assert names_of(_b, house)[:3] == ['high', 'mid', 'low']
 
-    ctx.assert_all(check_descending)
+    house.assert_all(check_descending)
 
 
 # === Callbacks ===
 
 # if_entered fires only for a row that made the board; if_missed for one that did not.
 buffer = io.StringIO()
-with redirect_stdout(buffer), ExecutionContext(ignore_action_limits=True) as ctx:
+with redirect_stdout(buffer), EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.seed()
     for i, ms in enumerate((1000, 2000, 3000, 4000, 5000)):
         board.insert((chr(ord('a') + i), 't', 0, ms))
     board.insert(
         ('nope', 't', 0, 9999),
-        if_entered=lambda: ctx.print('entered'),
-        if_missed=lambda: ctx.print('missed'),
+        if_entered=lambda: house.print('entered'),
+        if_missed=lambda: house.print('missed'),
     )
     board.insert(
         ('yes', 't', 0, 1),
-        if_entered=lambda: ctx.print('entered'),
-        if_missed=lambda: ctx.print('missed'),
+        if_entered=lambda: house.print('entered'),
+        if_missed=lambda: house.print('missed'),
     )
 printed = buffer.getvalue().split()
 assert printed == ['missed', 'entered'], printed
@@ -199,14 +199,14 @@ assert printed == ['missed', 'entered'], printed
 # === Seeding ===
 
 # A board that was never seeded reads unset keys as 0, which outrank everything.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     board = build()
     board.insert(('real', 't', 0, 1000))
 
     def check_unseeded(_b: SortedTopN = board) -> None:
-        assert names_of(_b, ctx)[0] != 'real'
+        assert names_of(_b, house)[0] != 'real'
 
-    ctx.assert_all(check_unseeded)
+    house.assert_all(check_unseeded)
 
 
 # === Validation ===

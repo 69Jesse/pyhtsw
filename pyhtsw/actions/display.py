@@ -28,7 +28,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 def _or_reset(value: Checkable | str) -> Checkable | str:
@@ -60,7 +60,7 @@ class ChatExpression(Expression):
     def into_htsl(self) -> str:
         return f'chat {self.inline_quoted(_chat_text(self.line, field="chat text"))}'
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         log(
             formatting_to_ansi(
                 f'&7* &f{context.get(self.line, cast=False, output="string")}',
@@ -86,7 +86,7 @@ def chat(line: Checkable | str) -> None:
 
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -141,7 +141,7 @@ class DisplayTitleExpression(Expression):
             f' {self.inline(self.fadein)} {self.inline(self.stay)} {self.inline(self.fadeout)}'
         )
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         log(
             formatting_to_ansi(
                 '&7<display-title>\n'
@@ -196,7 +196,7 @@ def display_title(
 
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -217,7 +217,7 @@ class DisplayActionBarExpression(Expression):
     def into_htsl(self) -> str:
         return f'actionBar {self.inline_quoted(_chat_text(self.text, field="display_action_bar text"))}'
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         log(
             formatting_to_ansi(
                 '&7<display-action-bar>\n'

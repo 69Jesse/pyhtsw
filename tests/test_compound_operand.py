@@ -2,7 +2,7 @@ import math
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     IfAll,
     PlayerPositionX,
     PlayerPositionY,
@@ -160,13 +160,13 @@ assert container.into_htsl() == expected, container.into_htsl()
 
 
 # Two computed conditions each evaluate independently
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     a = PlayerStat('a').as_long()
     b = PlayerStat('b').as_long()
     low = PlayerStat('low').as_long()
     high = PlayerStat('high').as_long()
-    ctx.put(a, 40, ignore_warning=True)
-    ctx.put(b, 40, ignore_warning=True)
+    house.put(a, 40, ignore_warning=True)
+    house.put(b, 40, ignore_warning=True)
     low.value = 0
     high.value = 0
     with IfAll((a * b) > 1000):
@@ -174,85 +174,85 @@ with ExecutionContext() as ctx:
     with IfAll((a * b) > 2000):
         high.value = 1
 
-assert int(ctx.get_raw(low)) == 1, ctx.get_raw(low)
-assert int(ctx.get_raw(high)) == 0, ctx.get_raw(high)
+assert int(house.get_raw(low)) == 1, house.get_raw(low)
+assert int(house.get_raw(high)) == 0, house.get_raw(high)
 
 
 # The squared distance computes the right number
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_double()
     y = PlayerStat('y').as_double()
     z = PlayerStat('z').as_double()
     out = PlayerStat('out').as_double()
-    ctx.put(x, 10.0, ignore_warning=True)
-    ctx.put(y, 5.0, ignore_warning=True)
-    ctx.put(z, 2.0, ignore_warning=True)
+    house.put(x, 10.0, ignore_warning=True)
+    house.put(y, 5.0, ignore_warning=True)
+    house.put(z, 2.0, ignore_warning=True)
     out.value = (x - 1.0) ** 2 + (y - 1.0) ** 2 + (z - 1.0) ** 2
 
-actual = float(ctx.get_raw(out))
+actual = float(house.get_raw(out))
 expected_value = (10 - 1) ** 2 + (5 - 1) ** 2 + (2 - 1) ** 2
 assert actual == expected_value, f'got {actual}, expected {expected_value}'
 
 
 # The sum(...) form computes the same number
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_double()
     y = PlayerStat('y').as_double()
     z = PlayerStat('z').as_double()
     out = PlayerStat('out').as_double()
-    ctx.put(x, 10.0, ignore_warning=True)
-    ctx.put(y, 5.0, ignore_warning=True)
-    ctx.put(z, 2.0, ignore_warning=True)
+    house.put(x, 10.0, ignore_warning=True)
+    house.put(y, 5.0, ignore_warning=True)
+    house.put(z, 2.0, ignore_warning=True)
     out.value = sum(((x - 1.0) ** 2, (y - 1.0) ** 2, (z - 1.0) ** 2))
 
-actual = float(ctx.get_raw(out))
+actual = float(house.get_raw(out))
 assert actual == expected_value, f'got {actual}, expected {expected_value}'
 
 
 # A multi-temp compound inside a condition branches right
 for a_val, hit in ((30, 1), (1, 0)):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
         b = PlayerStat('b').as_long()
         c = PlayerStat('c').as_long()
         d = PlayerStat('d').as_long()
         flag = PlayerStat('flag').as_long()
-        ctx.put(a, a_val, ignore_warning=True)
-        ctx.put(b, 40, ignore_warning=True)
-        ctx.put(c, 2, ignore_warning=True)
-        ctx.put(d, 3, ignore_warning=True)
+        house.put(a, a_val, ignore_warning=True)
+        house.put(b, 40, ignore_warning=True)
+        house.put(c, 2, ignore_warning=True)
+        house.put(d, 3, ignore_warning=True)
         flag.value = 0
         with IfAll((a * b + c * d) > 1000):
             flag.value = 1
 
-    actual = int(ctx.get_raw(flag))
+    actual = int(house.get_raw(flag))
     expected_flag = 1 if (a_val * 40 + 2 * 3) > 1000 else 0
     assert actual == expected_flag == hit, f'a={a_val}: got {actual}'
 
 
 # A nested rhs self reference is not lost
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
     a = PlayerStat('a').as_long()
-    ctx.put(a, 3, ignore_warning=True)
+    house.put(a, 3, ignore_warning=True)
     x.value = 5
     x.value = (x + a) ** 2
 
-actual = int(ctx.get_raw(x))
+actual = int(house.get_raw(x))
 assert actual == (5 + 3) ** 2, f'got {actual}, expected {(5 + 3) ** 2}'
 
 
 # A compound built on a computed base, with a self-referencing `%` assignment
 for deg in (10.0, 145.0, 235.0, -200.0):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         raw = PlayerStat('raw').as_double()
         folded = PlayerStat('folded').as_double()
-        ctx.put(raw, deg, ignore_warning=True)
+        house.put(raw, deg, ignore_warning=True)
         folded.value = raw % 360.0
         folded.value = folded + 90.0
         folded.value = folded % 180.0 - 90.0
 
-    actual = float(ctx.get_raw(folded))
+    actual = float(house.get_raw(folded))
     expected_value = ((deg % 360.0) + 90.0) % 180.0 - 90.0
     assert math.isclose(actual, expected_value, abs_tol=1e-3), (
         f'deg={deg}: got {actual}, expected {expected_value}'

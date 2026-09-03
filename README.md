@@ -118,4 +118,4 @@ def on_join() -> None:
 
 ## Documentation
 
-[`docs/`](docs/) covers the whole thing in more depth, from [importables](docs/importables.md) and [expressions](docs/expressions.md) to the [optimizer](docs/optimizer.md), [scope rules](docs/scope.md) and the [simulator](docs/simulator.md).
+[`docs/`](docs/) covers the whole thing in more depth, from [importables](docs/importables.md) and [expressions](docs/expressions.md) to the [optimizer](docs/optimizer.md) and [emulation](docs/emulation.md).

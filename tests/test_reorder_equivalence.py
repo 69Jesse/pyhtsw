@@ -5,7 +5,7 @@ from contextlib import redirect_stdout
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     IfAll,
     NoOptimization,
     PlayerStat,
@@ -61,8 +61,8 @@ def executed(seed: int, *, reorder: bool) -> tuple[dict[str, object], list[str]]
     """Final stat values plus the chat lines the run printed."""
     captured = io.StringIO()
 
-    def run() -> ExecutionContext:
-        with ExecutionContext() as context:
+    def run() -> EmulatedHouse:
+        with EmulatedHouse() as context:
             for index, name in enumerate(STAT_NAMES):
                 context.put(STATS[name], index + 1, ignore_warning=True)
             emit(random.Random(seed), allow_barriers=False)

@@ -3,13 +3,13 @@ from contextlib import redirect_stdout
 
 from helpers import expect_exception
 
-from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw import Container, EmulatedHouse, PlayerStat
 from pyhtsw.ext.stack_queue import IntQueue, IntStack, Queue, Stack
 
 # === Single holder, width 1 ===
 
 # Push then pop returns the most recent value.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -19,14 +19,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)
 
     def check_top() -> None:
-        assert int(ctx.get(out)) == 7
+        assert int(house.get(out)) == 7
 
-    ctx.assert_all(check_top)
+    house.assert_all(check_top)
 
 
 # Push N values, pop them all in LIFO order.
 for _n in (1, 5, 7):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         h = PlayerStat('h').as_long()
         counter = PlayerStat('c').as_long()
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
@@ -38,15 +38,15 @@ for _n in (1, 5, 7):
 
         def check_lifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
-                got = int(ctx.get(_outs[i]))
+                got = int(house.get(_outs[i]))
                 want = (_count - i) * 11
                 assert got == want, f'pop {i}: got {got}, want {want}'
 
-        ctx.assert_all(check_lifo)
+        house.assert_all(check_lifo)
 
 
 # Pop on an empty stack writes -1 to the output.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -54,14 +54,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)
 
     def check_empty() -> None:
-        assert int(ctx.get(out)) == -1
+        assert int(house.get(out)) == -1
 
-    ctx.assert_all(check_empty)
+    house.assert_all(check_empty)
 
 
 # Custom `if_empty` sentinel: empty pop writes the configured value, and
 # a successful pop is unaffected (still returns the actual value).
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out_empty = PlayerStat('oe').as_long()
@@ -72,36 +72,36 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out_real)
 
     def check_custom_sentinel() -> None:
-        assert int(ctx.get(out_empty)) == 999
-        assert int(ctx.get(out_real)) == 42
+        assert int(house.get(out_empty)) == 999
+        assert int(house.get(out_real)) == 42
 
-    ctx.assert_all(check_custom_sentinel)
+    house.assert_all(check_custom_sentinel)
 
 
 # `if_empty` can also be a Checkable (read from another stat at HTSL time).
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     sentinel_src = PlayerStat('sentinel').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(sentinel_src, 7777, ignore_warning=True)
+    house.put(sentinel_src, 7777, ignore_warning=True)
     s = IntStack(holder=h, counter=counter, most=255, if_empty=sentinel_src)
     s.pop(output=out)
 
     def check_dynamic_sentinel() -> None:
-        assert int(ctx.get(out)) == 7777
+        assert int(house.get(out)) == 7777
 
-    ctx.assert_all(check_dynamic_sentinel)
+    house.assert_all(check_dynamic_sentinel)
 
 
 # `if_empty` as a Callable runs inside the Else context instead of writing
 # to outputs. Lets the caller emit arbitrary HTSL on empty.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     flag = PlayerStat('flag').as_long()
-    ctx.put(out, 123, ignore_warning=True)  # so we can detect "untouched"
+    house.put(out, 123, ignore_warning=True)  # so we can detect "untouched"
 
     def on_empty() -> None:
         flag.value = 1
@@ -110,30 +110,30 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)
 
     def check_callable_empty() -> None:
-        assert int(ctx.get(flag)) == 1
-        assert int(ctx.get(out)) == 123  # output untouched
+        assert int(house.get(flag)) == 1
+        assert int(house.get(out)) == 123  # output untouched
 
-    ctx.assert_all(check_callable_empty)
+    house.assert_all(check_callable_empty)
 
 
 # `if_empty=None` skips the Else entirely — output is left at whatever it
 # previously held.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(out, 555, ignore_warning=True)
+    house.put(out, 555, ignore_warning=True)
     s = IntStack(holder=h, counter=counter, most=255, if_empty=None)
     s.pop(output=out)
 
     def check_none_empty() -> None:
-        assert int(ctx.get(out)) == 555
+        assert int(house.get(out)) == 555
 
-    ctx.assert_all(check_none_empty)
+    house.assert_all(check_none_empty)
 
 
 # `if_present` runs inside the IF body whenever the pop succeeds.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -150,36 +150,36 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)  # empty   -> pops stays at 2
 
     def check_if_present() -> None:
-        assert int(ctx.get(pops)) == 2
+        assert int(house.get(pops)) == 2
 
-    ctx.assert_all(check_if_present)
+    house.assert_all(check_if_present)
 
 
 # Per-call `if_empty` / `if_present` override the class-level values. The
 # per-call argument takes precedence — including the ability to suppress
 # a class-level callback by passing None.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out_class = PlayerStat('oc').as_long()
     out_override = PlayerStat('oo').as_long()
     out_suppress = PlayerStat('os').as_long()
-    ctx.put(out_suppress, 42, ignore_warning=True)
+    house.put(out_suppress, 42, ignore_warning=True)
     s = IntStack(holder=h, counter=counter, most=255, if_empty=100)
     s.pop(output=out_class)  # uses class-level 100
     s.pop(output=out_override, if_empty=200)  # overrides to 200
     s.pop(output=out_suppress, if_empty=None)  # suppresses, untouched
 
     def check_per_call() -> None:
-        assert int(ctx.get(out_class)) == 100
-        assert int(ctx.get(out_override)) == 200
-        assert int(ctx.get(out_suppress)) == 42
+        assert int(house.get(out_class)) == 100
+        assert int(house.get(out_override)) == 200
+        assert int(house.get(out_suppress)) == 42
 
-    ctx.assert_all(check_per_call)
+    house.assert_all(check_per_call)
 
 
 # Counter tracks current depth.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     s = IntStack(holder=h, counter=counter, most=255)
@@ -188,13 +188,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.push(3)
 
     def check_counter() -> None:
-        assert int(ctx.get(counter)) == 3
+        assert int(house.get(counter)) == 3
 
-    ctx.assert_all(check_counter)
+    house.assert_all(check_counter)
 
 
 # Push, pop to empty, then pop again -> -1 (counter doesn't go negative).
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out_first = PlayerStat('of').as_long()
@@ -205,11 +205,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out_second)
 
     def check_double_pop() -> None:
-        assert int(ctx.get(out_first)) == 99
-        assert int(ctx.get(out_second)) == -1
-        assert int(ctx.get(counter)) == 0
+        assert int(house.get(out_first)) == 99
+        assert int(house.get(out_second)) == -1
+        assert int(house.get(counter)) == 0
 
-    ctx.assert_all(check_double_pop)
+    house.assert_all(check_double_pop)
 
 
 # === Overflow modes (single holder, capacity == per_holder_capacity) ===
@@ -217,7 +217,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 # 'ignore': pushes past capacity are no-ops; the original 7 values survive.
 # (capacity_is_exact pins real_capacity to 7 even though per_holder_capacity
 # would otherwise grow to 8 for bits=8.)
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(7)]
@@ -233,23 +233,23 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         s.push(i + 1)
 
     def check_counter_saturated() -> None:
-        assert int(ctx.get(counter)) == 7
+        assert int(house.get(counter)) == 7
 
-    ctx.assert_all(check_counter_saturated)
+    house.assert_all(check_counter_saturated)
     for i in range(7):
         s.pop(output=outs[i])
 
     def check_ignore_pops(_outs: list = outs) -> None:
         for i in range(7):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = 7 - i
             assert got == want, f'ignore pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_ignore_pops)
+    house.assert_all(check_ignore_pops)
 
 
 # 'override_newest': pushes past capacity replace the top in place.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(7)]
@@ -265,9 +265,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         s.push(i + 1)
 
     def check_stack_override_newest_counter() -> None:
-        assert int(ctx.get(counter)) == 7
+        assert int(house.get(counter)) == 7
 
-    ctx.assert_all(check_stack_override_newest_counter)
+    house.assert_all(check_stack_override_newest_counter)
     for i in range(7):
         s.pop(output=outs[i])
 
@@ -276,16 +276,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         # replaced by the next push). LIFO pop order: 10, 6, 5, 4, 3, 2, 1.
         expected = [10, 6, 5, 4, 3, 2, 1]
         for i, want in enumerate(expected):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'stack override_newest pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_stack_override_newest)
+    house.assert_all(check_stack_override_newest)
 
 
 # 'override_oldest': pushes past capacity drop the oldest; counter stays full.
 # (Stack's override_oldest requires real_capacity == n_holders * per_holder
 # _capacity, so we use the natural single-holder capacity for bits=8: 8.)
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(8)]
@@ -300,19 +300,19 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         s.push(i + 1)
 
     def check_override_counter() -> None:
-        assert int(ctx.get(counter)) == 8
+        assert int(house.get(counter)) == 8
 
-    ctx.assert_all(check_override_counter)
+    house.assert_all(check_override_counter)
     for i in range(8):
         s.pop(output=outs[i])
 
     def check_override_pops(_outs: list = outs) -> None:
         for i in range(8):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = 11 - i  # LIFO of [4..11]
             assert got == want, f'override pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_override_pops)
+    house.assert_all(check_override_pops)
 
 
 # === Multi-holder cascade ===
@@ -320,7 +320,7 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 # (default growth fills both holders).
 
 # Push past per_holder_capacity to force the carry between holders.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(14)]
     s = IntStack(
@@ -336,17 +336,17 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_cascade(_outs: list = outs) -> None:
         for i in range(14):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = 14 - i
             assert got == want, f'cascade pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_cascade)
+    house.assert_all(check_cascade)
 
 
 # Multi-holder + override_oldest: oldest cascades out the top of the last holder.
 # (capacity=14 grows to real_capacity=16 = 2*per_holder_capacity, satisfying the
 # stack's override_oldest tile-evenness requirement.)
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(16)]
     s = IntStack(
@@ -363,17 +363,17 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_multi_override(_outs: list = outs) -> None:
         for i in range(16):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = 22 - i  # LIFO of [7..22]
             assert got == want, f'multi-override pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_multi_override)
+    house.assert_all(check_multi_override)
 
 
 # Multi-holder partial fill: pushing fewer values than per_holder_capacity
 # stays in holder 0 entirely; pop should still work and counter should
 # drain to 0.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(3)]
     s = IntStack(
@@ -389,18 +389,18 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         s.pop(output=outs[i])
 
     def check_partial(_outs: list = outs) -> None:
-        assert int(ctx.get(_outs[0])) == 33
-        assert int(ctx.get(_outs[1])) == 22
-        assert int(ctx.get(_outs[2])) == 11
-        assert int(ctx.get(counter)) == 0
+        assert int(house.get(_outs[0])) == 33
+        assert int(house.get(_outs[1])) == 22
+        assert int(house.get(_outs[2])) == 11
+        assert int(house.get(counter)) == 0
 
-    ctx.assert_all(check_partial)
+    house.assert_all(check_partial)
 
 
 # === Width > 1: parallel sub-stacks share one counter ===
 
 # most=1023 keeps room for the second column's larger values (up to 300).
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [
         (PlayerStat(f'oa{i}').as_long(), PlayerStat(f'ob{i}').as_long())
@@ -420,14 +420,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_width2(_outs: list = outs) -> None:
         expected = [(3, 300), (2, 200), (1, 100)]
         for i, (oa, ob) in enumerate(_outs):
-            got = (int(ctx.get(oa)), int(ctx.get(ob)))
+            got = (int(house.get(oa)), int(house.get(ob)))
             assert got == expected[i], f'width2 pop {i}: got {got}, want {expected[i]}'
 
-    ctx.assert_all(check_width2)
+    house.assert_all(check_width2)
 
 
 # Width > 1 + multi-holder: each width-position has its own n_holders chain.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [
         (PlayerStat(f'wa{i}').as_long(), PlayerStat(f'wb{i}').as_long())
@@ -450,11 +450,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_width2_multi(_outs: list = outs) -> None:
         for i in range(12):
             n = 12 - i
-            got = (int(ctx.get(_outs[i][0])), int(ctx.get(_outs[i][1])))
+            got = (int(house.get(_outs[i][0])), int(house.get(_outs[i][1])))
             want = (n, n * 10)
             assert got == want, f'width2-multi pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_width2_multi)
+    house.assert_all(check_width2_multi)
 
 
 # === Init failure cases ===
@@ -579,7 +579,7 @@ with expect_exception(ValueError):
 # === Single holder, width 1, basic FIFO ===
 
 # Enqueue then dequeue returns the OLDEST value (not the newest).
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -589,14 +589,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.pop(output=out)
 
     def check_front() -> None:
-        assert int(ctx.get(out)) == 42
+        assert int(house.get(out)) == 42
 
-    ctx.assert_all(check_front)
+    house.assert_all(check_front)
 
 
 # Enqueue N values, dequeue them all in FIFO order.
 for _n in (1, 5, 7):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         h = PlayerStat('h').as_long()
         counter = PlayerStat('c').as_long()
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
@@ -608,15 +608,15 @@ for _n in (1, 5, 7):
 
         def check_fifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
-                got = int(ctx.get(_outs[i]))
+                got = int(house.get(_outs[i]))
                 want = (i + 1) * 11
                 assert got == want, f'dequeue {i}: got {got}, want {want}'
 
-        ctx.assert_all(check_fifo)
+        house.assert_all(check_fifo)
 
 
 # Dequeue on an empty queue writes -1 to the output.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -624,14 +624,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.pop(output=out)
 
     def check_dequeue_empty() -> None:
-        assert int(ctx.get(out)) == -1
+        assert int(house.get(out)) == -1
 
-    ctx.assert_all(check_dequeue_empty)
+    house.assert_all(check_dequeue_empty)
 
 
 # Custom `if_empty` sentinel for IntQueue: empty dequeue writes the
 # configured value; a successful dequeue is unaffected.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out_empty = PlayerStat('oe').as_long()
@@ -642,14 +642,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.pop(output=out_real)
 
     def check_q_custom_sentinel() -> None:
-        assert int(ctx.get(out_empty)) == 42
-        assert int(ctx.get(out_real)) == 99
+        assert int(house.get(out_empty)) == 42
+        assert int(house.get(out_real)) == 99
 
-    ctx.assert_all(check_q_custom_sentinel)
+    house.assert_all(check_q_custom_sentinel)
 
 
 # Counter tracks current depth.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     q = IntQueue(holder=h, counter=counter, most=255)
@@ -658,13 +658,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.push(3)
 
     def check_q_counter() -> None:
-        assert int(ctx.get(counter)) == 3
+        assert int(house.get(counter)) == 3
 
-    ctx.assert_all(check_q_counter)
+    house.assert_all(check_q_counter)
 
 
 # Interleaved enqueue/dequeue keeps FIFO order.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     out_a = PlayerStat('oa').as_long()
@@ -679,18 +679,18 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.pop(output=out_c)  # 33
 
     def check_interleave() -> None:
-        assert int(ctx.get(out_a)) == 11
-        assert int(ctx.get(out_b)) == 22
-        assert int(ctx.get(out_c)) == 33
-        assert int(ctx.get(counter)) == 0
+        assert int(house.get(out_a)) == 11
+        assert int(house.get(out_b)) == 22
+        assert int(house.get(out_c)) == 33
+        assert int(house.get(counter)) == 0
 
-    ctx.assert_all(check_interleave)
+    house.assert_all(check_interleave)
 
 
 # === Overflow modes ===
 
 # 'ignore': enqueue past capacity is a no-op; the original 7 survive.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(7)]
@@ -709,17 +709,17 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_q_ignore(_outs: list = outs) -> None:
         for i in range(7):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = i + 1
             assert got == want, f'q-ignore deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_ignore)
+    house.assert_all(check_q_ignore)
 
 
 # 'override_oldest': enqueue past capacity drops the FRONT (oldest).
 # Queue's override_oldest doesn't require tile-evenness, so we can pin
 # real_capacity to 7 with capacity_is_exact=True.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(7)]
@@ -738,15 +738,15 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_q_override(_outs: list = outs) -> None:
         for i in range(7):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = i + 4  # FIFO of [4..10]
             assert got == want, f'q-override deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_override)
+    house.assert_all(check_q_override)
 
 
 # 'override_newest' for queue: drop the BACK and replace with new.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     h = PlayerStat('h').as_long()
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(7)]
@@ -762,9 +762,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         q.push(i + 1)
 
     def check_q_override_newest_counter() -> None:
-        assert int(ctx.get(counter)) == 7
+        assert int(house.get(counter)) == 7
 
-    ctx.assert_all(check_q_override_newest_counter)
+    house.assert_all(check_q_override_newest_counter)
     for i in range(7):
         q.pop(output=outs[i])
 
@@ -772,15 +772,15 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         # Stored: [1, 2, 3, 4, 5, 6, 10] (front -> back).
         expected = [1, 2, 3, 4, 5, 6, 10]
         for i, want in enumerate(expected):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'q override_newest deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_override_newest)
+    house.assert_all(check_q_override_newest)
 
 
 # Queue's override_newest works with multi-holder where the back slot lives
 # in the LAST holder. (capacity=14 grows to real_capacity=16 by default.)
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(16)]
     q = IntQueue(
@@ -800,17 +800,17 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         # replaced the back slot, ending with 20).
         expected = list(range(1, 16)) + [20]
         for i, want in enumerate(expected):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, (
                 f'q multi-override_newest deq {i}: got {got}, want {want}'
             )
 
-    ctx.assert_all(check_q_multi_override_newest)
+    house.assert_all(check_q_multi_override_newest)
 
 
 # Queue's override_oldest works even when real_capacity doesn't tile evenly,
 # unlike IntStack which requires the exact match.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(10)]
     q = IntQueue(
@@ -828,16 +828,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_q_override_exact(_outs: list = outs) -> None:
         for i in range(10):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = i + 6
             assert got == want, f'q-override-exact deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_override_exact)
+    house.assert_all(check_q_override_exact)
 
 
 # === Multi-holder cascade ===
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(14)]
     q = IntQueue(
@@ -853,16 +853,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_q_cascade(_outs: list = outs) -> None:
         for i in range(14):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = i + 1
             assert got == want, f'q-cascade deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_cascade)
+    house.assert_all(check_q_cascade)
 
 
 # Multi-holder + override_oldest. Queue's override_oldest doesn't require
 # real_capacity to tile evenly, so capacity_is_exact pins it to 14.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(14)]
     q = IntQueue(
@@ -880,16 +880,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_q_multi_override(_outs: list = outs) -> None:
         for i in range(14):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = i + 7  # FIFO of [7..20]
             assert got == want, f'q-multi-override deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_multi_override)
+    house.assert_all(check_q_multi_override)
 
 
 # === Width > 1 ===
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [
         (PlayerStat(f'oa{i}').as_long(), PlayerStat(f'ob{i}').as_long())
@@ -909,16 +909,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_q_width2(_outs: list = outs) -> None:
         expected = [(1, 100), (2, 200), (3, 300)]
         for i, (oa, ob) in enumerate(_outs):
-            got = (int(ctx.get(oa)), int(ctx.get(ob)))
+            got = (int(house.get(oa)), int(house.get(ob)))
             assert got == expected[i], (
                 f'q-width2 deq {i}: got {got}, want {expected[i]}'
             )
 
-    ctx.assert_all(check_q_width2)
+    house.assert_all(check_q_width2)
 
 
 # Width > 1 + multi-holder
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [
         (PlayerStat(f'wqa{i}').as_long(), PlayerStat(f'wqb{i}').as_long())
@@ -941,11 +941,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_q_width2_multi(_outs: list = outs) -> None:
         for i in range(12):
             n = i + 1
-            got = (int(ctx.get(_outs[i][0])), int(ctx.get(_outs[i][1])))
+            got = (int(house.get(_outs[i][0])), int(house.get(_outs[i][1])))
             want = (n, n * 10)
             assert got == want, f'q-width2-multi deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_q_width2_multi)
+    house.assert_all(check_q_width2_multi)
 
 
 # === Failure cases ===
@@ -1026,7 +1026,7 @@ with expect_exception(ValueError):
 # ===========================================================================
 
 # Push then pop returns the most recent value.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'sh{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -1036,14 +1036,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)
 
     def check_stack_top() -> None:
-        assert int(ctx.get(out)) == 7
+        assert int(house.get(out)) == 7
 
-    ctx.assert_all(check_stack_top)
+    house.assert_all(check_stack_top)
 
 
 # Push N values, pop them all in LIFO order. Capacity = N.
 for _n in (1, 4, 8):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         holders = [PlayerStat(f'h{i}').as_long() for i in range(_n)]
         counter = PlayerStat('c').as_long()
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
@@ -1055,53 +1055,53 @@ for _n in (1, 4, 8):
 
         def check_stack_lifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
-                got = int(ctx.get(_outs[i]))
+                got = int(house.get(_outs[i]))
                 want = (_count - i) * 11
                 assert got == want, f'Stack pop {i}: got {got}, want {want}'
 
-        ctx.assert_all(check_stack_lifo)
+        house.assert_all(check_stack_lifo)
 
 
 # Pop on an empty Stack leaves output unchanged (no -1 sentinel since the
 # slot type is arbitrary). Counter doesn't go negative either.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(3)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(out, 999, ignore_warning=True)
+    house.put(out, 999, ignore_warning=True)
     s = Stack(holders=holders, counter=counter)
     s.pop(output=out)
 
     def check_stack_empty() -> None:
-        assert int(ctx.get(out)) == 999  # untouched
-        assert int(ctx.get(counter)) == 0
+        assert int(house.get(out)) == 999  # untouched
+        assert int(house.get(counter)) == 0
 
-    ctx.assert_all(check_stack_empty)
+    house.assert_all(check_stack_empty)
 
 
 # Plain Stack with `if_empty` set to a HousingType value writes that to
 # the output on empty pop. Default behavior (None) is to leave it alone.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(3)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(out, 100, ignore_warning=True)
+    house.put(out, 100, ignore_warning=True)
     s = Stack(holders=holders, counter=counter, if_empty=-99)
     s.pop(output=out)
 
     def check_stack_if_empty() -> None:
-        assert int(ctx.get(out)) == -99
+        assert int(house.get(out)) == -99
 
-    ctx.assert_all(check_stack_if_empty)
+    house.assert_all(check_stack_if_empty)
 
 
 # Plain Stack `if_empty` as a Callable runs in the Else context.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(3)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
     flag = PlayerStat('flag').as_long()
-    ctx.put(out, 5, ignore_warning=True)
+    house.put(out, 5, ignore_warning=True)
 
     def on_empty_stack() -> None:
         flag.value = 7
@@ -1110,15 +1110,15 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)
 
     def check_stack_callable_empty() -> None:
-        assert int(ctx.get(flag)) == 7
-        assert int(ctx.get(out)) == 5
+        assert int(house.get(flag)) == 7
+        assert int(house.get(out)) == 5
 
-    ctx.assert_all(check_stack_callable_empty)
+    house.assert_all(check_stack_callable_empty)
 
 
 # Plain Stack `if_present` runs on successful pop. Per-call override
 # can also suppress it with None.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(3)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -1136,13 +1136,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.pop(output=out)  # success -> pops=2
 
     def check_stack_if_present() -> None:
-        assert int(ctx.get(pops)) == 2
+        assert int(house.get(pops)) == 2
 
-    ctx.assert_all(check_stack_if_present)
+    house.assert_all(check_stack_if_present)
 
 
 # Counter tracks current depth.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(5)]
     counter = PlayerStat('c').as_long()
     s = Stack(holders=holders, counter=counter)
@@ -1151,13 +1151,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     s.push(3)
 
     def check_stack_counter() -> None:
-        assert int(ctx.get(counter)) == 3
+        assert int(house.get(counter)) == 3
 
-    ctx.assert_all(check_stack_counter)
+    house.assert_all(check_stack_counter)
 
 
 # 'ignore': pushes past capacity are no-ops; the original 4 survive.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
@@ -1169,14 +1169,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_stack_ignore(_outs: list = outs) -> None:
         for i, want in enumerate([4, 3, 2, 1]):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'Stack ignore pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_stack_ignore)
+    house.assert_all(check_stack_ignore)
 
 
 # 'override_oldest': drops the bottom and shifts up.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
@@ -1188,14 +1188,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_stack_override_oldest(_outs: list = outs) -> None:
         for i, want in enumerate([7, 6, 5, 4]):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'Stack override_oldest pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_stack_override_oldest)
+    house.assert_all(check_stack_override_oldest)
 
 
 # 'override_newest': replaces the top in place when full.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
@@ -1208,14 +1208,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_stack_override_newest(_outs: list = outs) -> None:
         # Stored: [7, 3, 2, 1] (top to bottom). Pop order: 7, 3, 2, 1.
         for i, want in enumerate([7, 3, 2, 1]):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'Stack override_newest pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_stack_override_newest)
+    house.assert_all(check_stack_override_newest)
 
 
 # Width > 1 with mixed-type holders: each width-position is a separate Stat.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [
         (PlayerStat(f'a{i}').as_long(), PlayerStat(f'b{i}').as_long()) for i in range(3)
     ]
@@ -1234,16 +1234,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_stack_width2(_outs: list = outs) -> None:
         expected = [(3, 300), (2, 200), (1, 100)]
         for i, (oa, ob) in enumerate(_outs):
-            got = (int(ctx.get(oa)), int(ctx.get(ob)))
+            got = (int(house.get(oa)), int(house.get(ob)))
             assert got == expected[i], (
                 f'Stack width-2 pop {i}: got {got}, want {expected[i]}'
             )
 
-    ctx.assert_all(check_stack_width2)
+    house.assert_all(check_stack_width2)
 
 
 # Plain Stack works with non-int types — string holders, string values.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'sh{i}').as_string() for i in range(3)]
     counter = PlayerStat('c').as_long()
     str_outs = [PlayerStat(f'so{i}').as_string() for i in range(3)]
@@ -1255,11 +1255,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         s.pop(output=str_outs[i])
 
     def check_stack_string() -> None:
-        assert str(ctx.get(str_outs[0])) == 'gamma'
-        assert str(ctx.get(str_outs[1])) == 'beta'
-        assert str(ctx.get(str_outs[2])) == 'alpha'
+        assert str(house.get(str_outs[0])) == 'gamma'
+        assert str(house.get(str_outs[1])) == 'beta'
+        assert str(house.get(str_outs[2])) == 'alpha'
 
-    ctx.assert_all(check_stack_string)
+    house.assert_all(check_stack_string)
 
 
 # === Stack failure cases ===
@@ -1305,7 +1305,7 @@ with expect_exception(ValueError):
 # ===========================================================================
 
 # Enqueue then dequeue returns the OLDEST value.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'qh{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
@@ -1315,14 +1315,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.pop(output=out)
 
     def check_queue_front() -> None:
-        assert int(ctx.get(out)) == 42
+        assert int(house.get(out)) == 42
 
-    ctx.assert_all(check_queue_front)
+    house.assert_all(check_queue_front)
 
 
 # Enqueue N values, dequeue in FIFO order.
 for _n in (1, 4, 8):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         holders = [PlayerStat(f'h{i}').as_long() for i in range(_n)]
         counter = PlayerStat('c').as_long()
         outs = [PlayerStat(f'o{i}').as_long() for i in range(_n)]
@@ -1334,31 +1334,31 @@ for _n in (1, 4, 8):
 
         def check_queue_fifo(_count: int = _n, _outs: list = outs) -> None:
             for i in range(_count):
-                got = int(ctx.get(_outs[i]))
+                got = int(house.get(_outs[i]))
                 want = (i + 1) * 11
                 assert got == want, f'Queue dequeue {i}: got {got}, want {want}'
 
-        ctx.assert_all(check_queue_fifo)
+        house.assert_all(check_queue_fifo)
 
 
 # Dequeue on empty leaves output unchanged.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(3)]
     counter = PlayerStat('c').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(out, 999, ignore_warning=True)
+    house.put(out, 999, ignore_warning=True)
     q = Queue(holders=holders, counter=counter)
     q.pop(output=out)
 
     def check_queue_empty() -> None:
-        assert int(ctx.get(out)) == 999
-        assert int(ctx.get(counter)) == 0
+        assert int(house.get(out)) == 999
+        assert int(house.get(counter)) == 0
 
-    ctx.assert_all(check_queue_empty)
+    house.assert_all(check_queue_empty)
 
 
 # Interleaved enqueue/dequeue keeps FIFO order.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(3)]
     counter = PlayerStat('c').as_long()
     out_a = PlayerStat('oa').as_long()
@@ -1373,16 +1373,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     q.pop(output=out_c)  # 33
 
     def check_queue_interleave() -> None:
-        assert int(ctx.get(out_a)) == 11
-        assert int(ctx.get(out_b)) == 22
-        assert int(ctx.get(out_c)) == 33
-        assert int(ctx.get(counter)) == 0
+        assert int(house.get(out_a)) == 11
+        assert int(house.get(out_b)) == 22
+        assert int(house.get(out_c)) == 33
+        assert int(house.get(counter)) == 0
 
-    ctx.assert_all(check_queue_interleave)
+    house.assert_all(check_queue_interleave)
 
 
 # 'ignore': enqueue past capacity is a no-op; original 4 survive in order.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
@@ -1394,14 +1394,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_queue_ignore(_outs: list = outs) -> None:
         for i, want in enumerate([1, 2, 3, 4]):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'Queue ignore deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_queue_ignore)
+    house.assert_all(check_queue_ignore)
 
 
 # 'override_oldest': drop front, shift down, write new at back.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
@@ -1413,14 +1413,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_queue_override_oldest(_outs: list = outs) -> None:
         for i, want in enumerate([4, 5, 6, 7]):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'Queue override_oldest deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_queue_override_oldest)
+    house.assert_all(check_queue_override_oldest)
 
 
 # 'override_newest': replace the back slot in place.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'h{i}').as_long() for i in range(4)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'o{i}').as_long() for i in range(4)]
@@ -1433,14 +1433,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_queue_override_newest(_outs: list = outs) -> None:
         # Stored: [1, 2, 3, 7] front -> back.
         for i, want in enumerate([1, 2, 3, 7]):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'Queue override_newest deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_queue_override_newest)
+    house.assert_all(check_queue_override_newest)
 
 
 # Width > 1 queue.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [
         (PlayerStat(f'qa{i}').as_long(), PlayerStat(f'qb{i}').as_long())
         for i in range(3)
@@ -1460,16 +1460,16 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     def check_queue_width2(_outs: list = outs) -> None:
         expected = [(1, 100), (2, 200), (3, 300)]
         for i, (oa, ob) in enumerate(_outs):
-            got = (int(ctx.get(oa)), int(ctx.get(ob)))
+            got = (int(house.get(oa)), int(house.get(ob)))
             assert got == expected[i], (
                 f'Queue width-2 deq {i}: got {got}, want {expected[i]}'
             )
 
-    ctx.assert_all(check_queue_width2)
+    house.assert_all(check_queue_width2)
 
 
 # String values through a plain Queue.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'qs{i}').as_string() for i in range(3)]
     counter = PlayerStat('c').as_long()
     qstr_outs = [PlayerStat(f'qso{i}').as_string() for i in range(3)]
@@ -1481,11 +1481,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         q.pop(output=qstr_outs[i])
 
     def check_queue_string() -> None:
-        assert str(ctx.get(qstr_outs[0])) == 'first'
-        assert str(ctx.get(qstr_outs[1])) == 'second'
-        assert str(ctx.get(qstr_outs[2])) == 'third'
+        assert str(house.get(qstr_outs[0])) == 'first'
+        assert str(house.get(qstr_outs[1])) == 'second'
+        assert str(house.get(qstr_outs[2])) == 'third'
 
-    ctx.assert_all(check_queue_string)
+    house.assert_all(check_queue_string)
 
 
 # === Queue failure cases ===
@@ -1516,7 +1516,7 @@ _BIG = 28  # slot holders: a 27-deep shift clears the per-if action cap
 _INT_CAP = 104  # IntStack/IntQueue capacity -> 13 holders, tile-even for 8-bit
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'bigq{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigqo{i}').as_long() for i in range(_BIG)]
@@ -1528,13 +1528,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_big_queue(_outs: list = outs) -> None:
         for i in range(_BIG):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == i + 1, f'big queue deq {i}: got {got}, want {i + 1}'
 
-    ctx.assert_all(check_big_queue)
+    house.assert_all(check_big_queue)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'bigqo{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigqoo{i}').as_long() for i in range(_BIG)]
@@ -1546,14 +1546,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_big_queue_oldest(_outs: list = outs) -> None:
         for i in range(_BIG):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = i + 9  # FIFO of [9 .. 36]
             assert got == want, f'big queue oldest deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_big_queue_oldest)
+    house.assert_all(check_big_queue_oldest)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'bigqn{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigqno{i}').as_long() for i in range(_BIG)]
@@ -1567,13 +1567,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         # Stored front -> back: [1 .. 27, 36].
         expected = list(range(1, _BIG)) + [_BIG + 8]
         for i, want in enumerate(expected):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'big queue newest deq {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_big_queue_newest)
+    house.assert_all(check_big_queue_newest)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'bigs{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigso{i}').as_long() for i in range(_BIG)]
@@ -1585,14 +1585,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_big_stack(_outs: list = outs) -> None:
         for i in range(_BIG):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = _BIG - i  # LIFO of [1 .. 28]
             assert got == want, f'big stack pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_big_stack)
+    house.assert_all(check_big_stack)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'bigso{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigsoo{i}').as_long() for i in range(_BIG)]
@@ -1604,14 +1604,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_big_stack_oldest(_outs: list = outs) -> None:
         for i in range(_BIG):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = _BIG + 8 - i  # LIFO of [9 .. 36]
             assert got == want, f'big stack oldest pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_big_stack_oldest)
+    house.assert_all(check_big_stack_oldest)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     holders = [PlayerStat(f'bigsn{i}').as_long() for i in range(_BIG)]
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigsno{i}').as_long() for i in range(_BIG)]
@@ -1625,13 +1625,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         # Stored top -> bottom: [36, 27, 26, ..., 1].
         expected = [_BIG + 8] + [_BIG - i for i in range(1, _BIG)]
         for i, want in enumerate(expected):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == want, f'big stack newest pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_big_stack_newest)
+    house.assert_all(check_big_stack_newest)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigiq{i}').as_long() for i in range(16)]
     q = IntQueue(
@@ -1647,13 +1647,13 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_big_intqueue(_outs: list = outs) -> None:
         for i in range(16):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == i + 1, f'big IntQueue deq {i}: got {got}, want {i + 1}'
 
-    ctx.assert_all(check_big_intqueue)
+    house.assert_all(check_big_intqueue)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     counter = PlayerStat('c').as_long()
     outs = [PlayerStat(f'bigis{i}').as_long() for i in range(16)]
     s = IntStack(
@@ -1669,11 +1669,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_big_intstack(_outs: list = outs) -> None:
         for i in range(16):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             want = 16 - i  # LIFO of [1 .. 16]
             assert got == want, f'big IntStack pop {i}: got {got}, want {want}'
 
-    ctx.assert_all(check_big_intstack)
+    house.assert_all(check_big_intstack)
 
 
 with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
@@ -1725,7 +1725,7 @@ with redirect_stdout(io.StringIO()):  # silence "created a new function" logs
 
 for _cap in (10, 25, 30, 50):
     for _ov in ('ignore', 'override_newest', 'override_oldest'):
-        with ExecutionContext(ignore_action_limits=True) as ctx:
+        with EmulatedHouse(ignore_action_limits=True) as house:
             _holders = [PlayerStat(f'fq{i}').as_long() for i in range(_cap)]
             _q = Queue(
                 holders=_holders,
@@ -1742,7 +1742,7 @@ for _cap in (10, 25, 30, 50):
                 _h: list = _holders,
                 _n: int = _pushed,
             ) -> None:
-                got = [int(ctx.get(s)) for s in _h]
+                got = [int(house.get(s)) for s in _h]
                 if _o == 'ignore':
                     want = [1000 + v for v in range(_c)]
                 elif _o == 'override_newest':
@@ -1751,4 +1751,4 @@ for _cap in (10, 25, 30, 50):
                     want = [1000 + v for v in range(_n - _c, _n)]
                 assert got == want, (_c, _o, got, want)
 
-            ctx.assert_all(check_fast_queue)
+            house.assert_all(check_fast_queue)

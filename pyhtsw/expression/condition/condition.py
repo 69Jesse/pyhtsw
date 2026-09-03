@@ -9,7 +9,7 @@ from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
     from pyhtsw.checkable import Checkable
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.expression.housing_type import HousingType
     from pyhtsw.stats.stat import Stat
 
@@ -45,14 +45,14 @@ class Condition(BaseObject):
     def __invert__(self) -> Self:
         return self.cloned(inverted=not self.inverted)
 
-    def raw_evaluate(self, context: 'ExecutionContext') -> bool:
+    def raw_evaluate(self, context: 'EmulatedHouse') -> bool:
         log(
             f'No execution implemented for condition \x1b[38;2;255;0;0m"{self!r}"\x1b[0m, returning False',
         )
         return False
 
     @final
-    def evaluate(self, context: 'ExecutionContext') -> bool:
+    def evaluate(self, context: 'EmulatedHouse') -> bool:
         if context.verbose:
             log(f'Executing condition \x1b[38;2;255;0;0m"{self!r}"\x1b[0m')
         value = self.raw_evaluate(context)

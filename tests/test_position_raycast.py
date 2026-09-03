@@ -2,7 +2,7 @@ import math
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     IfAll,
     Item,
     PlayerStat,
@@ -28,7 +28,7 @@ disable_global_export()
 
 
 def stand(
-    ctx: ExecutionContext,
+    house: EmulatedHouse,
     x: float = 0.5,
     y: float = 0.0,
     z: float = 0.5,
@@ -37,18 +37,18 @@ def stand(
     pitch: float = 0.0,
 ) -> None:
     """Place the caster. yaw=0 looks towards +Z, pitch=90 looks straight down."""
-    ctx.put(PlayerPositionX, x, ignore_warning=True)
-    ctx.put(PlayerPositionY, y, ignore_warning=True)
-    ctx.put(PlayerPositionZ, z, ignore_warning=True)
-    ctx.put(PlayerPositionYaw, yaw, ignore_warning=True)
-    ctx.put(PlayerPositionPitch, pitch, ignore_warning=True)
+    house.put(PlayerPositionX, x, ignore_warning=True)
+    house.put(PlayerPositionY, y, ignore_warning=True)
+    house.put(PlayerPositionZ, z, ignore_warning=True)
+    house.put(PlayerPositionYaw, yaw, ignore_warning=True)
+    house.put(PlayerPositionPitch, pitch, ignore_warning=True)
 
 
 # === The block dead ahead is hit; the ones beside, behind and above are not.
 # The ray runs along +Z with look.x and look.y both exactly zero, which is the
 # case the slab reciprocal has to survive. ===
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast(
         'Ahead',
         [
@@ -60,60 +60,60 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 0, ctx.get_raw(ray.index)
-assert abs(float(ctx.get_raw(ray.distance)) - 5.0) < 0.01, ctx.get_raw(ray.distance)
+assert int(house.get_raw(ray.index)) == 0, house.get_raw(ray.index)
+assert abs(float(house.get_raw(ray.distance)) - 5.0) < 0.01, house.get_raw(ray.distance)
 
 
 # === Closest wins, whatever order the positions are listed in. ===
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast('Closest', [(0, 1, 9), (0, 1, 3), (0, 1, 6)])
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 1, ctx.get_raw(ray.index)
-assert abs(float(ctx.get_raw(ray.distance)) - 3.0) < 0.01, ctx.get_raw(ray.distance)
+assert int(house.get_raw(ray.index)) == 1, house.get_raw(ray.index)
+assert abs(float(house.get_raw(ray.distance)) - 3.0) < 0.01, house.get_raw(ray.distance)
 
 
 # === max_distance rejects everything past it, and a total miss leaves index at
 # -1 with distance parked on the cap. ===
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast('Capped', [(0, 1, 20)], max_distance=8.0)
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == -1, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == -1, house.get_raw(ray.index)
 
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast('Uncapped', [(0, 1, 20)], max_distance=None)
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 0, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 0, house.get_raw(ray.index)
 
 
 # === Looking straight down finds the block under the caster's feet. ===
-with ExecutionContext() as ctx:
-    stand(ctx, y=10.0, pitch=90.0)
+with EmulatedHouse() as house:
+    stand(house, y=10.0, pitch=90.0)
     ray = create_position_raycast('Down', [(0, 9, 0), (0, 20, 0)])
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 0, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 0, house.get_raw(ray.index)
 
 
 # === A diagonal ray: yaw 45 looks towards -X/+Z, so the block on that diagonal
 # is hit and the one straight ahead is not. ===
-with ExecutionContext() as ctx:
-    stand(ctx, yaw=45.0)
+with EmulatedHouse() as house:
+    stand(house, yaw=45.0)
     ray = create_position_raycast('Diagonal', [(0, 1, 5), (-5, 1, 5)])
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 1, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 1, house.get_raw(ray.index)
 
 
 # === Shapes: a sphere small enough to sit inside the block it replaces is
 # missed by a ray that clears its centre, while the block is hit. ===
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast(
         'Shapes',
         [
@@ -123,14 +123,14 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 1, ctx.get_raw(ray.index)
-assert abs(float(ctx.get_raw(ray.distance)) - 9.0) < 0.01, ctx.get_raw(ray.distance)
+assert int(house.get_raw(ray.index)) == 1, house.get_raw(ray.index)
+assert abs(float(house.get_raw(ray.distance)) - 9.0) < 0.01, house.get_raw(ray.distance)
 
 
 # === A Box is centred on its position, unlike a Block, and per-axis sizes make
 # a slab: 9 wide in x, 1 tall, so the ray that misses a cube still hits it. ===
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast(
         'Slab',
         [
@@ -140,30 +140,30 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 1, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 1, house.get_raw(ray.index)
 
 
 # === Dynamic coordinates: a target whose position lives in stats moves with
 # them, and mixes freely with constant ones. ===
 block_z = PlayerStat('target/z').as_double()
 
-with ExecutionContext() as ctx:
-    stand(ctx)
-    ctx.put(block_z, 4.0, ignore_warning=True)
+with EmulatedHouse() as house:
+    stand(house)
+    house.put(block_z, 4.0, ignore_warning=True)
     ray = create_position_raycast('Dynamic', [(0, 1, 12), RayTarget(0, 1, block_z)])
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 1, ctx.get_raw(ray.index)
-assert abs(float(ctx.get_raw(ray.distance)) - 4.0) < 0.01, ctx.get_raw(ray.distance)
+assert int(house.get_raw(ray.index)) == 1, house.get_raw(ray.index)
+assert abs(float(house.get_raw(ray.distance)) - 4.0) < 0.01, house.get_raw(ray.distance)
 
 
 # === Conditions gate a target without changing the geometry: the nearer block
 # is skipped while its switch is off, so the farther one is reported. ===
 switch = PlayerStat('switch').as_long()
 
-with ExecutionContext() as ctx:
-    stand(ctx)
-    ctx.put(switch, 0, ignore_warning=True)
+with EmulatedHouse() as house:
+    stand(house)
+    house.put(switch, 0, ignore_warning=True)
     ray = create_position_raycast(
         'Gated',
         [
@@ -173,11 +173,11 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 1, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 1, house.get_raw(ray.index)
 
-with ExecutionContext() as ctx:
-    stand(ctx)
-    ctx.put(switch, 1, ignore_warning=True)
+with EmulatedHouse() as house:
+    stand(house)
+    house.put(switch, 1, ignore_warning=True)
     ray = create_position_raycast(
         'Ungated',
         [
@@ -187,13 +187,13 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 0, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 0, house.get_raw(ray.index)
 
 
 # === An explicit origin and direction detach the cast from the caster's eyes
 # entirely — the same helper serves a projectile. ===
-with ExecutionContext() as ctx:
-    stand(ctx, x=100.0, y=100.0, z=100.0)  # nowhere near the ray
+with EmulatedHouse() as house:
+    stand(house, x=100.0, y=100.0, z=100.0)  # nowhere near the ray
     ray = create_position_raycast(
         'Projectile',
         [(0, 0, 5)],
@@ -202,17 +202,17 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(ray.index)) == 0, ctx.get_raw(ray.index)
+assert int(house.get_raw(ray.index)) == 0, house.get_raw(ray.index)
 
 
 # === compute_hit_point puts the point on the ray at `distance`. ===
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
     ray = create_position_raycast('Point', [(0, 1, 5)], compute_hit_point=True)
     ray.trigger()
 
 assert ray.hit_z is not None
-assert abs(float(ctx.get_raw(ray.hit_z)) - 5.5) < 0.02, ctx.get_raw(ray.hit_z)
+assert abs(float(house.get_raw(ray.hit_z)) - 5.5) < 0.02, house.get_raw(ray.hit_z)
 
 
 # === Callbacks: on_hit runs at top level (so it may branch), on_miss inside a
@@ -222,8 +222,8 @@ miss_flag = PlayerStat('cb/miss').as_long()
 which = PlayerStat('cb/which').as_long()
 
 
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
 
     def on_hit() -> None:
         hit_flag.value = 1
@@ -245,12 +245,12 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(hit_flag)) == 2, ctx.get_raw(hit_flag)
-assert int(ctx.get_raw(miss_flag)) == 0, ctx.get_raw(miss_flag)
-assert int(ctx.get_raw(which)) == 101, ctx.get_raw(which)
+assert int(house.get_raw(hit_flag)) == 2, house.get_raw(hit_flag)
+assert int(house.get_raw(miss_flag)) == 0, house.get_raw(miss_flag)
+assert int(house.get_raw(which)) == 101, house.get_raw(which)
 
-with ExecutionContext() as ctx:
-    stand(ctx)
+with EmulatedHouse() as house:
+    stand(house)
 
     def on_hit_2() -> None:
         hit_flag.value = 1
@@ -266,8 +266,8 @@ with ExecutionContext() as ctx:
     )
     ray.trigger()
 
-assert int(ctx.get_raw(hit_flag)) == 0, ctx.get_raw(hit_flag)
-assert int(ctx.get_raw(miss_flag)) == 1, ctx.get_raw(miss_flag)
+assert int(house.get_raw(hit_flag)) == 0, house.get_raw(hit_flag)
+assert int(house.get_raw(miss_flag)) == 1, house.get_raw(miss_flag)
 
 
 # === Pair CSE must not change what the cast computes. A grid shares partial
@@ -275,15 +275,15 @@ assert int(ctx.get_raw(miss_flag)) == 1, ctx.get_raw(miss_flag)
 GRID = [(x, 1, z) for x in range(-2, 3) for z in range(3, 8)]
 
 for use_pairs in (True, False):
-    with ExecutionContext() as ctx:
-        stand(ctx)
+    with EmulatedHouse() as house:
+        stand(house)
         ray = create_position_raycast(
             f'Grid {use_pairs}',
             GRID,
             pair_cse=use_pairs,
         )
         ray.trigger()
-    hit = int(ctx.get_raw(ray.index))
+    hit = int(house.get_raw(ray.index))
     assert GRID[hit] == (0, 1, 3), (use_pairs, hit, GRID[hit])
 
 
@@ -357,8 +357,8 @@ for _shape, _label in ((Sphere(1.0), 'Sphere(1.0)'), (Box(2.0), 'Box(2.0)')):
             _cx, _cy, _cz = (
                 (0.5, 1.62, 0.5)[_k] + _direction[_k] * _distance for _k in range(3)
             )
-            with ExecutionContext() as ctx:
-                stand(ctx, yaw=_yaw, pitch=_pitch)
+            with EmulatedHouse() as house:
+                stand(house, yaw=_yaw, pitch=_pitch)
                 ray = create_position_raycast(
                     'Oblique',
                     [RayTarget(_cx, _cy, _cz)],
@@ -366,14 +366,14 @@ for _shape, _label in ((Sphere(1.0), 'Sphere(1.0)'), (Box(2.0), 'Box(2.0)')):
                     max_distance=None,
                 )
                 ray.trigger()
-            assert int(ctx.get_raw(ray.index)) == 0, (
+            assert int(house.get_raw(ray.index)) == 0, (
                 _label,
                 _yaw,
                 _pitch,
                 _distance,
-                ctx.get_raw(ray.index),
+                house.get_raw(ray.index),
             )
-            _got = float(ctx.get_raw(ray.distance))
+            _got = float(house.get_raw(ray.distance))
             assert abs(_got - _distance) < 0.1, (
                 _label,
                 _yaw,

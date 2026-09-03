@@ -2,7 +2,7 @@ import re
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     PlayerStat,
     TemporaryStat,
     chat,
@@ -68,10 +68,10 @@ htsl = block_htsl(container, 'Sequential')
 assert max_temp(htsl) <= 1, htsl
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     a = PlayerStat('a').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(a, 100, ignore_warning=True)
+    house.put(a, 100, ignore_warning=True)
     t1 = TemporaryStat().as_long()
     t2 = TemporaryStat().as_long()
     t1.value = a  # both live at once
@@ -80,16 +80,16 @@ with ExecutionContext() as ctx:
     out.value = t1 + t2  # 100 + 101
 
     def check_overlap(_o=out) -> None:
-        assert int(ctx.get_raw(_o)) == 201, int(ctx.get_raw(_o))
+        assert int(house.get_raw(_o)) == 201, int(house.get_raw(_o))
 
-    ctx.assert_all(check_overlap)
+    house.assert_all(check_overlap)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     a = PlayerStat('a').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(a, 5, ignore_warning=True)
-    ctx.put(out, 0, ignore_warning=True)
+    house.put(a, 5, ignore_warning=True)
+    house.put(out, 0, ignore_warning=True)
     for i in range(1, 4):
         t = TemporaryStat().as_long()  # fresh temp each round, reuses the number
         t.value = a
@@ -97,6 +97,6 @@ with ExecutionContext() as ctx:
         out.value += t  # 5*1 + 5*2 + 5*3 = 30
 
     def check_reuse(_o=out) -> None:
-        assert int(ctx.get_raw(_o)) == 30, int(ctx.get_raw(_o))
+        assert int(house.get_raw(_o)) == 30, int(house.get_raw(_o))
 
-    ctx.assert_all(check_reuse)
+    house.assert_all(check_reuse)

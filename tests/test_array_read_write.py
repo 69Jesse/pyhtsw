@@ -3,7 +3,7 @@ import random
 
 from helpers import expect_exception
 
-from pyhtsw import Container, ExecutionContext, GlobalStat, PlayerStat
+from pyhtsw import Container, EmulatedHouse, GlobalStat, PlayerStat
 from pyhtsw.actions.flow import IfAll, RandomExpression
 from pyhtsw.expression.binary_expression import BinaryExpression
 from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
@@ -36,7 +36,7 @@ def value_at(i: int, k: int) -> int:
 
 for length in (1, 10, 100):
     for width in (1, 3):
-        with ExecutionContext(ignore_action_limits=True) as ctx:
+        with EmulatedHouse(ignore_action_limits=True) as house:
             sources = [
                 tuple(
                     PlayerStat(letter_name(i * width + k)).as_long()
@@ -46,7 +46,7 @@ for length in (1, 10, 100):
             ]
             for i in range(length):
                 for k in range(width):
-                    ctx.put(sources[i][k], value_at(i, k))
+                    house.put(sources[i][k], value_at(i, k))
 
             items_arg = [s[0] for s in sources] if width == 1 else list(sources)
 
@@ -65,14 +65,14 @@ for length in (1, 10, 100):
                     _outs: tuple[PlayerStat, ...] = outputs,
                 ) -> None:
                     for k in range(_w):
-                        got = int(ctx.get(_outs[k]))
+                        got = int(house.get(_outs[k]))
                         want = value_at(_t, k)
                         assert got == want, (
                             f'read width={_w} length={_len} target={_t}: '
                             f'output[{k}]={got}, want {want}'
                         )
 
-                ctx.assert_all(check_read)
+                house.assert_all(check_read)
 
 
 NEW_OFFSET = 1_000_000  # added to value_at to make the post-write value distinct
@@ -80,7 +80,7 @@ NEW_OFFSET = 1_000_000  # added to value_at to make the post-write value distinc
 
 for length in (1, 10, 100):
     for width in (1, 3):
-        with ExecutionContext(ignore_action_limits=True) as ctx:
+        with EmulatedHouse(ignore_action_limits=True) as house:
             slots = [
                 tuple(
                     PlayerStat(letter_name(i * width + k)).as_long()
@@ -90,7 +90,7 @@ for length in (1, 10, 100):
             ]
             for i in range(length):
                 for k in range(width):
-                    ctx.put(slots[i][k], value_at(i, k))
+                    house.put(slots[i][k], value_at(i, k))
 
             index = PlayerStat('idx').as_long()
             items_arg = [s[0] for s in slots] if width == 1 else list(slots)
@@ -115,7 +115,7 @@ for length in (1, 10, 100):
                 ) -> None:
                     for i in range(_len):
                         for k in range(_w):
-                            got = int(ctx.get(_slots[i][k]))
+                            got = int(house.get(_slots[i][k]))
                             want = value_at(i, k) + (
                                 NEW_OFFSET if i in _promoted else 0
                             )
@@ -124,7 +124,7 @@ for length in (1, 10, 100):
                                 f'item[{i}][{k}]={got}, want {want}'
                             )
 
-                ctx.assert_all(check_write)
+                house.assert_all(check_write)
 
 
 # Width=1, non-empty prefix, simple indexing → 4 BinaryExpressions, no conditionals.
@@ -229,10 +229,10 @@ assert counts[BinaryExpression] == 4, counts
 # HTSL behavior), so reading items[i] for i straddling the 999/1,000 boundary
 # resolves to the correct stat.
 for _target in (0, 1, 4, 10):  # 0 -> a999, 1 -> a1,000, 10 -> a1,009
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _sources = [PlayerStat(f'a{i:,}').as_long() for i in range(999, 1010)]
         for _i, _s in enumerate(_sources):
-            ctx.put(_s, 1_000_000 + _i)
+            house.put(_s, 1_000_000 + _i)
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
@@ -242,10 +242,10 @@ for _target in (0, 1, 4, 10):  # 0 -> a999, 1 -> a1,000, 10 -> a1,009
             _t: int = _target,
             _o: PlayerStat = _out,
         ) -> None:
-            got = int(ctx.get(_o))
+            got = int(house.get(_o))
             assert got == 1_000_000 + _t, (got, _t)
 
-        ctx.assert_all(check_comma)
+        house.assert_all(check_comma)
 
 
 # No-comma names crossing 1000 boundary: pattern detection bails (since
@@ -291,10 +291,10 @@ assert ConditionalExpression in counts, counts
 
 # Width=1, PlayerStat, prefix='src', start=0
 for _target in (0, 3, 7, 9):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _sources = [PlayerStat(f'src{i}').as_long() for i in range(10)]
         for _i, _s in enumerate(_sources):
-            ctx.put(_s, 100 + _i)
+            house.put(_s, 100 + _i)
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
@@ -304,18 +304,18 @@ for _target in (0, 3, 7, 9):
             _t: int = _target,
             _o: PlayerStat = _out,
         ) -> None:
-            got = int(ctx.get(_o))
+            got = int(house.get(_o))
             assert got == 100 + _t, (got, _t)
 
-        ctx.assert_all(check_w1_player)
+        house.assert_all(check_w1_player)
 
 
 # Width=1, GlobalStat
 for _target in (0, 4, 9):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _sources = [GlobalStat(f'gsrc{i}').as_long() for i in range(10)]
         for _i, _s in enumerate(_sources):
-            ctx.put(_s, 200 + _i)
+            house.put(_s, 200 + _i)
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
@@ -325,15 +325,15 @@ for _target in (0, 4, 9):
             _t: int = _target,
             _o: PlayerStat = _out,
         ) -> None:
-            got = int(ctx.get(_o))
+            got = int(house.get(_o))
             assert got == 200 + _t, (got, _t)
 
-        ctx.assert_all(check_w1_global)
+        house.assert_all(check_w1_global)
 
 
 # Width=3, Mode B (per-column prefixes)
 for _target in (0, 2, 5, 7):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _items = [
             (
                 PlayerStat(f'aaa{i}').as_long(),
@@ -344,7 +344,7 @@ for _target in (0, 2, 5, 7):
         ]
         for _i, _row in enumerate(_items):
             for _k, _s in enumerate(_row):
-                ctx.put(_s, _i * 10 + _k)
+                house.put(_s, _i * 10 + _k)
         _idx = PlayerStat('idx').as_long()
         _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(3))
         _idx.value = _target
@@ -355,22 +355,22 @@ for _target in (0, 2, 5, 7):
             _outs: tuple[PlayerStat, ...] = _outputs,
         ) -> None:
             for k in range(3):
-                got = int(ctx.get(_outs[k]))
+                got = int(house.get(_outs[k]))
                 assert got == _t * 10 + k, (got, _t, k)
 
-        ctx.assert_all(check_w3_modeB)
+        house.assert_all(check_w3_modeB)
 
 
 # Width=3, Mode A (shared prefix, flat numbering)
 for _target in (0, 3, 7):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _items = [
             tuple(PlayerStat(f'm{i * 3 + k}').as_long() for k in range(3))
             for i in range(8)
         ]
         for _i, _row in enumerate(_items):
             for _k, _s in enumerate(_row):
-                ctx.put(_s, _i * 100 + _k)
+                house.put(_s, _i * 100 + _k)
         _idx = PlayerStat('idx').as_long()
         _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(3))
         _idx.value = _target
@@ -381,18 +381,18 @@ for _target in (0, 3, 7):
             _outs: tuple[PlayerStat, ...] = _outputs,
         ) -> None:
             for k in range(3):
-                got = int(ctx.get(_outs[k]))
+                got = int(house.get(_outs[k]))
                 assert got == _t * 100 + k, (got, _t, k)
 
-        ctx.assert_all(check_w3_modeA)
+        house.assert_all(check_w3_modeA)
 
 
 # Middle-digit pattern correctness ('a1<n>1a')
 for _target in (0, 3, 6, 9):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _sources = [PlayerStat(f'a1{i}1a').as_long() for i in range(10)]
         for _i, _s in enumerate(_sources):
-            ctx.put(_s, 7000 + _i)
+            house.put(_s, 7000 + _i)
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
@@ -402,18 +402,18 @@ for _target in (0, 3, 6, 9):
             _t: int = _target,
             _o: PlayerStat = _out,
         ) -> None:
-            got = int(ctx.get(_o))
+            got = int(house.get(_o))
             assert got == 7000 + _t, (got, _t)
 
-        ctx.assert_all(check_middle)
+        house.assert_all(check_middle)
 
 
 # Non-zero start (offset != 0): items 'p5'..'p14', logical index 0..9
 for _target in (0, 3, 9):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _sources = [PlayerStat(f'p{i}').as_long() for i in range(5, 15)]
         for _i, _s in enumerate(_sources):
-            ctx.put(_s, 500 + _i)
+            house.put(_s, 500 + _i)
         _idx = PlayerStat('idx').as_long()
         _out = PlayerStat('out').as_long()
         _idx.value = _target
@@ -423,10 +423,10 @@ for _target in (0, 3, 9):
             _t: int = _target,
             _o: PlayerStat = _out,
         ) -> None:
-            got = int(ctx.get(_o))
+            got = int(house.get(_o))
             assert got == 500 + _t, (got, _t)
 
-        ctx.assert_all(check_offset)
+        house.assert_all(check_offset)
 
 
 # Empty items list
@@ -464,14 +464,14 @@ with expect_exception(ValueError):
 
 
 for _width in (1, 2, 3):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _items = [
             tuple(PlayerStat(f'z{i * _width + k}').as_long() for k in range(_width))
             for i in range(4)
         ]
         for _i, _row in enumerate(_items):
             for _k, _s in enumerate(_row):
-                ctx.put(_s, _i * 100 + _k + 1)
+                house.put(_s, _i * 100 + _k + 1)
         _idx = PlayerStat('idx').as_long()
         _idx.value = 0
         _outputs = tuple(PlayerStat(f'o{k}').as_long() for k in range(_width))
@@ -486,17 +486,17 @@ for _width in (1, 2, 3):
             _outs: tuple[PlayerStat, ...] = _outputs,
         ) -> None:
             for k in range(_w):
-                got = int(ctx.get(_outs[k]))
+                got = int(house.get(_outs[k]))
                 assert got == k + 1, (
                     f'width={_w} index=0: output[{k}]={got}, want {k + 1}'
                 )
 
-        ctx.assert_all(check_zero_index)
+        house.assert_all(check_zero_index)
 
 
 for _length, _width in ((2, 1), (5, 1), (13, 1), (30, 1), (60, 1), (6, 2), (10, 3)):
     for _target in sample_targets(_length):
-        with ExecutionContext(ignore_action_limits=True) as ctx:
+        with EmulatedHouse(ignore_action_limits=True) as house:
             _slots = [
                 tuple(
                     PlayerStat(f'fw{i * _width + k}').as_long() for k in range(_width)
@@ -505,7 +505,7 @@ for _length, _width in ((2, 1), (5, 1), (13, 1), (30, 1), (60, 1), (6, 2), (10, 
             ]
             for _i in range(_length):
                 for _k in range(_width):
-                    ctx.put(_slots[_i][_k], value_at(_i, _k))
+                    house.put(_slots[_i][_k], value_at(_i, _k))
             _idx = PlayerStat('idx').as_long()
             _idx.value = _target
             _new = tuple(-7_000_000 - k for k in range(_width))
@@ -525,43 +525,43 @@ for _length, _width in ((2, 1), (5, 1), (13, 1), (30, 1), (60, 1), (6, 2), (10, 
             ) -> None:
                 for i in range(_len):
                     for k in range(_w):
-                        got = int(ctx.get(_s[i][k]))
+                        got = int(house.get(_s[i][k]))
                         want = _n[k] if i == _t else value_at(i, k)
                         assert got == want, (
                             f'fast write length={_len} width={_w} target={_t}: '
                             f'slot[{i}][{k}]={got}, want {want}'
                         )
 
-            ctx.assert_all(check_fast_write)
+            house.assert_all(check_fast_write)
 
 
 # Writing the value a slot already holds is a no-op: the diff is 0, which
 # auto-unsets the one-hot so every lookup falls back to 0.
 for _target in (0, 3, 7):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _slots = [PlayerStat(f'fz{i}').as_long() for i in range(8)]
         for _s in _slots:
-            ctx.put(_s, 42)
+            house.put(_s, 42)
         _idx = PlayerStat('idx').as_long()
         _idx.value = _target
         array_write(items=_slots, index=_idx, input=42)
 
         def check_no_op(_s: list[PlayerStat] = _slots, _t: int = _target) -> None:
             for i, stat in enumerate(_s):
-                got = int(ctx.get(stat))
+                got = int(house.get(stat))
                 assert got == 42, f'no-op target={_t}: slot[{i}]={got}, want 42'
 
-        ctx.assert_all(check_no_op)
+        house.assert_all(check_no_op)
 
 
 # Successive writes in one block: each one must see the array the previous one
 # left behind. The one-hot is only ever read through a name assembled at
 # runtime, so nothing in the emitted expressions mentions it -- without a
 # keep-alive reference the dead-store pass drops every write but the last.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _slots = [PlayerStat(f'fs{i}').as_long() for i in range(13)]
     for _i, _s in enumerate(_slots):
-        ctx.put(_s, value_at(_i, 0))
+        house.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     _written: dict[int, int] = {}
     for _step, _target in enumerate((1, 5, 12, 0)):
@@ -576,14 +576,14 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         ) -> None:
             written = dict(_w)
             for i, stat in enumerate(_s):
-                got = int(ctx.get(stat))
+                got = int(house.get(stat))
                 want = written.get(i, value_at(i, 0))
                 assert got == want, (
                     f'successive write (after target={_t}): '
                     f'slot[{i}]={got}, want {want}'
                 )
 
-        ctx.assert_all(check_successive)
+        house.assert_all(check_successive)
 
 
 # The fast path costs far fewer conditionals than the chunked cascade, and for
@@ -691,10 +691,10 @@ assert counts.get(ConditionalExpression, 0) > 10, counts
 
 
 # Exhaustive index sweep at the headline size.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _slots = [PlayerStat(f'fx{i}').as_long() for i in range(100)]
     for _i, _s in enumerate(_slots):
-        ctx.put(_s, value_at(_i, 0))
+        house.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     _expected = [value_at(_i, 0) for _i in range(100)]
     for _target in range(100):
@@ -708,12 +708,12 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         _want: list[int] = _expected,
     ) -> None:
         for i, stat in enumerate(_s):
-            got = int(ctx.get(stat))
+            got = int(house.get(stat))
             assert got == _want[i], (
                 f'fast-write sweep: slot[{i}]={got}, want {_want[i]}'
             )
 
-    ctx.assert_all(check_fw_exhaustive)
+    house.assert_all(check_fw_exhaustive)
 
 
 # Extreme magnitudes: the diff wraps modulo 2**64, and the wrap cancels so the
@@ -727,10 +727,10 @@ for _old, _new in (
     (2**63 - 1, 0),
 ):
     for _target in (0, 13, 24, 25, 99):
-        with ExecutionContext(ignore_action_limits=True) as ctx:
+        with EmulatedHouse(ignore_action_limits=True) as house:
             _slots = [PlayerStat(f'fy{i}').as_long() for i in range(100)]
             for _i, _s in enumerate(_slots):
-                ctx.put(_s, _old)
+                house.put(_s, _old)
             _idx = PlayerStat('idx').as_long()
             _idx.value = _target
             array_write(items=_slots, index=_idx, input=_new)
@@ -742,23 +742,23 @@ for _old, _new in (
                 _n: int = _new,
             ) -> None:
                 for i, stat in enumerate(_s):
-                    got = int(ctx.get(stat))
+                    got = int(house.get(stat))
                     want = _n if i == _t else _o
                     assert got == want, (
                         f'fast-write extremes old={_o} new={_n} target={_t}: '
                         f'slot[{i}]={got}, want {want}'
                     )
 
-            ctx.assert_all(check_fw_extreme)
+            house.assert_all(check_fw_extreme)
 
 
 # Non-zero start and a comma boundary in the composed names.
 for _start, _len in ((100, 30), (990, 20)):
     for _target in (0, 7, 8, 15, 16, _len - 1):
-        with ExecutionContext(ignore_action_limits=True) as ctx:
+        with EmulatedHouse(ignore_action_limits=True) as house:
             _slots = [PlayerStat(f'n{_start + i:,}').as_long() for i in range(_len)]
             for _i, _s in enumerate(_slots):
-                ctx.put(_s, value_at(_i, 0))
+                house.put(_s, value_at(_i, 0))
             _idx = PlayerStat('idx').as_long()
             _idx.value = _target
             array_write(items=_slots, index=_idx, input=-42_424)
@@ -769,21 +769,21 @@ for _start, _len in ((100, 30), (990, 20)):
                 _st: int = _start,
             ) -> None:
                 for i, stat in enumerate(_s):
-                    got = int(ctx.get(stat))
+                    got = int(house.get(stat))
                     want = -42_424 if i == _t else value_at(i, 0)
                     assert got == want, (
                         f'fast-write start={_st}: slot[{i}]={got}, want {want}'
                     )
 
-            ctx.assert_all(check_fw_start)
+            house.assert_all(check_fw_start)
 
 
 # GlobalStat arrays route the composed read through var.global while the
 # helper's own bookkeeping stays player-side.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _gslots = [GlobalStat(f'g{i}').as_long() for i in range(40)]
     for _i, _s in enumerate(_gslots):
-        ctx.put(_s, value_at(_i, 0))
+        house.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     for _target in (0, 24, 25, 39):
         _idx.value = _target
@@ -791,11 +791,11 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_fw_global(_s: list[GlobalStat] = _gslots) -> None:
         for i, stat in enumerate(_s):
-            got = int(ctx.get(stat))
+            got = int(house.get(stat))
             want = 7_777_000 + i if i in (0, 24, 25, 39) else value_at(i, 0)
             assert got == want, f'fast-write global: slot[{i}]={got}, want {want}'
 
-    ctx.assert_all(check_fw_global)
+    house.assert_all(check_fw_global)
 
 
 # Items whose shared prefix is a single letter would collide with a temp of
@@ -803,21 +803,21 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 # occurrence, so a counter named like the prefix would match inside the
 # freshly inserted prefix text and mangle the composed name. The name pool
 # skips such letters; this pins the guard for both the read and the write.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _aslots = [PlayerStat(f'a{i}').as_long() for i in range(60)]
     for _i, _s in enumerate(_aslots):
-        ctx.put(_s, 3_000 + _i)
+        house.put(_s, 3_000 + _i)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 42
     array_write(items=_aslots, index=_idx, input=424_242)
 
     def check_fw_prefix_collision(_s: list[PlayerStat] = _aslots) -> None:
         for i, stat in enumerate(_s):
-            got = int(ctx.get(stat))
+            got = int(house.get(stat))
             want = 424_242 if i == 42 else 3_000 + i
             assert got == want, f'prefix-collision write: slot[{i}]={got}, want {want}'
 
-    ctx.assert_all(check_fw_prefix_collision)
+    house.assert_all(check_fw_prefix_collision)
 
 
 # Items living inside the helper's own one-hot namespaces cannot use the fast
@@ -832,10 +832,10 @@ counts = container.expression_counts(nested=True)
 assert counts.get(ConditionalExpression, 0) > 10, counts
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _slots = [PlayerStat(f'vf{i}').as_long() for i in range(100)]
     for _i, _s in enumerate(_slots):
-        ctx.put(_s, value_at(_i, 0))
+        house.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     _written = {}
     for _step, _target in enumerate(
@@ -852,22 +852,22 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         ) -> None:
             written = dict(_w)
             for i, stat in enumerate(_s):
-                got = int(ctx.get(stat))
+                got = int(house.get(stat))
                 want = written.get(i, value_at(i, 0))
                 assert got == want, (
                     f'v5 successive (after target={_t}): slot[{i}]={got}, want {want}'
                 )
 
-        ctx.assert_all(check_v5_successive)
+        house.assert_all(check_v5_successive)
 
 
 # v5 exhaustive index sweep at the smallest two-chunk size: every target of a
 # 26-slot array in one block, so each call also sees every staleness pattern
 # the previous ones left behind.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _slots = [PlayerStat(f'vg{i}').as_long() for i in range(26)]
     for _i, _s in enumerate(_slots):
-        ctx.put(_s, value_at(_i, 0))
+        house.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     _final = {}
     for _target in range(26):
@@ -877,19 +877,19 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_v5_exhaustive(_s: list[PlayerStat] = _slots) -> None:
         for i, stat in enumerate(_s):
-            got = int(ctx.get(stat))
+            got = int(house.get(stat))
             assert got == 70_000 + i, f'v5 exhaustive: slot[{i}]={got}'
 
-    ctx.assert_all(check_v5_exhaustive)
+    house.assert_all(check_v5_exhaustive)
 
 
 # v5 with a lone chunk (n=75 -> three chunks: one exact-condition lone plus an
 # if/else pair) and with a non-zero name offset (names start at 'vh5').
 for _n, _first, _targets in ((75, 0, (60, 10, 74, 40)), (30, 5, (0, 29, 13, 12))):
-    with ExecutionContext(ignore_action_limits=True) as ctx:
+    with EmulatedHouse(ignore_action_limits=True) as house:
         _slots = [PlayerStat(f'vh{_first + i}').as_long() for i in range(_n)]
         for _i, _s in enumerate(_slots):
-            ctx.put(_s, value_at(_i, 0))
+            house.put(_s, value_at(_i, 0))
         _idx = PlayerStat('idx').as_long()
         _written = {}
         for _step, _target in enumerate(_targets):
@@ -904,37 +904,37 @@ for _n, _first, _targets in ((75, 0, (60, 10, 74, 40)), (30, 5, (0, 29, 13, 12))
         ) -> None:
             written = dict(_w)
             for i, stat in enumerate(_s):
-                got = int(ctx.get(stat))
+                got = int(house.get(stat))
                 want = written.get(i, value_at(i, 0))
                 assert got == want, f'v5 n={_n_}: slot[{i}]={got}, want {want}'
 
-        ctx.assert_all(check_v5_shapes)
+        house.assert_all(check_v5_shapes)
 
 
 # v5 GlobalStat array: the machinery stays player-side, only the item scope
 # head changes.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _gslots = [GlobalStat(f'vk{i}').as_long() for i in range(40)]
     for _i, _s in enumerate(_gslots):
-        ctx.put(_s, value_at(_i, 0))
+        house.put(_s, value_at(_i, 0))
     _idx = PlayerStat('idx').as_long()
     _idx.value = 33
     array_write(items=_gslots, index=_idx, input=-123_456)
 
     def check_v5_global(_s: list[GlobalStat] = _gslots) -> None:
         for i, stat in enumerate(_s):
-            got = int(ctx.get(stat))
+            got = int(house.get(stat))
             want = -123_456 if i == 33 else value_at(i, 0)
             assert got == want, f'v5 global: slot[{i}]={got}, want {want}'
 
-    ctx.assert_all(check_v5_global)
+    house.assert_all(check_v5_global)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _sitems = [PlayerStat(f'sv{i}').as_string() for i in range(30)]
     for _i, _s in enumerate(_sitems):
-        ctx.put(_s, f'word{_i}', ignore_warning=True)
-    ctx.put(_sitems[7], '%var.player/sv3%', ignore_warning=True)
+        house.put(_s, f'word{_i}', ignore_warning=True)
+    house.put(_sitems[7], '%var.player/sv3%', ignore_warning=True)
     _idx = PlayerStat('idx').as_long()
     _swritten: dict[int, str] = {}
     for _step, _t in enumerate((0, 12, 25, 29, 7, 12)):
@@ -951,59 +951,59 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     ) -> None:
         _wd = dict(_w)
         for i, s in enumerate(_items):
-            got = str(ctx.get(s))
+            got = str(house.get(s))
             want = _wd.get(i, '%var.player/sv3%' if i == 7 else f'word{i}')
             assert got == want, (i, got, want)
 
-    ctx.assert_all(check_staged_strings)
+    house.assert_all(check_staged_strings)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _ditems = [PlayerStat(f'dv{i}').as_double() for i in range(30)]
     for _i, _s in enumerate(_ditems):
-        ctx.put(_s, _i + 0.5, ignore_warning=True)
+        house.put(_s, _i + 0.5, ignore_warning=True)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 17
     array_write(items=_ditems, index=_idx, input=-2.25)
 
     def check_staged_doubles(_items: list[PlayerStat] = _ditems) -> None:
         for i, s in enumerate(_items):
-            got = float(ctx.get_raw(s))
+            got = float(house.get_raw(s))
             want = -2.25 if i == 17 else i + 0.5
             assert abs(got - want) < 0.001, (i, got, want)
 
-    ctx.assert_all(check_staged_doubles)
+    house.assert_all(check_staged_doubles)
 
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _mitems = [
         (PlayerStat(f'mv{2 * i}').as_long(), PlayerStat(f'mv{2 * i + 1}').as_string())
         for i in range(15)
     ]
     for _i, (_a, _b) in enumerate(_mitems):
-        ctx.put(_a, 1000 + _i, ignore_warning=True)
-        ctx.put(_b, f's{_i}', ignore_warning=True)
+        house.put(_a, 1000 + _i, ignore_warning=True)
+        house.put(_b, f's{_i}', ignore_warning=True)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 9
     array_write(items=_mitems, index=_idx, input=(4242, 'hit'))
 
     def check_staged_mixed(_items: list = _mitems) -> None:
         for i, (a, b) in enumerate(_items):
-            got = (int(ctx.get(a)), str(ctx.get(b)))
+            got = (int(house.get(a)), str(house.get(b)))
             want = (4242, 'hit') if i == 9 else (1000 + i, f's{i}')
             assert got == want, (i, got, want)
 
-    ctx.assert_all(check_staged_mixed)
+    house.assert_all(check_staged_mixed)
 
 
 from pyhtsw.ext import Queue, StatArray  # noqa: E402
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _arr = StatArray([PlayerStat(f'sa{i}').as_long() for i in range(30)])
     assert len(_arr) == 30 and _arr.width == 1
     assert _arr[7].name == 'sa7'
     for _i in range(30):
-        ctx.put(_arr[_i], 500 + _i)
+        house.put(_arr[_i], 500 + _i)
     _idx = PlayerStat('idx').as_long()
     _idx.value = 21
     _arr.write(_idx, input=9999)
@@ -1012,21 +1012,21 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
     _arr.read(_idx, output=_out)
 
     def check_stat_array(_a: StatArray = _arr) -> None:
-        assert int(ctx.get(_out)) == 9999, ctx.get(_out)
+        assert int(house.get(_out)) == 9999, house.get(_out)
         for i in range(30):
             want = 9999 if i == 21 else 500 + i
-            assert int(ctx.get(_a[i])) == want, (i, ctx.get(_a[i]))
+            assert int(house.get(_a[i])) == want, (i, house.get(_a[i]))
 
-    ctx.assert_all(check_stat_array)
+    house.assert_all(check_stat_array)
 
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     _qarr = StatArray([PlayerStat(f'qa{i}').as_long() for i in range(10)])
     _q = Queue(holders=_qarr, counter=PlayerStat('qac').as_long())
     for _v in (11, 22, 33):
         _q.push(_v)
 
     def check_queue_from_array(_a: StatArray = _qarr) -> None:
-        got = [int(ctx.get(_a[i])) for i in range(3)]
+        got = [int(house.get(_a[i])) for i in range(3)]
         assert got == [11, 22, 33], got
 
-    ctx.assert_all(check_queue_from_array)
+    house.assert_all(check_queue_from_array)

@@ -12,4 +12,4 @@
 - [Scoreboards](./scoreboards.md)
 - [Scope](./scope.md)
 - [Optimizer](./optimizer.md)
-- [Simulator](./simulator.md)
+- [Emulation](./emulation.md)

@@ -2,44 +2,44 @@ from collections.abc import Callable
 from typing import Unpack
 
 from pyhtsw.compiler.settings import ContainerSettings
-from pyhtsw.execute.context import ExecutionContext
 from pyhtsw.execute.expressions.run_execution_expression import CallbackType
+from pyhtsw.execute.house import EmulatedHouse
 from pyhtsw.expression.expression import Expression
 from pyhtsw.utils.callback import call_with_optional_arg
 
 __all__ = (
-    'execute',
-    'run_saved_execution_contexts',
+    'emulate',
+    'run_saved_emulations',
 )
 
 
-_saved_execution_contexts: list[tuple[ExecutionContext, CallbackType]] = []
+_saved_emulations: list[tuple[EmulatedHouse, CallbackType]] = []
 
 
-def execute(
+def emulate(
     *,
     verbose: bool = False,
     expression_callback: Callable[[Expression], None] | None = None,
     pause_multiplier: float = 1.0,
     volume_multiplier: float = 0.1,
     **settings: Unpack[ContainerSettings],
-) -> Callable[[CallbackType], ExecutionContext]:
-    def decorator(callback: CallbackType) -> ExecutionContext:
-        context = ExecutionContext(
+) -> Callable[[CallbackType], EmulatedHouse]:
+    def decorator(callback: CallbackType) -> EmulatedHouse:
+        house = EmulatedHouse(
             verbose=verbose,
             expression_callback=expression_callback,
             pause_multiplier=pause_multiplier,
             volume_multiplier=volume_multiplier,
             **settings,
         )
-        _saved_execution_contexts.append((context, callback))
-        return context
+        _saved_emulations.append((house, callback))
+        return house
 
     return decorator
 
 
-def run_saved_execution_contexts() -> None:
-    while _saved_execution_contexts:
-        context, callback = _saved_execution_contexts.pop(0)
-        with context:
-            call_with_optional_arg(callback, context, noun='callback')
+def run_saved_emulations() -> None:
+    while _saved_emulations:
+        house, callback = _saved_emulations.pop(0)
+        with house:
+            call_with_optional_arg(callback, house, noun='callback')

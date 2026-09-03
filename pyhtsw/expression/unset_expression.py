@@ -5,7 +5,7 @@ from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.expression.expression import Expression
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.stats.stat import Stat
 
 
@@ -27,7 +27,7 @@ class UnsetExpression(Expression):
     def into_htsl(self) -> str:
         return f'{self.target.into_string_lhs()} unset'
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         context.pop(self.target)
 
     def cloned(

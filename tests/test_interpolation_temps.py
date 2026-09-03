@@ -3,7 +3,7 @@ from contextlib import redirect_stdout
 
 from pyhtsw import (
     Container,
-    ExecutionContext,
+    EmulatedHouse,
     GlobalStat,
     HousePlayers,
     IfAll,
@@ -158,11 +158,11 @@ assert container.into_htsl() == (
 # Execution: two interpolations compute independent, correct values
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
         b = PlayerStat('b').as_long()
-        ctx.put(a, 10)
-        ctx.put(b, 20)
+        house.put(a, 10)
+        house.put(b, 20)
         chat(f'A={a + 1} B={b + 2}')
 
 output = buf.getvalue()
@@ -172,11 +172,11 @@ assert 'A=11 B=22' in output, output
 # Execution: a nested interpolation computes the right value
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
         b = PlayerStat('b').as_long()
-        ctx.put(a, 10)
-        ctx.put(b, 20)
+        house.put(a, 10)
+        house.put(b, 20)
         chat(f'N={(a + 1) * (b + 2)}')
 
 output = buf.getvalue()
@@ -186,9 +186,9 @@ assert 'N=242' in output, output
 # Execution: a modulo interpolation computes the right value
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
-        ctx.put(a, 13)
+        house.put(a, 13)
         chat(f'M={a % 5}')
 
 output = buf.getvalue()
@@ -198,11 +198,11 @@ assert 'M=3' in output, output
 # Execution: temps reused across statements stay correct
 buf = io.StringIO()
 with redirect_stdout(buf):
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         a = PlayerStat('a').as_long()
         b = PlayerStat('b').as_long()
-        ctx.put(a, 10)
-        ctx.put(b, 20)
+        house.put(a, 10)
+        house.put(b, 20)
         chat(f'first={a + 1}')
         chat(f'second={b + 2}')
 

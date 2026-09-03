@@ -1,19 +1,19 @@
-from pyhtsw import ExecutionContext, PlayerStat
+from pyhtsw import EmulatedHouse, PlayerStat
 from pyhtsw.ext import format_time_string, set_ordinal_inline, set_ordinal_suffix
 
 assert set_ordinal_inline is set_ordinal_suffix  # deprecated alias
 
 
 def check_time(seconds: int, separator: str, expected: str) -> None:
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         out = PlayerStat('out').as_string()
         format_time_string(seconds, output=out, separator=separator)
 
         def verify(_o=out, _e=expected, _s=seconds, _sep=separator) -> None:
-            got = ctx.get_raw(_o)
+            got = house.get_raw(_o)
             assert got == _e, (_s, repr(_sep), 'got', repr(got), 'want', repr(_e))
 
-        ctx.assert_all(verify)
+        house.assert_all(verify)
 
 
 # No separator
@@ -43,38 +43,38 @@ check_time(-100, ' ', '0s')
 # A computed input (the real-world call shape) works, and a consumer stat the
 # helper's managed temps could once have clobbered survives untouched.
 def check_computed() -> None:
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         ending_at = PlayerStat('ENDING_AT').as_long()
         now = PlayerStat('DateUnix').as_long()
         tmp0 = PlayerStat('tmp0').as_long()  # consumer's own tmp0
         out = PlayerStat('out').as_string()
-        ctx.put(ending_at, 2243760, ignore_warning=True)
-        ctx.put(now, 0, ignore_warning=True)
+        house.put(ending_at, 2243760, ignore_warning=True)
+        house.put(now, 0, ignore_warning=True)
         tmp0.value = 777
         format_time_string(abs(ending_at - now), output=out)
 
         def verify(_o=out, _t=tmp0) -> None:
-            assert ctx.get_raw(_o) == '25d23h16m', repr(ctx.get_raw(_o))
-            assert int(ctx.get_raw(_t)) == 777, ctx.get_raw(_t)
+            assert house.get_raw(_o) == '25d23h16m', repr(house.get_raw(_o))
+            assert int(house.get_raw(_t)) == 777, house.get_raw(_t)
 
-        ctx.assert_all(verify)
+        house.assert_all(verify)
 
 
 check_computed()
 
 
 def check_ordinal(n: int, expected: str) -> None:
-    with ExecutionContext() as ctx:
+    with EmulatedHouse() as house:
         value = PlayerStat('n').as_long()
-        ctx.put(value, n, ignore_warning=True)
+        house.put(value, n, ignore_warning=True)
         out = PlayerStat('suffix').as_string()
         set_ordinal_suffix(value, out)
 
         def verify(_o=out, _e=expected, _n=n) -> None:
-            got = ctx.get_raw(_o)
+            got = house.get_raw(_o)
             assert got == _e, (_n, 'got', repr(got), 'want', repr(_e))
 
-        ctx.assert_all(verify)
+        house.assert_all(verify)
 
 
 for number, suffix in (

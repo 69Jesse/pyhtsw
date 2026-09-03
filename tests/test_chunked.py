@@ -6,7 +6,7 @@ from helpers import expect_exception
 from pyhtsw import (
     Container,
     Else,
-    ExecutionContext,
+    EmulatedHouse,
     IfAll,
     IfAny,
     PlayerStat,
@@ -16,9 +16,9 @@ from pyhtsw import (
 # === Execution: the right branch runs ===
 
 # Condition true -> every `if` chunk runs, no `else` chunk does.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     cond = PlayerStat('cond').as_long()
-    ctx.put(cond, 1, ignore_warning=True)
+    house.put(cond, 1, ignore_warning=True)
     result = PlayerStat('result').as_long()
     fillers = [PlayerStat(f'f{i}').as_long() for i in range(40)]
     with chunked(IfAll(cond > 0)):
@@ -31,17 +31,17 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         result.value = 222
 
     def check_if_branch() -> None:
-        assert int(ctx.get(result)) == 111
-        assert int(ctx.get(fillers[0])) == 7
-        assert int(ctx.get(fillers[39])) == 7
+        assert int(house.get(result)) == 111
+        assert int(house.get(fillers[0])) == 7
+        assert int(house.get(fillers[39])) == 7
 
-    ctx.assert_all(check_if_branch)
+    house.assert_all(check_if_branch)
 
 
 # Condition false -> every `else` chunk runs, no `if` chunk does.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     cond = PlayerStat('cond').as_long()
-    ctx.put(cond, 0, ignore_warning=True)
+    house.put(cond, 0, ignore_warning=True)
     result = PlayerStat('result').as_long()
     fillers = [PlayerStat(f'f{i}').as_long() for i in range(40)]
     with chunked(IfAll(cond > 0)):
@@ -54,19 +54,19 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         result.value = 222
 
     def check_else_branch() -> None:
-        assert int(ctx.get(result)) == 222
-        assert int(ctx.get(fillers[0])) == 9
-        assert int(ctx.get(fillers[39])) == 9
+        assert int(house.get(result)) == 222
+        assert int(house.get(fillers[0])) == 9
+        assert int(house.get(fillers[39])) == 9
 
-    ctx.assert_all(check_else_branch)
+    house.assert_all(check_else_branch)
 
 
 # A tiny `if` next to a large `else`: the else overflows the one `if` block's
 # slot, so the extra empty-`if` blocks must still run their `else` on a false
 # condition.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     cond = PlayerStat('cond').as_long()
-    ctx.put(cond, 0, ignore_warning=True)
+    house.put(cond, 0, ignore_warning=True)
     outs = [PlayerStat(f'o{i}').as_long() for i in range(60)]
     with chunked(IfAll(cond > 0)):
         PlayerStat('tiny').as_long().value = 1
@@ -76,18 +76,18 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
 
     def check_extra_else_blocks(_outs: list = outs) -> None:
         for i in range(60):
-            got = int(ctx.get(_outs[i]))
+            got = int(house.get(_outs[i]))
             assert got == i + 1, f'extra-else out {i}: got {got}, want {i + 1}'
 
-    ctx.assert_all(check_extra_else_blocks)
+    house.assert_all(check_extra_else_blocks)
 
 
 # `IfAny` works as a template just like `IfAll`.
-with ExecutionContext(ignore_action_limits=True) as ctx:
+with EmulatedHouse(ignore_action_limits=True) as house:
     a = PlayerStat('a').as_long()
     b = PlayerStat('b').as_long()
-    ctx.put(a, 0, ignore_warning=True)
-    ctx.put(b, 5, ignore_warning=True)
+    house.put(a, 0, ignore_warning=True)
+    house.put(b, 5, ignore_warning=True)
     result = PlayerStat('result').as_long()
     fillers = [PlayerStat(f'f{i}').as_long() for i in range(40)]
     with chunked(IfAny(a > 0, b > 0)):
@@ -100,9 +100,9 @@ with ExecutionContext(ignore_action_limits=True) as ctx:
         result.value = 2
 
     def check_ifany() -> None:
-        assert int(ctx.get(result)) == 1  # b > 0 satisfies IfAny
+        assert int(house.get(result)) == 1  # b > 0 satisfies IfAny
 
-    ctx.assert_all(check_ifany)
+    house.assert_all(check_ifany)
 
 
 # === Rendered structure ===
@@ -160,7 +160,7 @@ assert _extra_htsl.count('0) {\n} else {') == 2
 
 # === Finalization through a real Container respects the action limits ===
 #
-# ExecutionContext ignores the limits; a plain Container enforces them, so
+# EmulatedHouse ignores the limits; a plain Container enforces them, so
 # this is what proves each chunk (if-side and else-side) stays legal.
 with redirect_stdout(io.StringIO()):
     with Container() as container:

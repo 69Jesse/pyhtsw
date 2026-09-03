@@ -6,7 +6,7 @@ from pyhtsw.execute.expressions.execution_expression import ExecutionExpression
 from pyhtsw.utils.callback import call_with_optional_arg
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 __all__ = (
@@ -15,7 +15,7 @@ __all__ = (
 )
 
 
-type CallbackType = Callable[[], Any] | Callable[['ExecutionContext'], Any]
+type CallbackType = Callable[[], Any] | Callable[['EmulatedHouse'], Any]
 
 
 class RunExecutionExpression(ExecutionExpression):
@@ -24,7 +24,7 @@ class RunExecutionExpression(ExecutionExpression):
     def __init__(self, callback: CallbackType) -> None:
         self.callback = callback
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         call_with_optional_arg(self.callback, context, noun='callback')
 
     def cloned(

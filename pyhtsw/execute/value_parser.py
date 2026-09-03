@@ -7,8 +7,8 @@ from pyhtsw.execute.backend_type import BackendType, JavaLong, backend_into_stri
 from pyhtsw.execute.java_long import INT64_MAX, INT64_MIN
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
-    from pyhtsw.execute.player import ExecutionPlayer
+    from pyhtsw.execute.house import EmulatedHouse
+    from pyhtsw.execute.player import EmulatedPlayer
 
 __all__ = (
     'parse_string',
@@ -72,10 +72,10 @@ def _render_var(value: BackendType) -> str:
 
 
 def _run_placeholder(
-    context: 'ExecutionContext',
+    context: 'EmulatedHouse',
     content: str,
     *,
-    player: 'ExecutionPlayer | None',
+    player: 'EmulatedPlayer | None',
 ) -> BackendType | None:
     from pyhtsw.checkable import Checkable
     from pyhtsw.stats.global_stat import GlobalStat
@@ -133,7 +133,7 @@ def _run_placeholder(
         team = args[1] if len(args) > 1 else ''
         return resolve_stat(TeamStat(key, team=team))
 
-    # Any other placeholder type falls back to the simulator's registered
+    # Any other placeholder type falls back to the emulator's registered
     # placeholder classes (dates, player values, ...), mirroring htsw's other
     # placeholder behaviors.
     text = f'%{content}%'
@@ -146,10 +146,10 @@ def _run_placeholder(
 
 
 def parse_string(
-    context: 'ExecutionContext',
+    context: 'EmulatedHouse',
     value: str,
     *,
-    player: 'ExecutionPlayer | None' = None,
+    player: 'EmulatedPlayer | None' = None,
 ) -> BackendType:
     """htsw `parseString`: one interpolation pass, then number typing."""
     placeholders = PLACEHOLDER_REGEX.findall(value)
@@ -191,10 +191,10 @@ def parse_string(
 
 
 def parse_value(
-    context: 'ExecutionContext',
+    context: 'EmulatedHouse',
     value: str,
     *,
-    player: 'ExecutionPlayer | None' = None,
+    player: 'EmulatedPlayer | None' = None,
 ) -> BackendType:
     """htsw `parseValue`: how a CHANGE_VAR right-hand side resolves."""
     if not value:

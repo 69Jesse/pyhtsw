@@ -1,6 +1,6 @@
 from helpers import expect_exception
 
-from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw import Container, EmulatedHouse, PlayerStat
 from pyhtsw.expression.binary_expression import (
     SET_STRING_MAX_LENGTH,
     BinaryExpression,
@@ -70,20 +70,20 @@ finally:
 assert caught, 'expected ValueError for >32-char direct set'
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     s = PlayerStat('s').as_string()
     set_string(s, 'hello')
 
     def check_short() -> None:
-        assert str(ctx.get(s)) == 'hello', ctx.get(s)
+        assert str(house.get(s)) == 'hello', house.get(s)
 
-    ctx.assert_all(check_short)
+    house.assert_all(check_short)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     s = PlayerStat('s').as_string()
     x = PlayerStat('x').as_string()
-    ctx.put(x, 'XYZ', ignore_warning=True)
+    house.put(x, 'XYZ', ignore_warning=True)
     # Source 36 chars, but placeholder %var.player/x% (14 chars) substitutes
     # to "XYZ" (3 chars), so the expanded value is 36 - 14 + 3 = 25 chars,
     # well under 32. Chained self-concat should produce the right result.
@@ -94,42 +94,42 @@ with ExecutionContext() as ctx:
     assert len(expected) <= SET_STRING_MAX_LENGTH
 
     def check_chained() -> None:
-        assert str(ctx.get(s)) == expected, (ctx.get(s), expected)
+        assert str(house.get(s)) == expected, (house.get(s), expected)
 
-    ctx.assert_all(check_chained)
+    house.assert_all(check_chained)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     a = PlayerStat('a').as_string()
     b = PlayerStat('b').as_string()
     dest = PlayerStat('dest').as_string()
-    ctx.put(a, 'X' * 20, ignore_warning=True)
-    ctx.put(b, 'Y' * 20, ignore_warning=True)
+    house.put(a, 'X' * 20, ignore_warning=True)
+    house.put(b, 'Y' * 20, ignore_warning=True)
     # Source 28 chars (under 32 limit), but a + b = 40 chars > 32.
     dest.value = '%var.player/a%%var.player/b%'
 
     def check_rule_fires() -> None:
-        # ctx.get_raw bypasses substitution and returns the literal source.
-        raw = ctx.get_raw(dest)
+        # house.get_raw bypasses substitution and returns the literal source.
+        raw = house.get_raw(dest)
         assert raw == '%var.player/a%%var.player/b%', raw
 
-    ctx.assert_all(check_rule_fires)
+    house.assert_all(check_rule_fires)
 
 
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     a = PlayerStat('a').as_string()
     b = PlayerStat('b').as_string()
     dest = PlayerStat('dest').as_string()
-    ctx.put(a, 'X' * 5, ignore_warning=True)
-    ctx.put(b, 'Y' * 5, ignore_warning=True)
+    house.put(a, 'X' * 5, ignore_warning=True)
+    house.put(b, 'Y' * 5, ignore_warning=True)
     # Substituted = 10 chars, well under 32, so the substituted value is stored.
     dest.value = '%var.player/a%%var.player/b%'
 
     def check_substituted() -> None:
-        raw = ctx.get_raw(dest)
+        raw = house.get_raw(dest)
         assert raw == 'XXXXXYYYYY', raw
 
-    ctx.assert_all(check_substituted)
+    house.assert_all(check_substituted)
 
 
 with Container() as container:

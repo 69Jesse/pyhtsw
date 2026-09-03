@@ -1,4 +1,4 @@
-from pyhtsw import Container, ExecutionContext, PlayerStat
+from pyhtsw import Container, EmulatedHouse, PlayerStat
 from pyhtsw.execute import java_long
 from pyhtsw.execute.java_long import INT64_MAX, INT64_MIN, JavaLong
 
@@ -71,61 +71,61 @@ assert java_long.from_double(1e308) == INT64_MAX  # beyond long range -> clamp
 
 
 # === The executor wraps long arithmetic exactly like a JVM ===
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
-    ctx.put(x, INT64_MAX, ignore_warning=True)
+    house.put(x, INT64_MAX, ignore_warning=True)
     x.value += 1
 
-assert int(ctx.get_raw(x)) == INT64_MIN, ctx.get_raw(x)
+assert int(house.get_raw(x)) == INT64_MIN, house.get_raw(x)
 
 
 # Integer division through the executor truncates toward zero.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
-    ctx.put(x, -7, ignore_warning=True)
+    house.put(x, -7, ignore_warning=True)
     x.value //= 2
 
-assert int(ctx.get_raw(x)) == -3, ctx.get_raw(x)
+assert int(house.get_raw(x)) == -3, house.get_raw(x)
 
 
 # A shift count past 63 is masked, not undefined behaviour.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
-    ctx.put(x, 1, ignore_warning=True)
+    house.put(x, 1, ignore_warning=True)
     x.value <<= 65  # 65 & 63 == 1
 
-assert int(ctx.get_raw(x)) == 2, ctx.get_raw(x)
+assert int(house.get_raw(x)) == 2, house.get_raw(x)
 
 
 # Logical right shift of a negative long zero-fills and never raises.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
-    ctx.put(x, -1, ignore_warning=True)
+    house.put(x, -1, ignore_warning=True)
     x.logical_rshift(1).write()
 
-assert int(ctx.get_raw(x)) == INT64_MAX, ctx.get_raw(x)
+assert int(house.get_raw(x)) == INT64_MAX, house.get_raw(x)
 
 
 # The `remainder` primitive composes to Java's `%`: a truncated quotient
 # leaves a remainder with the sign of the dividend.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(x, -7, ignore_warning=True)
+    house.put(x, -7, ignore_warning=True)
     out.value = x.remainder(3)
 
-assert int(ctx.get_raw(out)) == -1, ctx.get_raw(out)
+assert int(house.get_raw(out)) == -1, house.get_raw(out)
 
 
 # PyHTSW's `%` operator stays Python-flavoured on purpose — it adjusts the
 # truncated remainder so the result instead takes the sign of the divisor.
-with ExecutionContext() as ctx:
+with EmulatedHouse() as house:
     x = PlayerStat('x').as_long()
     out = PlayerStat('out').as_long()
-    ctx.put(x, -7, ignore_warning=True)
+    house.put(x, -7, ignore_warning=True)
     out.value = x % 3
 
-assert int(ctx.get_raw(out)) == 2, ctx.get_raw(out)
+assert int(house.get_raw(out)) == 2, house.get_raw(out)
 
 
 # === The constant folder wraps long results exactly like the executor ===

@@ -8,7 +8,7 @@ from pyhtsw.compiler.registry import ActionMeta
 from pyhtsw.expression.expression import INDENT, Expression
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.expression.condition.condition import Condition
     from pyhtsw.stats.stat import Stat
 
@@ -139,7 +139,7 @@ class ConditionalExpression(Expression):
     def __repr__(self) -> str:
         return f'If<{self.mode.name}, conditions={len(self.conditions)}, if_exprs={len(self.if_expressions)}, else_exprs={len(self.else_expressions)}>'
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         holds = (
             all(cond.evaluate(context) for cond in self.conditions)
             if self.mode == ConditionalMode.ALL

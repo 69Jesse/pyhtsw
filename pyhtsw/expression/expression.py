@@ -9,7 +9,7 @@ from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
     from pyhtsw.checkable import Checkable
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.stats.stat import Stat
     from pyhtsw.stats.temporary_stat import TemporaryStat
 
@@ -54,13 +54,13 @@ class Expression(BaseObject):
     def write(self) -> None:
         get_current_container().write_expression(self.cloned())
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         log(
             f'No execution implemented for expression \x1b[38;2;255;0;0m"{self!r}"\x1b[0m',
         )
 
     @final
-    def execute(self, context: 'ExecutionContext') -> None:
+    def execute(self, context: 'EmulatedHouse') -> None:
         if context.expression_callback is not None:
             context.expression_callback(self)
         if context.verbose:

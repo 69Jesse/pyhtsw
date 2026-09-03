@@ -46,7 +46,7 @@ __all__ = (
 )
 
 if TYPE_CHECKING:
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
 
 
 @final
@@ -92,7 +92,7 @@ class PlaySoundExpression(Expression):
             f' {self.inline(self.pitch)} {self.location.into_htsl()}'
         )
 
-    def raw_execute(self, context: 'ExecutionContext') -> None:
+    def raw_execute(self, context: 'EmulatedHouse') -> None:
         from pyhtsw.misc.sounds import preview_sound
 
         found = preview_sound(

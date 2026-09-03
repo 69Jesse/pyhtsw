@@ -15,7 +15,7 @@ from pyhtsw.internal_type import InternalType
 if TYPE_CHECKING:
     from pyhtsw.checkable import Checkable
     from pyhtsw.compiler.container import Container
-    from pyhtsw.execute.context import ExecutionContext
+    from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.stats.stat import Stat
 
 
@@ -155,7 +155,7 @@ class ComparisonCondition[LeftT: 'Checkable', RightT: 'Checkable | HousingType']
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}<{repr(self.left)} {self.operator.value} {repr(self.right)}, inverted={self.inverted}>'
 
-    def raw_evaluate(self, context: 'ExecutionContext') -> bool:
+    def raw_evaluate(self, context: 'EmulatedHouse') -> bool:
         left_value = context.get(self.left, output='backend')
         right_value = context.get(self.right, output='backend')
         if type(left_value) is not type(right_value):

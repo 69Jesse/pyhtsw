@@ -68,8 +68,7 @@ So an item's own action list should be the part that never has to change:
 
 ```python
 @function('Teleport To Crown', icon=Item('compass'))
-def teleport_to_crown() -> None:
-    ...
+def teleport_to_crown() -> None: ...
 
 
 CROWN_COMPASS: Item = Item(

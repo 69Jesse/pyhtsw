@@ -111,7 +111,7 @@ purchasable item wants: clicking the icon buys one, it does not use one.
 ```python
 WAND = Item('blaze_rod', name='&dWand', on_right_click=cast_spell)
 
-WAND.cloned(count=3)                 # three wands, still castable
+WAND.cloned(count=3)  # three wands, still castable
 WAND.cloned(lore=price, on_click=None)  # the shop's picture of a wand
 ```
 
@@ -127,9 +127,9 @@ almost always the one you want. Handing one out is how a player gets the menu
 without the permission that normally grants it.
 
 ```python
-Item.housing_menu()                     # OWNER, a nether star
-Item.housing_menu('TRUSTED_BUILDER')    # a ghast tear
-Item.housing_menu('GUEST')              # a dark oak door
+Item.housing_menu()  # OWNER, a nether star
+Item.housing_menu('TRUSTED_BUILDER')  # a ghast tear
+Item.housing_menu('GUEST')  # a dark oak door
 ```
 
 `housing_menu_tier='OWNER'` is also a plain `Item` keyword, if you want the
@@ -138,7 +138,7 @@ Item.housing_menu('GUEST')              # a dark oak door
 ## SNBT
 
 ```python
-print(Item(key='apple').into_snbt())          # indent=4 (default)
+print(Item(key='apple').into_snbt())  # indent=4 (default)
 print(Item(key='apple').into_snbt(indent=None))  # compact
 ```
 

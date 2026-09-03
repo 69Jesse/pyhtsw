@@ -57,7 +57,7 @@ writes to one stat end up adjacent and collapse:
 ```python
 coins.value += 8
 gems.value = 3
-coins.value += 8   # emitted as a single `var "coins" += 16`
+coins.value += 8  # emitted as a single `var "coins" += 16`
 ```
 
 ## Merging conditionals
@@ -87,10 +87,10 @@ pass keeps that one running:
 ```python
 from pyhtsw import NoOptimization
 
-with NoOptimization():            # emitted exactly as written
+with NoOptimization():  # emitted exactly as written
     ...
 
-with NoOptimization(fold=True):   # only constant folding still runs
+with NoOptimization(fold=True):  # only constant folding still runs
     ...
 ```
 

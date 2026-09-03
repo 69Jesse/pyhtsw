@@ -13,8 +13,8 @@ declaration:
 ```python
 shop = Menu('Magic Shop', 6)
 
-shop.name   # 'Magic Shop'
-shop.size   # 6
+shop.name  # 'Magic Shop'
+shop.size  # 6
 ```
 
 Anything that already exists in the house without a declaration is referred to
@@ -223,6 +223,7 @@ NPCs generated from data are the common case:
 
 ```python
 for enemy in ENEMIES:
+
     def strike(enemy=enemy) -> None:
         chat(f'You strike the {enemy.name}!')
 
@@ -365,9 +366,9 @@ referenced by their plain name string, everywhere a `Team` / `Group` value is
 accepted:
 
 ```python
-VIP.priority                          # 5
-Group('Plain').tag                    # None
-set_player_team('Red')                # the string names it, declared or not
+VIP.priority  # 5
+Group('Plain').tag  # None
+set_player_team('Red')  # the string names it, declared or not
 TeamStat('kills', team='Red')
 HasTeam('Red')
 ```

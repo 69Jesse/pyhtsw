@@ -6,9 +6,9 @@ the bare `Location` class is **not** a valid value.
 ```python
 from pyhtsw import Location
 
-Location.custom(10, 65, 10)                  # x, y, z
-Location.custom(10, 65, 10, 90, 0)           # x, y, z, yaw, pitch
-Location.custom(10, 65, 10, pitch=0, yaw=90) # the same, by name
+Location.custom(10, 65, 10)  # x, y, z
+Location.custom(10, 65, 10, 90, 0)  # x, y, z, yaw, pitch
+Location.custom(10, 65, 10, pitch=0, yaw=90)  # the same, by name
 Location.house_spawn()
 Location.invokers()
 Location.current()

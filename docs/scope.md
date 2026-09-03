@@ -21,7 +21,7 @@ which is where an item's behaviour should live anyway — see
 
 ```python
 def _use() -> None:
-    var.value = 1          # plain assignments are fine
+    var.value = 1  # plain assignments are fine
     trigger_function(cast)  # everything that branches lives in here
 
 

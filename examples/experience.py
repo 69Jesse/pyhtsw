@@ -30,18 +30,18 @@ with Else:
 """Output:
 
 // Generated with PyHTSW (https://github.com/69Jesse/pyhtsw)
-stat temp1 = "%stat.player/reward%"
-stat temp1 *= "%stat.player/multiplier%"
-stat temp1 *= "%stat.global/multiplier%"
-stat experience += "%stat.player/temp1%"
-chat "&aYour EXP has been updated to &6%stat.player/experience%g"
-if and (stat experience >= 100) {
-    stat experience -= "100"
-    stat level += "1"
-    chat "&eYou leveled up to &dLevel %stat.player/level%&e!"
+var "tmp0" = %var.player/reward% false
+var "tmp0" *= %var.player/multiplier% false
+var "tmp0" *= %var.global/multiplier% false
+var "experience" += %var.player/tmp0% true
+chat "&aYour EXP has been updated to &6%var.player/experience%g"
+if and (var "experience" >= 100) {
+    var "experience" -= 100 true
+    var "level" += 1 true
+    chat "&eYou leveled up to &dLevel %var.player/level%&e!"
 } else {
-    stat temp1 = "100"
-    stat temp1 -= "%stat.player/experience%"
-    chat "&eOnly &a%stat.player/temp1% EXP&e left to level up!"
+    var "tmp0" = 100 false
+    var "tmp0" -= "%var.player/experience 0%L" false
+    chat "&eOnly &a%var.player/tmp0 0% EXP&e left to level up!"
 }
 """

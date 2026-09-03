@@ -762,13 +762,14 @@ class NpcImportable(Importable):
         return entry
 
 
-TAG_PATTERN = re.compile(r'^[A-Za-z0-9 ]*$')
+TAG_PATTERN = re.compile(r'^[A-Za-z0-9 -]*$')
 
 
 def _check_tag(name: str, tag: str | None) -> None:
     if tag is not None and TAG_PATTERN.match(tag) is None:
         raise ValueError(
-            f'"{name}": tag {tag!r} must contain only letters, digits and spaces.',
+            f'"{name}": tag {tag!r} must contain only letters, digits, '
+            'spaces and hyphens.',
         )
 
 

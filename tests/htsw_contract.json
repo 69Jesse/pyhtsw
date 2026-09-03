@@ -5,10 +5,6 @@
       "required": false,
       "kind": "string"
     },
-    "dangerouslyDeleteEverythingNotInThisFile": {
-      "required": false,
-      "kind": "boolean"
-    },
     "include": {
       "required": false,
       "kind": "array"
@@ -132,7 +128,8 @@
     "items": {
       "name": {
         "required": true,
-        "kind": "string"
+        "kind": "ref",
+        "ref": "itemName"
       },
       "nbt": {
         "required": true,
@@ -176,7 +173,7 @@
       "tag": {
         "required": false,
         "kind": "string",
-        "pattern": "^[A-Za-z0-9 ]*$"
+        "pattern": "^[A-Za-z0-9 -]*$"
       },
       "color": {
         "required": false,
@@ -196,7 +193,7 @@
       "tag": {
         "required": false,
         "kind": "string",
-        "pattern": "^[A-Za-z0-9 ]*$"
+        "pattern": "^[A-Za-z0-9 -]*$"
       },
       "tagShownInChat": {
         "required": false,

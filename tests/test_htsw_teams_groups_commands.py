@@ -112,14 +112,17 @@ with Container():
 assert raised, 'expected a ValueError for a permission in both allow and deny'
 
 
-# Tags are restricted to letters, digits and spaces; priority to 0-20.
+# Tags are restricted to letters, digits, spaces and hyphens; priority to 0-20.
 raised = False
 with Container():
     try:
-        Team('Bad', tag='no-dashes')
+        Team('Bad', tag='no_underscores')
     except ValueError:
         raised = True
-assert raised, "expected a ValueError for tag='no-dashes'"
+assert raised, "expected a ValueError for tag='no_underscores'"
+
+with Container():
+    Team('Fine', tag='a-b')
 
 raised = False
 with Container():

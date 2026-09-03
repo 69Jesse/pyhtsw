@@ -3,7 +3,7 @@
 PyHTSW requires **Python 3.13+**. Make sure Git is on your PATH, then install:
 
 ```sh
-pip install "git+https://github.com/69Jesse/PyHTSW.git" --upgrade
+pip install "git+https://github.com/69Jesse/pyhtsw.git" --upgrade
 ```
 
 Then `import pyhtsw` from any script.

@@ -12,7 +12,7 @@ You write ordinary Python; running it builds an expression tree, optimizes it, a
 ## Installation
 To install PyHTSW, make sure Git is available in your system's PATH, then run the following command:
 ```bash
-pip install "git+https://github.com/69Jesse/PyHTSW.git" --upgrade
+pip install "git+https://github.com/69Jesse/pyhtsw.git" --upgrade
 ```
 
 ## Usage
@@ -61,7 +61,7 @@ Generates the project `experience/` with this `import.json`:
 ```
 and this `functions/experience.htsl`:
 ```
-// Generated with PyHTSW (https://github.com/69Jesse/PyHTSW)
+// Generated with PyHTSW (https://github.com/69Jesse/pyhtsw)
 var "tmp0" = %var.player/reward% false
 var "tmp0" *= %var.player/multiplier% false
 var "tmp0" *= %var.global/multiplier% false

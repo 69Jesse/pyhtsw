@@ -29,7 +29,7 @@ with Else:
 
 """Output:
 
-// Generated with PyHTSW https://github.com/69Jesse/PyHTSW
+// Generated with PyHTSW (https://github.com/69Jesse/pyhtsw)
 stat temp1 = "%stat.player/reward%"
 stat temp1 *= "%stat.player/multiplier%"
 stat temp1 *= "%stat.global/multiplier%"

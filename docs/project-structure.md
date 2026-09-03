@@ -48,7 +48,7 @@ package = false           # this is an app, not an importable library
 
 # Only when depending on a local pyhtsw checkout instead of the published package:
 [tool.uv.sources]
-pyhtsw = { path = "../path/to/PyHTSW", editable = true }
+pyhtsw = { path = "../path/to/pyhtsw", editable = true }
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG001", "COM812"]

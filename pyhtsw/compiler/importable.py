@@ -90,7 +90,7 @@ __all__ = (
 )
 
 
-HEADER = '// Generated with PyHTSW (https://github.com/69Jesse/PyHTSW)'
+HEADER = '// Generated with PyHTSW (https://github.com/69Jesse/pyhtsw)'
 
 # A 0-arg handler (the importable has no runtime instance to hand back).
 Handler = Callable[[], Any] | Callable[[Any], Any]

@@ -18,7 +18,7 @@ for letter in ('A', 'B', 'C', 'D', 'E', 'F'):
 
 """Output:
 
-// Generated with PyHTSW https://github.com/69Jesse/PyHTSW
+// Generated with PyHTSW (https://github.com/69Jesse/pyhtsw)
 chat "&aChecking for empty teams.."
 if and (stat team_A_players == 0) {
     chat "&eTeam A is empty!"

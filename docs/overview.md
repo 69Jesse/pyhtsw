@@ -1,8 +1,8 @@
 # Overview
 
-PyHTSW (formerly PyHTSL) is a Python frontend that emits **htsw** projects. You
-write Python; running the script produces an htsw project folder that the HTSW
-tooling imports into a Hypixel Housing.
+PyHTSW is a Python frontend that emits **htsw** projects. You write Python;
+running the script produces an htsw project folder that the HTSW tooling imports
+into a Hypixel Housing.
 
 htsw is a text format for Housing entities (functions, events, items, regions,
 menus, NPCs) built around two formats: `import.json` and HTSL. PyHTSW generates

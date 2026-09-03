@@ -1,29 +1,36 @@
 # PyHTSW
-*(formerly PyHTSL)*
 
-PyHTSW is a Python DSL that compiles to [HTSW](https://github.com/LGHousing/htsw) projects, created to simplify the process of making housings on [Hypixel](https://hypixel.net/)
+PyHTSW is a Python DSL that compiles to [HTSW](https://github.com/LGHousing/htsw) projects, created to simplify the process of making housings on [Hypixel](https://hypixel.net/).
 
-You write ordinary Python; running it builds an expression tree, optimizes it, and emits a full HTSW project — `import.json`, the `.htsl` action scripts and the `.snbt` items — ready to import.
+You write ordinary Python, but operators on stats build an expression tree instead of computing anything. Running your script compiles that tree into a complete HTSW project: an `import.json`, the `.htsl` action scripts it names, and the `.snbt` items they use. Import that folder with HTSW and it is in your house.
 
 ## Prerequisites
+
 - [HTSW](https://github.com/LGHousing/htsw)
 - [Python](https://www.python.org/) 3.13 or newer
 
 ## Installation
-To install PyHTSW, make sure Git is available in your system's PATH, then run the following command:
+
+Make sure Git is available in your system's PATH, then run:
+
 ```bash
 pip install "git+https://github.com/69Jesse/pyhtsw.git" --upgrade
 ```
 
 ## Usage
-To use PyHTSW, you need to import anything from the package (examples below) and run your Python file like you would with any other Python file.
-```
+
+Import anything from `pyhtsw` and run your file like any other Python file:
+
+```bash
 python file.py
 ```
-This generates an htsw project folder named `file` in your HTSW projects folder, which you can then import with HTSW.
+
+That writes an htsw project folder named `file` into your HTSW projects folder (by default `.minecraft/htsw/projects`, changed with `set_projects_folder`), ready to import.
 
 ## Example
-The following Python file named `experience.py`:
+
+`experience.py`:
+
 ```python
 from pyhtsw import Else, GlobalStat, IfAll, PlayerStat, chat
 
@@ -45,10 +52,13 @@ with IfAll(experience >= EXP_TO_LEVEL_UP):
 with Else:
     chat(f'&eOnly &a{EXP_TO_LEVEL_UP - experience} EXP&e left to level up!')
 ```
-```
+
+```bash
 python experience.py
 ```
+
 Generates the project `experience/` with this `import.json`:
+
 ```json
 {
   "functions": [
@@ -59,7 +69,9 @@ Generates the project `experience/` with this `import.json`:
   ]
 }
 ```
+
 and this `functions/experience.htsl`:
+
 ```
 // Generated with PyHTSW (https://github.com/69Jesse/pyhtsw)
 var "tmp0" = %var.player/reward% false
@@ -77,3 +89,33 @@ if and (var "experience" >= 100) {
     chat "&eOnly &a%var.player/tmp0 0% EXP&e left to level up!"
 }
 ```
+
+Everything else HTSW imports is declared the same way. Functions, events and commands are decorators; items, menus, regions, NPCs, teams and groups are classes:
+
+```python
+from pyhtsw import Item, Menu, chat, event, give_item
+
+wand = Item('blaze_rod', name='&aMagic Wand', lore='&7Right-click me')
+
+
+@wand.on_right_click
+def on_right() -> None:
+    chat('&dPoof!')
+
+
+shop = Menu('Magic Shop', 6)
+
+
+@shop.add_element(wand, x=2, y=4)
+def buy_wand() -> None:
+    give_item(wand)
+
+
+@event('player_join')
+def on_join() -> None:
+    give_item(wand)
+```
+
+## Documentation
+
+[`docs/`](docs/) covers the whole thing in more depth, from [importables](docs/importables.md) and [expressions](docs/expressions.md) to the [optimizer](docs/optimizer.md), [scope rules](docs/scope.md) and the [simulator](docs/simulator.md).

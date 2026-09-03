@@ -470,7 +470,7 @@ class RegionImportable(Importable):
         self,
         *,
         name: str,
-        bounds: Bounds | None = None,
+        bounds: Bounds,
         on_enter: 'Block | None' = None,
         on_exit: 'Block | None' = None,
     ) -> None:
@@ -495,13 +495,20 @@ class RegionImportable(Importable):
         )
 
     def build(self, project: Project) -> dict[str, Any]:
-        entry: dict[str, Any] = {'name': self.name}
-        if self.bounds is not None:
-            what = f'Region "{self.name}"'
-            entry['bounds'] = {
+        what = f'Region "{self.name}"'
+        if self.bounds is None:
+            raise ValueError(
+                f'{what} has no bounds, which htsw requires. Pass '
+                f'bounds=((x, y, z), (x, y, z)), or refer to a region built in-game '
+                f'by its name string rather than declaring one.',
+            )
+        entry: dict[str, Any] = {
+            'name': self.name,
+            'bounds': {
                 'from': _block_pos(self.bounds[0], what=what),
                 'to': _block_pos(self.bounds[1], what=what),
-            }
+            },
+        }
         folder = f'regions/{into_kebab(self.name)}'
         if self.on_enter is not None and not self.on_enter.is_empty():
             entry['onEnterActions'] = project.write_block(

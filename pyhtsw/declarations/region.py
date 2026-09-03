@@ -21,12 +21,12 @@ class Region(Declared):
     __htsw_kind__ = 'regions'
     __htsw_factory__ = 'Region'
 
-    bounds: declared_field[Bounds | None] = declared_field()
+    bounds: declared_field[Bounds] = declared_field()
 
     def __init__(
         self,
         name: str,
-        bounds: Bounds | None = None,
+        bounds: Bounds,
         *,
         on_enter: Handler | None = None,
         on_exit: Handler | None = None,

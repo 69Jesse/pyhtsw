@@ -162,18 +162,19 @@ def left() -> None:
 ```
 
 - `bounds` is `((x, y, z), (x, y, z))` — the from/to corners — and is
-  **optional**: htsw imports a region without them and you place it in-game.
+  **required**: htsw's schema marks the field required, so a declared region
+  cannot be placed in-game later. A region you built in-game is referred to by
+  its name string instead of being declared.
 - `region.corners(a, b)` sets `bounds` from two opposite corners in either
   order, the way the in-game region tool hands them to you.
 - `region.bounds` is readable and settable after declaration, so a region can be
-  declared up front and placed once the coordinates are known.
+  declared with placeholder bounds and corrected once the real coordinates are
+  known.
 - `region.attach('enter' | 'exit', handler)` is the non-decorator form, which is
   what a loop wants.
 
 ```python
-pads = [Region(f'Pad {n}') for n in range(3)]
-for n, pad in enumerate(pads):
-    pad.corners((n, 60, 0), (n + 1, 61, 1))
+pads = [Region(f'Pad {n}', ((n, 60, 0), (n + 1, 61, 1))) for n in range(3)]
 ```
 
 `WithinRegion` takes the value, or a bare string for a region declared in-game:

@@ -22,7 +22,7 @@ with Container(projects_folder=tmp) as container:
     )
 
     # ...or attached afterwards, which is what a loop needs.
-    lobby = Region('Lobby')
+    lobby = Region('Lobby', ((0, 0, 0), (1, 1, 1)))
 
     @lobby.on_enter
     def _welcome() -> None:
@@ -32,9 +32,7 @@ with Container(projects_folder=tmp) as container:
     def _bye() -> None:
         chat('&7bye')
 
-    # Bounds are optional at declaration and settable after it - htsw imports a
-    # region without them and you place it in-game.
-    assert lobby.bounds is None
+    # Bounds are settable after declaration, which is what `corners` is for.
     lobby.corners((10, 70, 10), (0, 60, 0))
     assert lobby.bounds == ((0, 60, 0), (10, 70, 10)), lobby.bounds
 
@@ -45,7 +43,7 @@ with Container(projects_folder=tmp) as container:
 
     # The condition takes the value, or a bare name for a region declared
     # in-game.
-    @Region('Watcher').on_enter
+    @Region('Watcher', ((0, 0, 0), (1, 1, 1))).on_enter
     def _watch() -> None:
         with IfAll(WithinRegion(arena)):
             chat('&ealso in the arena')
@@ -91,10 +89,34 @@ assert 'inRegion "Hand Placed"' in watcher, watcher
 
 # Two regions cannot share a name.
 with Container():
-    Region('Twin')
+    Region('Twin', ((0, 0, 0), (1, 1, 1)))
     raised = False
     try:
-        Region('Twin')
+        Region('Twin', ((0, 0, 0), (1, 1, 1)))
     except RuntimeError:
         raised = True
     assert raised, 'expected a duplicate region name to be refused'
+
+
+# htsw's schemaSpec.ts marks bounds required, so a region cannot be declared
+# here and placed in-game later. Omitting them is a TypeError at the call...
+with Container():
+    raised = False
+    try:
+        Region('Unbounded')  # type: ignore[call-arg]
+    except TypeError:
+        raised = True
+    assert raised, 'expected a region without bounds to be refused'
+
+# ...and clearing them afterwards is caught at build, before htsw sees it.
+with tempfile.TemporaryDirectory() as unbounded_tmp:
+    with Container(projects_folder=unbounded_tmp) as unbounded:
+        cleared = Region('Cleared', ((0, 0, 0), (1, 1, 1)))
+        cleared.bounds = None  # type: ignore[assignment]
+
+    raised = False
+    try:
+        unbounded.export('Unbounded Test')
+    except ValueError as error:
+        raised = 'has no bounds' in str(error)
+    assert raised, 'expected a bounds-less region to fail at build'

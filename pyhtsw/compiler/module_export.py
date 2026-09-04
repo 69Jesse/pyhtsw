@@ -4,7 +4,6 @@ from collections.abc import Generator
 from typing import TYPE_CHECKING
 
 from pyhtsw.compiler.importable import Project, build_import_json, module_to_folder
-from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
     from pyhtsw.compiler.block import Block
@@ -153,12 +152,7 @@ def _resolve_includes(
         if reaches(source, target):
             continue  # already pulled in via containment or an earlier edge
         if reaches(target, source):
-            log(
-                f'\x1b[38;2;255;191;0mSkipping cross-module include '
-                f'{source or "<root>"} -> {target} (would create an import.json '
-                f'cycle); it still resolves through the root.\x1b[0m',
-            )
-            continue
+            continue  # a cycle; it still resolves through the root
         adjacency[source].add(target)
         cross[source].append(target)
     return cross

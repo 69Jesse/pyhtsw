@@ -11,9 +11,15 @@ if TYPE_CHECKING:
 
 __all__ = (
     'ContainerSettings',
+    'PostExportHook',
     'SETTING_NAMES',
     'setting',
     'inherited_setting',
+)
+
+
+type PostExportHook = (
+    Callable[[], Any] | Callable[[Path], Any] | Callable[[Path, 'Container'], Any]
 )
 
 
@@ -30,6 +36,7 @@ class ContainerSettings(TypedDict, total=False):
     ignore_action_limits: bool
     ignore_scope: bool
     allow_nested_expressions: bool
+    post_export: 'PostExportHook | None'
 
 
 SETTING_NAMES: frozenset[str] = frozenset(ContainerSettings.__optional_keys__)
@@ -116,6 +123,12 @@ def check_house_uuid(value: str | None) -> str | None:
         return None
     if UUID_PATTERN.match(value) is None:
         raise ValueError(f'Not a valid house UUID: {value!r}')
+    return value
+
+
+def check_post_export(value: 'PostExportHook | None') -> 'PostExportHook | None':
+    if value is not None and not callable(value):
+        raise TypeError(f'A post_export hook must be callable or None, got {value!r}')
     return value
 
 

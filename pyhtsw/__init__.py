@@ -267,6 +267,9 @@ from pyhtsw.compiler.scope import ScopeError as ScopeError
 from pyhtsw.compiler.settings import (
     ContainerSettings as ContainerSettings,
 )
+from pyhtsw.compiler.settings import (
+    PostExportHook as PostExportHook,
+)
 from pyhtsw.conditions.event import (
     BlockType as BlockType,
 )

@@ -11,13 +11,16 @@ from typing import TYPE_CHECKING, Any, NamedTuple, NoReturn, Self, Unpack
 from pyhtsw.compiler.settings import (
     SETTING_NAMES,
     ContainerSettings,
+    PostExportHook,
     as_projects_folder,
     check_house_uuid,
+    check_post_export,
     inherited_setting,
     setting,
 )
 from pyhtsw.config import get_projects_folder
 from pyhtsw.logger import AntiSpamLogger
+from pyhtsw.utils.callback import call_with_optional_args
 from pyhtsw.utils.kebab import into_kebab
 from pyhtsw.utils.log import log
 
@@ -123,6 +126,10 @@ class Container:
     ignore_action_limits = inherited_setting[bool](False)
     ignore_scope = inherited_setting[bool](False)
     allow_nested_expressions = inherited_setting[bool](False)
+    post_export = inherited_setting[PostExportHook | None](
+        None,
+        transform=check_post_export,
+    )
 
     def __init__(self, **settings: Unpack[ContainerSettings]) -> None:
         from pyhtsw.compiler.block import GlobalBlock
@@ -763,6 +770,10 @@ class Container:
             f'\nImport it with HTSW using the project named: \x1b[38;2;255;0;0m{name}\x1b[0m'
             '\n',
         )
+
+        hook = self.post_export
+        if hook is not None:
+            call_with_optional_args(hook, root, self, noun='post_export hook')
 
 
 def _format_nested_expression_error(

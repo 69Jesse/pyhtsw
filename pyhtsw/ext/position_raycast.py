@@ -15,7 +15,7 @@ from pyhtsw.ext.look_vector import (
 from pyhtsw.placeholders.player import PlayerPositionX, PlayerPositionY, PlayerPositionZ
 from pyhtsw.stats.player_stat import PlayerStat
 from pyhtsw.stats.temporary_stat import TemporaryStat
-from pyhtsw.utils.callback import call_with_optional_arg
+from pyhtsw.utils.callback import call_with_optional_args
 
 __all__ = (
     'Block',
@@ -523,7 +523,7 @@ def create_position_raycast(
         if on_miss is not None or has_hit_path:
             with IfAll(index < 0):
                 if on_miss is not None:
-                    call_with_optional_arg(on_miss, result, noun='on_miss')
+                    call_with_optional_args(on_miss, result, noun='on_miss')
                 if has_hit_path:
                     exit_function()
 
@@ -536,7 +536,7 @@ def create_position_raycast(
                 point.value += org[axis]
 
         if on_hit is not None:
-            call_with_optional_arg(on_hit, result, noun='on_hit')
+            call_with_optional_args(on_hit, result, noun='on_hit')
 
         if on_target_hit is not None:
             for position, target in enumerate(targets):

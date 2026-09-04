@@ -14,7 +14,7 @@ from pyhtsw.ext.look_vector import (
 from pyhtsw.placeholders.player import PlayerPositionX, PlayerPositionY, PlayerPositionZ
 from pyhtsw.stats.global_stat import GlobalStat
 from pyhtsw.stats.temporary_stat import TemporaryStat
-from pyhtsw.utils.callback import call_with_optional_arg
+from pyhtsw.utils.callback import call_with_optional_args
 
 __all__ = (
     'RaycastResult',
@@ -279,7 +279,7 @@ def create_raycast(
             headshot.value = my_headshot
 
         if on_hit_target is not None:
-            call_with_optional_arg(on_hit_target, result, noun='on_hit_target')
+            call_with_optional_args(on_hit_target, result, noun='on_hit_target')
 
     def trigger() -> None:
         # Reset per-cast outputs.
@@ -312,7 +312,7 @@ def create_raycast(
         trigger_function(raycast_function)
 
         if on_hit_sender is not None:
-            call_with_optional_arg(on_hit_sender, result, noun='on_hit_sender')
+            call_with_optional_args(on_hit_sender, result, noun='on_hit_sender')
 
     result = RaycastResult(
         function=raycast_function,

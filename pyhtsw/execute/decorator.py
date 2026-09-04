@@ -5,7 +5,7 @@ from pyhtsw.compiler.settings import ContainerSettings
 from pyhtsw.execute.expressions.run_execution_expression import CallbackType
 from pyhtsw.execute.house import EmulatedHouse
 from pyhtsw.expression.expression import Expression
-from pyhtsw.utils.callback import call_with_optional_arg
+from pyhtsw.utils.callback import call_with_optional_args
 
 __all__ = (
     'emulate',
@@ -42,4 +42,4 @@ def run_saved_emulations() -> None:
     while _saved_emulations:
         house, callback = _saved_emulations.pop(0)
         with house:
-            call_with_optional_arg(callback, house, noun='callback')
+            call_with_optional_args(callback, house, noun='callback')

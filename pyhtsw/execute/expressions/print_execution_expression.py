@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Self
 
 from pyhtsw.clone import MISSING, Missing, clone_with
 from pyhtsw.execute.expressions.execution_expression import ExecutionExpression
-from pyhtsw.utils.callback import call_with_optional_arg
+from pyhtsw.utils.callback import call_with_optional_args
 from pyhtsw.utils.log import log
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ class PrintExecutionExpression(ExecutionExpression):
         flattened = []
         for value in self.values:
             if callable(value):
-                flattened.append(call_with_optional_arg(value, context, noun='values'))
+                flattened.append(call_with_optional_args(value, context, noun='values'))
             else:
                 flattened.append(value)
         return tuple(flattened)

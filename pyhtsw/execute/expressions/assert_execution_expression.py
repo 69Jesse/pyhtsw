@@ -6,7 +6,7 @@ from pyhtsw.execute.exception import descriptive_backend_type
 from pyhtsw.execute.expressions.execution_expression import ExecutionExpression
 from pyhtsw.expression.condition.condition import Condition
 from pyhtsw.expression.condition.conditional_expression import ConditionalMode
-from pyhtsw.utils.callback import call_with_optional_arg
+from pyhtsw.utils.callback import call_with_optional_args
 
 if TYPE_CHECKING:
     from pyhtsw.execute.house import EmulatedHouse
@@ -117,7 +117,7 @@ class AssertExecutionExpression(ExecutionExpression):
         flattened: list[Condition] = []
         for cond in self.conditions:
             if callable(cond):
-                cond = call_with_optional_arg(cond, context, noun='conditions')
+                cond = call_with_optional_args(cond, context, noun='conditions')
                 if cond is None:
                     continue
             if isinstance(cond, AssertExecutionExpression) and cond.mode == self.mode:

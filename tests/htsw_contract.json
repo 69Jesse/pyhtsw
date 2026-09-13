@@ -5,6 +5,10 @@
       "required": false,
       "kind": "string"
     },
+    "dangerouslyDeleteEverythingNotInThisFile": {
+      "required": false,
+      "kind": "boolean"
+    },
     "include": {
       "required": false,
       "kind": "array"

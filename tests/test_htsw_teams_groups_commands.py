@@ -102,6 +102,33 @@ plain.export('No Uuid')
 assert 'houseUuid' not in json.loads((tmp / 'no-uuid' / 'import.json').read_text())
 
 
+# The deletion flag rides with the binding: entry file only, and never without it.
+with Container(projects_folder=tmp) as armed:
+
+    @command('noop2')
+    def _noop2() -> None:
+        chat('noop')
+
+
+try:
+    armed.export('Unbound', exclusive_house=True)
+except ValueError as e:
+    assert 'house_uuid' in str(e), e
+else:
+    raise AssertionError('armed export without a house_uuid should fail')
+
+armed.export(
+    'Armed',
+    house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e',
+    exclusive_house=True,
+)
+data = json.loads((tmp / 'armed' / 'import.json').read_text())
+assert data['dangerouslyDeleteEverythingNotInThisFile'] is True, data
+assert 'dangerouslyDeleteEverythingNotInThisFile' not in json.loads(
+    (tmp / 'tgc' / 'import.json').read_text(),
+)
+
+
 # A permission in both allow and deny is a mistake, not a silent last-wins.
 raised = False
 with Container():

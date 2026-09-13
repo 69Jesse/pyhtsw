@@ -56,6 +56,7 @@ with pyhtsw.Container(project_name='side project') as side:
 | --- | --- | --- |
 | `project_name` | script filename | Names the export |
 | `house_uuid` | `None` | Binds the entry `import.json` to one house |
+| `exclusive_house` | `False` | Claims the whole house: htsw may delete what the project does not declare; needs `house_uuid` |
 | `projects_folder` | machine setting | Where this container's project folder is written |
 | `cleanup_stale_files` | `False` | Delete generated files a previous export left behind |
 | `display_output` | `False` | Print every generated file to the console |

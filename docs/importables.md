@@ -419,3 +419,18 @@ container.house_uuid = '3fcc64f4-0000-4000-8000-b517afa9958e'
 # or per export, which wins over both:
 container.export('MyHouse', house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e')
 ```
+
+A bound project can also claim the whole house:
+
+```python
+pyhtsw.configure(
+    house_uuid='3fcc64f4-0000-4000-8000-b517afa9958e',
+    exclusive_house=True,
+)
+```
+
+Running the script still only writes files. The flag lands in the entry
+`import.json` as `dangerouslyDeleteEverythingNotInThisFile`, and it is htsw
+that acts on it at import time by deleting anything in the house the project
+does not declare. Housing has no undo. Exporting with the flag but no
+`house_uuid` raises, since htsw rejects that manifest anyway.

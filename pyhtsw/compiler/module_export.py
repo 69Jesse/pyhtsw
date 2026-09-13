@@ -163,6 +163,7 @@ def export_project(
     importables: list['Importable'],
     prefix: tuple[str, ...] | None = None,
     house_uuid: str | None = None,
+    exclusive_house: bool = False,
 ) -> None:
     from pyhtsw.compiler.item_plan import promoted_importables
 
@@ -192,9 +193,12 @@ def export_project(
         data = build_import_json(project, node.importables)
         if includes:
             data = {'include': includes, **data}
-        # Only the entry import.json's binding is used by htsw.
-        if house_uuid is not None and not node.folder:
-            data = {'houseUuid': house_uuid, **data}
+        # Only the entry import.json's binding and deletion flag are used by htsw.
+        if not node.folder:
+            if exclusive_house:
+                data = {'dangerouslyDeleteEverythingNotInThisFile': True, **data}
+            if house_uuid is not None:
+                data = {'houseUuid': house_uuid, **data}
         project.write(node.import_json_relpath, json.dumps(data, indent=2) + '\n')
 
     project.node_folder = ''

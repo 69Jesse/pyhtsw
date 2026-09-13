@@ -127,6 +127,7 @@ class Container:
     auto_export = setting[bool](True)
 
     house_uuid = inherited_setting[str | None](None, transform=check_house_uuid)
+    exclusive_house = inherited_setting[bool](False)
     projects_folder = inherited_setting[Path | None](
         None,
         transform=as_projects_folder,
@@ -714,6 +715,7 @@ class Container:
         *,
         module_prefix: tuple[str, ...] | None = None,
         house_uuid: str | None = None,
+        exclusive_house: bool | None = None,
         cleanup_stale_files: bool | None = None,
         display_output: bool | None = None,
     ) -> None:
@@ -741,6 +743,14 @@ class Container:
             )
             return
 
+        house_uuid = house_uuid if house_uuid is not None else self.house_uuid
+        exclusive = _overridden(exclusive_house, self.exclusive_house)
+        if exclusive and house_uuid is None:
+            raise ValueError(
+                'exclusive_house requires a house_uuid: without one the manifest '
+                'names no house to claim.',
+            )
+
         root = self.project_path(name)
         if root in EXPORTED_ROOTS:
             raise RuntimeError(
@@ -765,7 +775,8 @@ class Container:
                 project,
                 importables,
                 module_prefix,
-                house_uuid if house_uuid is not None else self.house_uuid,
+                house_uuid,
+                exclusive,
             )
         finally:
             CONTAINERS.pop()

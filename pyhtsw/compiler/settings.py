@@ -29,6 +29,7 @@ class ContainerSettings(TypedDict, total=False):
 
     project_name: str | None
     house_uuid: str | None
+    exclusive_house: bool
     projects_folder: 'Path | str | None'
     cleanup_stale_files: bool
     display_output: bool

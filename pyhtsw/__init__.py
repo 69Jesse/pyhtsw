@@ -263,6 +263,9 @@ from pyhtsw.compiler.container import (
 )
 from pyhtsw.compiler.export import export as export
 from pyhtsw.compiler.limits import ActionLimitError as ActionLimitError
+from pyhtsw.compiler.references import (
+    UndeclaredReferenceError as UndeclaredReferenceError,
+)
 from pyhtsw.compiler.scope import ScopeError as ScopeError
 from pyhtsw.compiler.settings import (
     ContainerSettings as ContainerSettings,

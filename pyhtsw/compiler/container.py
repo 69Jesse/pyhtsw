@@ -722,6 +722,7 @@ class Container:
         from pyhtsw.compiler.importable import Project
         from pyhtsw.compiler.item_plan import plan_items
         from pyhtsw.compiler.module_export import export_project
+        from pyhtsw.compiler.references import check_declared_references
 
         name = self.resolve_project_name(name)
 
@@ -750,6 +751,8 @@ class Container:
                 'exclusive_house requires a house_uuid: without one the manifest '
                 'names no house to claim.',
             )
+        if exclusive:
+            check_declared_references(importables)
 
         root = self.project_path(name)
         if root in EXPORTED_ROOTS:

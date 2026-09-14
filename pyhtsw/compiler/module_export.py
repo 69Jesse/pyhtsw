@@ -75,7 +75,7 @@ def _build_tree(
     return nodes
 
 
-def _importable_blocks(importable: 'Importable') -> list['Block']:
+def importable_blocks(importable: 'Importable') -> list['Block']:
     blocks: list[Block] = []
     for attr in ('block', 'left', 'right', 'on_enter', 'on_exit'):
         block = getattr(importable, attr, None)
@@ -87,11 +87,11 @@ def _importable_blocks(importable: 'Importable') -> list['Block']:
     return blocks
 
 
-def _walk(expressions: list['Expression']) -> Generator['Expression']:
+def walk_expressions(expressions: list['Expression']) -> Generator['Expression']:
     for expression in expressions:
         yield expression
         for nested in expression.nested_expressions_refs():
-            yield from _walk(nested)
+            yield from walk_expressions(nested)
 
 
 def _node_targets(
@@ -101,8 +101,8 @@ def _node_targets(
 ) -> set[str]:
     targets: set[str] = set()
     for importable in node.importables:
-        for block in _importable_blocks(importable):
-            for expression in _walk(block.expressions):
+        for block in importable_blocks(importable):
+            for expression in walk_expressions(block.expressions):
                 for ref in expression.referenced_importables():
                     if ref not in key_to_module:
                         continue

@@ -434,3 +434,13 @@ Running the script still only writes files. The flag lands in the entry
 that acts on it at import time by deleting anything in the house the project
 does not declare. Housing has no undo. Exporting with the flag but no
 `house_uuid` raises, since htsw rejects that manifest anyway.
+
+A claimed house also has to declare everything it names. A team, group,
+function, menu or region referenced by plain string (`set_player_team('Green')`
+rather than `set_player_team(Team('Green', ...))`) is an existing-house
+reference, and the prune would delete it and leave the action pointing at
+nothing. htsw refuses such a manifest, and so does the export: it raises
+`UndeclaredReferenceError` listing every such reference, checking the same
+five sites htsw does (`trigger_function`, `display_menu`, `set_player_team`,
+`change_player_group`, `WithinRegion`) and nothing else. Names match the way
+Housing resolves them, case-insensitively, and the built-in team `None` passes.

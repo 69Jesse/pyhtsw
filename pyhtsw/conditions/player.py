@@ -260,6 +260,9 @@ class WithinRegion(Condition):
     def into_htsl_raw(self) -> str:
         return f'inRegion {self.inline_quoted(self.name)}'
 
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return [('regions', self.name)]
+
     def cloned(
         self,
         *,

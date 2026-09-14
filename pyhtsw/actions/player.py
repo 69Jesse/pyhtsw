@@ -538,6 +538,9 @@ class SetPlayerTeamExpression(Expression):
     def into_htsl(self) -> str:
         return f'setTeam {self.inline_quoted(self.team)}'
 
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return [('teams', self.team)]
+
     def cloned(
         self,
         *,
@@ -577,6 +580,9 @@ class ChangePlayerGroupExpression(Expression):
 
     def into_htsl(self) -> str:
         return f'changePlayerGroup {self.inline_quoted(self.group)} {self.inline(self.demotion_protection)}'
+
+    def referenced_importables(self) -> list[tuple[str, str]]:
+        return [('groups', self.group)]
 
     def cloned(
         self,

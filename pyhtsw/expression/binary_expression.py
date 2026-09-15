@@ -929,9 +929,16 @@ class BinaryExpression[
             # Inside the loop: a peephole fold can expose a new temp-stat merge.
             has_changed |= BinaryExpression.take_out_useless_expressions(expressions)
 
-    def into_executable_expressions(self) -> Generator[Expression]:
+    def rendered_expressions(self) -> list[Expression]:
+        """The actions this statement emits, before temp renumbering: the
+        flatten with the per-statement optimizer applied. Counting anything
+        else (the raw flatten, or a renamed list) drifts from the render."""
         expressions = self.flatten()
         self.optimize_binary_expressions(expressions)
+        return expressions
+
+    def into_executable_expressions(self) -> Generator[Expression]:
+        expressions = self.rendered_expressions()
         self.rename_temporary_stats(expressions)
         yield from expressions
 
@@ -942,8 +949,7 @@ class BinaryExpression[
             left=stat,
             right=self,
             operator=BinaryOperator.Set,
-        ).flatten()
-        self.optimize_binary_expressions(expressions)
+        ).rendered_expressions()
         # Finalized: each lands in the block as its own statement and gets
         # re-rendered independently, so the numbers must not drift.
         self.rename_temporary_stats(expressions, finalize=True)

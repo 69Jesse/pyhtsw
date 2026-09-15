@@ -61,19 +61,24 @@ class CompoundExpression(Expression, Editable):
                 expressions.append(expr)
         return expressions
 
-    def into_executable_expressions(self) -> Generator[Expression]:
+    def rendered_expressions(self) -> list[Expression]:
         from pyhtsw.expression.binary_expression import BinaryExpression
 
         expressions = self._flattened_expressions()
         BinaryExpression.optimize_binary_expressions(expressions)
+        return expressions
+
+    def into_executable_expressions(self) -> Generator[Expression]:
+        from pyhtsw.expression.binary_expression import BinaryExpression
+
+        expressions = self.rendered_expressions()
         BinaryExpression.rename_temporary_stats(expressions)
         yield from expressions
 
     def write_and_get_result(self) -> Editable:
         from pyhtsw.expression.binary_expression import BinaryExpression
 
-        expressions = self._flattened_expressions()
-        BinaryExpression.optimize_binary_expressions(expressions)
+        expressions = self.rendered_expressions()
         # Finalized: each lands in the block as its own statement and gets
         # re-rendered independently, so the numbers must not drift.
         BinaryExpression.rename_temporary_stats(expressions, finalize=True)
@@ -100,8 +105,7 @@ class CompoundExpression(Expression, Editable):
     def into_htsl(self) -> str:
         from pyhtsw.expression.binary_expression import BinaryExpression
 
-        expressions = self._flattened_expressions()
-        BinaryExpression.optimize_binary_expressions(expressions)
+        expressions = self.rendered_expressions()
         # Finalized so the per-expression re-render below stays consistent.
         BinaryExpression.rename_temporary_stats(expressions, finalize=True)
         return '\n'.join(expr.into_htsl() for expr in expressions)

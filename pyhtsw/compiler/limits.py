@@ -322,18 +322,63 @@ def nesting_of(expression: 'Expression') -> Nesting | None:
     return None
 
 
+def over_limit_keys(
+    expressions: list['Expression'],
+    *,
+    importable: ImportableKind = 'functions',
+    nested: Nesting | None = None,
+) -> list[tuple[ActionKey, int, int]]:
+    """`(key, count, limit)` for every action type these expressions hold more
+    of than one action list allows."""
+    counter = Counter(importable=importable, nested=nested)
+    for expr in expressions:
+        counter.increment(expr)
+    over: list[tuple[ActionKey, int, int]] = []
+    for key, amount in counter.count.items():
+        limit = counter.limit_for(key)
+        if limit is not None and amount > limit:
+            over.append((key, amount, limit))
+    return over
+
+
 def is_within_limits(
     expressions: list['Expression'],
     *,
     importable: ImportableKind = 'functions',
     nested: Nesting | None = None,
 ) -> bool:
-    counter = Counter(importable=importable, nested=nested)
+    return not over_limit_keys(expressions, importable=importable, nested=nested)
+
+
+def nested_limit_violations(
+    expressions: list['Expression'],
+    *,
+    importable: ImportableKind = 'functions',
+) -> list[str]:
+    """One line per nested action list over a limit. A conditional branch or a
+    random body cannot be wrapped or carved, so unlike a top-level overflow
+    there is nothing to fix; the caller reports these alongside the leftovers."""
+    from pyhtsw.expression.condition.conditional_expression import ConditionalExpression
+
+    violations: list[str] = []
     for expr in expressions:
-        if counter.would_exceed(expr):
-            return False
-        counter.increment(expr)
-    return True
+        nesting = nesting_of(expr)
+        if nesting is None:
+            continue
+        labels = ('if', 'else') if isinstance(expr, ConditionalExpression) else ('',)
+        for label, nested in zip(labels, expr.nested_expressions_refs(), strict=True):
+            where = f'the {label} branch of ' if label else 'the body of '
+            for key, amount, limit in over_limit_keys(
+                nested,
+                importable=importable,
+                nested=nesting,
+            ):
+                name = key if isinstance(key, str) else key.__name__
+                violations.append(
+                    f'{amount} "{name}" actions in {where}'
+                    f'{expr.describe_nestable_block()} exceeds the limit of {limit}',
+                )
+    return violations
 
 
 type PlanItem = tuple[str, list['Expression']]
@@ -579,17 +624,5 @@ def fix_action_limits(
 
             global_counter.increment(trigger)
             result.append(trigger)
-
-    for expr in result:
-        nesting = nesting_of(expr)
-        for nested_ref in expr.nested_expressions_refs():
-            if not is_within_limits(
-                nested_ref,
-                importable=importable,
-                nested=nesting,
-            ):
-                raise RuntimeError(
-                    f'Expression {expr} contains nested expressions that exceed limits: {nested_ref}',
-                )
 
     return result, remaining

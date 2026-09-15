@@ -1,9 +1,12 @@
 from pyhtsw import (
+    ActionLimitError,
     Container,
     Else,
     IfAll,
     PlayerPositionX,
     PlayerStat,
+    Random,
+    chat,
     function,
 )
 from pyhtsw.compiler.limits import Counter
@@ -72,3 +75,37 @@ assert not any(isinstance(e, ConditionalExpression) for e in block.expressions),
     block.expressions
 )
 assert top_level.into_htsl().count('\n') == 15, top_level.into_htsl()
+
+
+# A branch that really is over reports what and where, alongside every other
+# violation, instead of raising a repr dump from the middle of the fixer.
+try:
+    with Container():
+
+        @function('Over')
+        def _over() -> None:
+            with IfAll(ticks > 0):
+                ticks.value += 1
+            with Else:
+                for i in range(26):
+                    PlayerStat(f's{i}').value += 2
+
+        @function('Rolls')
+        def _rolls() -> None:
+            with Random:
+                for _ in range(21):
+                    chat('hi')
+
+except ActionLimitError as error:
+    message = str(error)
+else:
+    raise AssertionError('expected the over-limit branches to raise')
+
+assert (
+    'function "Over": 26 "CHANGE_VAR" actions in the else branch of '
+    'IfAll(...) with 1 condition exceeds the limit of 25'
+) in message, message
+assert (
+    'function "Rolls": 21 "MESSAGE" actions in the body of Random '
+    'exceeds the limit of 20'
+) in message, message

@@ -105,7 +105,7 @@ def _overridden(explicit: bool | None, configured: bool) -> bool:
 class ActionLimitViolation(NamedTuple):
     name: str
     kind: 'ImportableKind'
-    leftover: int
+    detail: str
 
 
 class Container:
@@ -177,15 +177,16 @@ class Container:
     def find_importable(self, kind: str, name: str) -> 'Importable | None':
         return self.importables_by_key.get((kind, name))
 
-    def report_action_limit_violation(self, block: 'Block', leftover: int) -> None:
-        """Record a block that ran out of room and cannot carve out a follow-up
-        function. Collected rather than raised on the spot: a house that hits
-        this usually hits it in several blocks at once."""
+    def report_action_limit_violation(self, block: 'Block', detail: str) -> None:
+        """Record a block over a limit the fixer cannot rewrite around: a tail
+        with no function to carve into, or a conditional branch. Collected
+        rather than raised on the spot: a house that hits this usually hits it
+        in several blocks at once."""
         self._action_limit_violations.append(
             ActionLimitViolation(
                 name=block.get_name(),
                 kind=block.importable_kind,
-                leftover=leftover,
+                detail=detail,
             ),
         )
 
@@ -197,21 +198,21 @@ class Container:
         # Kept, not cleared: the blocks were already rewritten in place, so a
         # second finalize has to fail the same way instead of fixing them twice.
         lines = [
-            f'  - {violation.kind[:-1]} "{violation.name}": '
-            f'{violation.leftover} expression(s) did not fit'
+            f'  - {violation.kind[:-1]} "{violation.name}": {violation.detail}'
             for violation in self._action_limit_violations
         ]
         raise ActionLimitError(
             'These action lists are over the Housing limit and cannot be split '
             'automatically:\n'
             + '\n'.join(lines)
-            + '\n\nOnly a function may spill into a follow-up function, because '
-            'triggering one costs 4 ticks and a click handler can fire faster '
-            'than that - splitting these behind your back would silently drop or '
-            'reorder the tail. Move the overflowing actions into their own '
-            '@function and call it (the same 4 ticks, but now visible), '
-            'or shorten the list. Pass ignore_action_limits=True to the Container '
-            'to skip this check.',
+            + '\n\nA conditional branch cannot be split at all, and only a '
+            'function may spill into a follow-up function, because triggering '
+            'one costs 4 ticks and a click handler can fire faster than that - '
+            'splitting these behind your back would silently drop or reorder '
+            'the tail. Move the overflowing actions into their own @function '
+            'and call it (the same 4 ticks, but now visible), or shorten the '
+            'list. Pass ignore_action_limits=True to the Container to skip '
+            'this check.',
         )
 
     def _raise_scope_violations(self) -> None:

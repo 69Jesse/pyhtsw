@@ -9,6 +9,7 @@ from pyhtsw.compiler.limits import (
     FUNCTION_OVERFLOW_KINDS,
     ImportableKind,
     fix_action_limits,
+    nested_limit_violations,
 )
 from pyhtsw.declarations.function import Function
 from pyhtsw.utils.log import log
@@ -156,6 +157,11 @@ class Block(BaseObject):
             while container.has_importable('functions', f'{base_name} {counter}'):
                 counter += 1
             function = Function(name=f'{base_name} {counter}')
+        for detail in nested_limit_violations(
+            self.expressions,
+            importable=self.importable_kind,
+        ):
+            container.report_action_limit_violation(self, detail)
         fixed, rest = fix_action_limits(
             self.expressions,
             nesting_possible=True,
@@ -167,7 +173,10 @@ class Block(BaseObject):
         if not rest:
             return
         if function is None:
-            container.report_action_limit_violation(self, len(rest))
+            container.report_action_limit_violation(
+                self,
+                f'{len(rest)} expression(s) did not fit',
+            )
             return
         from pyhtsw.compiler.importable import FunctionImportable
 

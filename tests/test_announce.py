@@ -1,7 +1,11 @@
+import json
+import tempfile
 from enum import Enum
+from pathlib import Path
 
 from helpers import expect_exception
 
+import pyhtsw.compiler.lock as lock
 from pyhtsw import (
     Container,
     EmulatedHouse,
@@ -70,7 +74,7 @@ assert announcer.text_slots == 1
 assert announcer.enqueue_actions == 5 * 2 + 1 + 5 + 1
 
 pump_block = next(b for b in container.blocks if b.get_name() == 'Pump')
-# Catch-up poll, overflow clamp, drain.
+# Stale drop, overflow clamp, drain.
 assert conditionals(list(pump_block.expressions)) == 3
 
 
@@ -92,6 +96,7 @@ def drain_once(ann: Announcer) -> None:
     ann._index.value -= 1
     from pyhtsw.ext.array_read_write import array_read
 
+    assert ann._rows is not None
     array_read(
         items=ann._rows,
         index=ann._index,
@@ -117,8 +122,8 @@ with EmulatedHouse(ignore_action_limits=True) as house:
     house.put(name_stat, 'Notch', ignore_warning=True)
 
     # Three rows in, FIFO out.
-    numbers.announce(amount=1, iota=-50)
-    numbers.announce(amount=4000, iota=50)
+    numbers.announce(amount=1, iota=-50)  # type: ignore[arg-type]
+    numbers.announce(amount=4000, iota=50)  # type: ignore[arg-type]
     plain.announce(name=name_stat)
 
     out_amount = GlobalStat('oam').as_long().with_auto_unset(False)
@@ -172,7 +177,7 @@ with EmulatedHouse(ignore_action_limits=True) as house:
         chat(f'{value}')
 
     for value in (10, 20, 30):
-        tick_message.announce(value=value)
+        tick_message.announce(value=value)  # type: ignore[arg-type]
 
     out = GlobalStat('ovl').as_long().with_auto_unset(False)
     field = ann._formats[0].num_fields[0]
@@ -186,6 +191,40 @@ with EmulatedHouse(ignore_action_limits=True) as house:
         assert int(house.get_raw(out)) == 20, house.get_raw(out)
 
     house.assert_all(check_dropped)
+
+
+# === A queue nobody ticked for stale_ms is dropped; a live one is kept ===
+
+with EmulatedHouse(ignore_action_limits=True) as house:
+    ann = Announcer('Ann7', capacity=4, prefix='qg')
+
+    @ann.format
+    def left(value: Num) -> None:
+        chat(f'{value}')
+
+    # Stranded rows from an emptied house: the last tick is long gone.
+    left.announce(value=1)  # type: ignore[arg-type]
+    left.announce(value=2)  # type: ignore[arg-type]
+    ann._last_tick.value = 0
+    ann.on_join()
+
+    def check_dropped_stale() -> None:
+        assert int(house.get_raw(ann._counter)) == 0, house.get_raw(ann._counter)
+
+    house.assert_all(check_dropped_stale)
+
+    # The drop stamped the tick, so a row queued right after survives it.
+    left.announce(value=3)  # type: ignore[arg-type]
+    ann._emit_drop_stale()
+
+    def check_kept_live() -> None:
+        assert int(house.get_raw(ann._counter)) == 1, house.get_raw(ann._counter)
+
+    house.assert_all(check_kept_live)
+
+
+with expect_exception(ValueError):
+    Announcer('Ann8', prefix='qh', stale_ms=500)
 
 
 # === A misused call site fails at build time ===
@@ -208,7 +247,7 @@ with Container():
         chat(f'{amount}')
 
     with expect_exception(ValueError):
-        bounded.announce(amount=11)
+        bounded.announce(amount=11)  # type: ignore[arg-type]
 
 
 # === An unannotated or unenumerable parameter is rejected ===
@@ -219,7 +258,7 @@ with Container():
     with expect_exception(TypeError):
 
         @ann.format
-        def bad(value) -> None:  # type: ignore[no-untyped-def] # noqa: ARG001
+        def bad(value) -> None:  # noqa: ARG001
             chat('x')
 
     with expect_exception(TypeError):
@@ -258,7 +297,56 @@ assert not any(
     if isinstance(parent, ConditionalExpression)
     for e in (*parent.if_expressions, *parent.else_expressions)
 ), 'the dispatcher must not contain a nested conditional'
-# seen guard, then the format's `chat('done')` run plus its two nested runs.
-assert conditionals(list(dispatch_block.expressions)) == 4
+# The format's `chat('done')` run plus its two nested runs.
+assert conditionals(list(dispatch_block.expressions)) == 3
+
+# === Ids are pinned in the lock, so a new format is appended, not inserted ===
+
+with tempfile.TemporaryDirectory() as tmp:
+    lock_path = Path(tmp) / 'pyhtsw.lock'
+
+    def build(run: int, titles: list[str]) -> list[tuple[str, int]]:
+        lock._LOCKS.clear()
+        with Container(lock_file=lock_path, projects_folder=tmp) as built:
+            pinned = Announcer('Pinned', prefix='qp')
+            for title in titles:
+                pinned.format(name=title)(lambda: chat('x'))
+
+            @function('Pinned Pump', repeat_ticks=5)
+            def pinned_pump() -> None:
+                pinned.tick()
+
+        built.export(f'pinned-{run}')
+        return [(s.title(), s.id) for s in pinned._specializations]
+
+    assert build(1, ['Alpha', 'Beta']) == [('Alpha', 1), ('Beta', 2)]
+    order = build(2, ['Gamma', 'Alpha', 'Beta'])
+    assert order == [('Alpha', 1), ('Beta', 2), ('Gamma', 3)], order
+    # A format no longer declared keeps its id reserved.
+    assert build(3, ['Beta', 'Delta']) == [('Beta', 2), ('Delta', 4)]
+    assert json.loads(lock_path.read_text(encoding='utf-8')) == {
+        'version': 1,
+        'announcer': {'Pinned': {'Alpha': 1, 'Beta': 2, 'Gamma': 3, 'Delta': 4}},
+    }
+
+    with expect_exception(ValueError), Container(lock_file=None):
+        twins = Announcer('Twins', prefix='qt')
+        twins.format(name='Same')(lambda: chat('a'))
+        twins.format(name='Same')(lambda: chat('b'))
+        twins.tick()
+
+
+# === The dispatcher belongs to the announcer's module, not the first format's ===
+
+with Container() as container:
+    owned = Announcer('Owned', prefix='qo')
+    exec(
+        "@owned.format\ndef elsewhere() -> None:\n    chat('x')\n",
+        {'__name__': 'other.module', 'owned': owned, 'chat': chat},
+    )
+
+owner = container.find_importable('functions', 'Owned')
+assert owner is not None and owner.module == __name__, owner
+
 
 print('test_announce OK')

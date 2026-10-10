@@ -5,8 +5,9 @@ from itertools import product
 from types import UnionType
 from typing import TYPE_CHECKING, Literal, get_args, get_origin, overload
 
-from pyhtsw.actions.flow import IfAll, exit_function, trigger_function
+from pyhtsw.actions.flow import IfAll, trigger_function
 from pyhtsw.checkable import Checkable
+from pyhtsw.compiler.container import get_current_container
 from pyhtsw.declarations.function import Function, function
 from pyhtsw.directives.preserved import Preserved
 from pyhtsw.directives.strict_order import StrictOrder
@@ -18,6 +19,7 @@ from pyhtsw.placeholders.date import DateUnixMS
 from pyhtsw.stats.global_stat import GlobalStat
 from pyhtsw.stats.player_stat import PlayerStat
 from pyhtsw.stats.temporary_stat import TemporaryStat
+from pyhtsw.utils.caller import caller_module
 
 if TYPE_CHECKING:
     from pyhtsw.declarations.item import Item
@@ -195,7 +197,7 @@ class _FormatBase:
         declared = [f for f in self.num_fields if f.span is not None]
         undeclared = [f for f in self.num_fields if f.span is None]
         for field in declared:
-            low, high = field.span  # type: ignore[misc]
+            low, high = field.low, field.high
             if high < low:
                 raise ValueError(
                     f'{self.title!r}: range for {field.name!r} is empty',
@@ -283,6 +285,15 @@ class Announcer:
     characters, so a rendered message can never be stored. Each row is
     ``text_slots`` shared string columns plus one long that packs the format
     id and every ``Num`` field.
+
+    Rows still pending when nobody has ticked for ``stale_ms`` are dropped:
+    they were stranded by an emptied house (everyone leaving at once queues a
+    leave message each), and would otherwise all play to the next joiner.
+
+    Format ids are pinned in the container's ``pyhtsw.lock``, so a format
+    declared in an earlier module is appended rather than renumbering every
+    later one. An entry no longer declared keeps its id reserved until it is
+    deleted from the lock.
     """
 
     def __init__(
@@ -291,6 +302,7 @@ class Announcer:
         *,
         capacity: int = 8,
         cooldown_ms: int = 400,
+        stale_ms: int = 5000,
         prefix: str = 'ga',
         icon: 'Item | None' = None,
     ) -> None:
@@ -301,11 +313,19 @@ class Announcer:
                 'Announcer: cooldown_ms below 250 cannot clear the four-tick '
                 'function cooldown on a lagging server',
             )
+        if stale_ms < 1000:
+            raise ValueError(
+                'Announcer: stale_ms below 1000 would drop a live queue on an '
+                'ordinary lag spike',
+            )
         self.name = name
         self.capacity = capacity
         self.cooldown_ms = cooldown_ms
+        self.stale_ms = stale_ms
         self.prefix = prefix
         self.icon = icon
+        self._container = get_current_container()
+        self._module = caller_module()
 
         self._formats: list[_FormatBase] = []
         self._specializations: list[_Specialization] = []
@@ -376,6 +396,7 @@ class Announcer:
         def dispatch() -> None:
             self._emit_dispatch()
 
+        dispatch.declaration().module = self._module
         self._dispatch = dispatch
 
     @property
@@ -391,10 +412,8 @@ class Announcer:
         if not self._formats:
             raise RuntimeError(f'{self.name}: no formats declared')
 
-        # Id 0 stays free so an unset packed column never names a format.
-        for index, specialization in enumerate(self._specializations, start=1):
-            specialization.id = index
-        self._id_bits = max(1, len(self._specializations).bit_length())
+        self._assign_ids()
+        self._id_bits = max(1, self._specializations[-1].id.bit_length())
         for base in self._formats:
             base.assign_bits(self._id_bits)
 
@@ -425,13 +444,46 @@ class Announcer:
         )
         self._counter = GlobalStat(f'{prefix}n').as_long().with_auto_unset(False)
         self._next_at = GlobalStat(f'{prefix}t').as_long().with_auto_unset(False)
-        self._sequence = GlobalStat(f'{prefix}q').as_long().with_auto_unset(False)
-        self._seen = PlayerStat(f'{prefix}s').as_long().with_auto_unset(False)
+        self._last_tick = GlobalStat(f'{prefix}l').as_long().with_auto_unset(False)
         # A plain PlayerStat index takes array_read's direct composed-name
         # path, which a TemporaryStat would miss. The name is the bare prefix
         # because that path only has 32 characters to spend on the whole
         # composed reference, and the text columns' fallback eats two of them.
         self._index = PlayerStat(prefix).as_long().with_auto_unset(False)
+
+    def _assign_ids(self) -> None:
+        titles = [specialization.title() for specialization in self._specializations]
+        duplicates = sorted({title for title in titles if titles.count(title) > 1})
+        if duplicates:
+            raise ValueError(
+                f'{self.name}: formats {duplicates} share a title, so their ids '
+                f'cannot be pinned; give them distinct name=...',
+            )
+
+        lock = self._container.lock
+        pinned: dict[str, int] = (
+            {} if lock is None else lock.section('announcer', self.name)
+        )
+        if not all(
+            type(value) is int and value > 0 for value in pinned.values()
+        ) or len(set(pinned.values())) != len(pinned):
+            raise ValueError(
+                f'{self.name}: the lock must map each format title to a distinct '
+                f'positive id',
+            )
+
+        # Id 0 stays free so an unset packed column never names a format.
+        next_id = max(pinned.values(), default=0) + 1
+        for specialization, title in zip(self._specializations, titles, strict=True):
+            if title not in pinned:
+                pinned[title] = next_id
+                next_id += 1
+            specialization.id = pinned[title]
+        self._specializations.sort(key=lambda specialization: specialization.id)
+
+        ordered = sorted(pinned.items(), key=lambda entry: entry[1])
+        pinned.clear()
+        pinned.update(ordered)
 
     @property
     def enqueue_actions(self) -> int:
@@ -517,10 +569,6 @@ class Announcer:
     def _emit_dispatch(self) -> None:
         self._ensure_layout()
         with Nestable():
-            with IfAll(self._seen == self._sequence):
-                exit_function()
-            self._seen.value = self._sequence
-
             identifier = TemporaryStat().as_long()
             identifier.value = self._current_packed
             identifier.value &= (1 << self._id_bits) - 1
@@ -566,8 +614,10 @@ class Announcer:
     def tick(self) -> None:
         """Release pending announcements. Put this in a per-player loop.
 
-        Emits the catch-up poll first, so the player who releases a row is
-        served by the same all-players trigger everyone else gets.
+        There is no catch-up: a player whose dispatch is still on its
+        cooldown when a row is released misses that row. ``cooldown_ms`` keeps
+        that from happening down to ``4000 / cooldown_ms`` TPS, below which
+        four ticks outlast it.
         """
         if not self._formats:
             return
@@ -575,8 +625,7 @@ class Announcer:
         assert self._rows is not None
         assert self._dispatch is not None
 
-        with IfAll(self._seen != self._sequence):
-            trigger_function(self._dispatch)
+        self._emit_drop_stale()
 
         # Only reachable if a row was dropped on overflow; the shift already
         # discarded it, this is the bookkeeping.
@@ -593,24 +642,30 @@ class Announcer:
                 output=[*self._current_text, self._current_packed],
             )
             self._counter.value -= 1
-            self._sequence.value += 1
             trigger_function(self._dispatch, trigger_for_all_players=True)
 
     def on_join(self) -> None:
-        """Mark a joining player as having seen the current announcement.
+        """Drop a stale queue. Call it before anything the join enqueues.
 
-        Without it a fresh player, whose seen counter starts at zero, renders
-        whatever was last released.
+        The join event can run before the joiner's first tick, whose own drop
+        would then take the join message with it.
         """
         if not self._formats:
             return
         self._ensure_layout()
-        self._seen.value = self._sequence
+        self._emit_drop_stale()
+
+    def _emit_drop_stale(self) -> None:
+        # While anyone is online this runs every few ticks, so a long gap
+        # means the house was empty and every pending row is left over.
+        with IfAll(DateUnixMS - self._last_tick > self.stale_ms):
+            self._counter.value = 0
+        self._last_tick.value = DateUnixMS
 
 
 def _as_value(value: object) -> Checkable | HousingType:
     if isinstance(value, Checkable | int | float | str | bool):
-        return value  # type: ignore[return-value]
+        return value
     raise TypeError(
         f'announcement argument {value!r} is neither a Checkable nor a plain '
         f'long/double/string value',
@@ -619,7 +674,7 @@ def _as_value(value: object) -> Checkable | HousingType:
 
 def _as_number(value: object) -> Checkable | NumericHousingType:
     if isinstance(value, Checkable | int | float | bool):
-        return value  # type: ignore[return-value]
+        return value
     raise TypeError(
         f'announcement Num argument {value!r} is neither a Checkable nor a '
         f'plain number',

@@ -31,6 +31,7 @@ class ContainerSettings(TypedDict, total=False):
     house_uuid: str | None
     exclusive_house: bool
     projects_folder: 'Path | str | None'
+    lock_file: 'Path | str | None'
     cleanup_stale_files: bool
     display_output: bool
     auto_export: bool

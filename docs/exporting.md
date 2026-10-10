@@ -58,6 +58,7 @@ with pyhtsw.Container(project_name='side project') as side:
 | `house_uuid` | `None` | Binds the entry `import.json` to one house |
 | `exclusive_house` | `False` | Claims the whole house: htsw may delete what the project does not declare; needs `house_uuid` |
 | `projects_folder` | machine setting | Where this container's project folder is written |
+| `lock_file` | `pyhtsw.lock` beside the script | Where build-to-build state is kept; `None` disables it |
 | `cleanup_stale_files` | `False` | Delete generated files a previous export left behind |
 | `display_output` | `False` | Print every generated file to the console |
 | `auto_export` | `True` | Export on program exit (global container only) |
@@ -76,6 +77,20 @@ two containers would export over one another.
 ```python
 container.export('MyHouse', cleanup_stale_files=True, display_output=True)
 ```
+
+## The lock file
+
+Some choices pyhtsw makes have to stay the same from one build to the next, or
+adding one thing in the source rewrites a lot of unrelated output. Those
+choices are recorded in `pyhtsw.lock`, a JSON file next to your entry script
+(a relative `lock_file` resolves against that script's folder too). Commit it.
+
+It is written only after a successful export, so it always describes what the
+house last imported, and it is not created until something needs it. Today
+that is the `Announcer`: each format's id is pinned there, so a format you add
+is appended to the dispatcher instead of renumbering every format declared
+after it. A format you remove keeps its id reserved; delete its line from the
+lock to free it.
 
 ## Generated folder layout
 

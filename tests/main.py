@@ -10,9 +10,10 @@ from pathlib import Path
 # silently resolves `import pyhtsw` to site-packages.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pyhtsw import PyHTSWWarning, disable_global_export
+from pyhtsw import PyHTSWWarning, configure, disable_global_export
 
 disable_global_export()
+configure(lock_file=None)
 warnings.simplefilter('error', PyHTSWWarning)
 warnings.filterwarnings(
     'ignore',

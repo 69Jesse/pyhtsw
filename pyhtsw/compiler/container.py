@@ -8,6 +8,7 @@ from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, NamedTuple, NoReturn, Self, Unpack
 
+from pyhtsw.compiler.lock import LOCK_FILE_NAME, Lock, as_lock_file, lock_at
 from pyhtsw.compiler.settings import (
     SETTING_NAMES,
     ContainerSettings,
@@ -131,6 +132,10 @@ class Container:
     projects_folder = inherited_setting[Path | None](
         None,
         transform=as_projects_folder,
+    )
+    lock_file = inherited_setting[Path | None](
+        as_lock_file(LOCK_FILE_NAME),
+        transform=as_lock_file,
     )
     cleanup_stale_files = inherited_setting[bool](False)
     display_output = inherited_setting[bool](False)
@@ -683,6 +688,11 @@ class Container:
             folder = get_projects_folder()
         return folder / into_kebab(name)
 
+    @property
+    def lock(self) -> Lock | None:
+        path = self.lock_file
+        return None if path is None else lock_at(path)
+
     def is_empty(self) -> bool:
         return all(block.is_empty() for block in self.blocks)
 
@@ -785,6 +795,10 @@ class Container:
         finally:
             CONTAINERS.pop()
             self.project = None
+
+        lock = self.lock
+        if lock is not None:
+            lock.save()
 
         if _overridden(cleanup_stale_files, self.cleanup_stale_files):
             project.cleanup_stale()

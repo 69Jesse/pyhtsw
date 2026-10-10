@@ -42,7 +42,7 @@ def tick() -> None:
   the house.
 - `icon` is an `Item` (optional).
 
-A house may hold **200 functions** in total, so a function is worth declaring
+A house may hold **300 functions** in total, so a function is worth declaring
 only when the actions have to be one shared thing. A menu slot or command whose
 whole body triggers a single-use function should hold the actions itself
 instead; an item's behaviour should always be a function. See

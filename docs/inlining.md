@@ -2,7 +2,7 @@
 
 Two budgets shape how a house is written, and they pull in opposite directions.
 
-A house may hold **200 functions**, house-wide, shared by every feature, with no
+A house may hold **300 functions**, house-wide, shared by every feature, with no
 way to buy more. A single **action list** — a function body, a command, one menu
 slot, one region's enter block, one branch of a conditional — is capped at a few
 dozen actions of each kind, and when a block runs over, PyHTSW spends a wrapper

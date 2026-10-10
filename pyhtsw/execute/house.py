@@ -1,3 +1,4 @@
+import os
 import re
 import time
 from collections.abc import Callable, Generator, Iterable
@@ -45,10 +46,23 @@ __all__ = ('EmulatedHouse',)
 type PlayersArg = int | Iterable[str | EmulatedPlayer] | None
 
 
+SOUND_ENV_VAR = 'PYHTSW_SOUND'
+
+
+def resolve_sound(requested: bool) -> bool:
+    """`PYHTSW_SOUND=1` / `0` in the environment wins over what the house was
+    constructed with, so a run can be heard (or muted) without editing it."""
+    value = os.getenv(SOUND_ENV_VAR)
+    if value is None or value.strip() == '':
+        return requested
+    return value.strip().lower() not in ('0', 'false', 'no', 'off')
+
+
 class EmulatedHouse(Container):
     verbose: bool
     expression_callback: Callable[[Expression], None] | None
     pause_multiplier: float
+    sound: bool
     volume_multiplier: float
 
     started_execution: bool
@@ -64,6 +78,7 @@ class EmulatedHouse(Container):
         verbose: bool = False,
         expression_callback: Callable[[Expression], None] | None = None,
         pause_multiplier: float = 1.0,
+        sound: bool = False,
         volume_multiplier: float = 0.1,
         **settings: Unpack[ContainerSettings],
     ) -> None:
@@ -71,6 +86,7 @@ class EmulatedHouse(Container):
         self.verbose = verbose
         self.expression_callback = expression_callback
         self.pause_multiplier = pause_multiplier
+        self.sound = resolve_sound(sound)
         self.volume_multiplier = volume_multiplier
         self.started_execution = False
         self.global_mapping = {}

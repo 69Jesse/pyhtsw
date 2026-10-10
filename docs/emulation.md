@@ -26,6 +26,12 @@ with EmulatedHouse() as house:
 - `EmulatedHouse(players=3)` or `players=[EmulatedPlayer('alice'), ...]` gives
   the house more than one player; `house.using_player(p)` switches who runs.
 - Everything runs at `__exit__`.
+- `play_sound` is silent unless you ask: `EmulatedHouse(sound=True)` (or
+  `@emulate(sound=True)`) previews sounds through your speakers, scaled by
+  `volume_multiplier` (default `0.1`). `PYHTSW_SOUND=1` / `PYHTSW_SOUND=0` in
+  the environment overrides the kwarg for that run, so a silent test can be
+  heard with `PYHTSW_SOUND=1 uv run python tests/test_x.py` and a noisy script
+  muted in CI.
 
 The emulated house follows Java arithmetic semantics (64-bit long wraparound,
 truncating integer division, UTF-16 string lengths) so what it computes is what

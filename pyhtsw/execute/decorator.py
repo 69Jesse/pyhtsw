@@ -21,6 +21,7 @@ def emulate(
     verbose: bool = False,
     expression_callback: Callable[[Expression], None] | None = None,
     pause_multiplier: float = 1.0,
+    sound: bool = False,
     volume_multiplier: float = 0.1,
     **settings: Unpack[ContainerSettings],
 ) -> Callable[[CallbackType], EmulatedHouse]:
@@ -29,6 +30,7 @@ def emulate(
             verbose=verbose,
             expression_callback=expression_callback,
             pause_multiplier=pause_multiplier,
+            sound=sound,
             volume_multiplier=volume_multiplier,
             **settings,
         )

@@ -16,7 +16,7 @@ WEATHER_TO_HTSW: dict[Weather, str] = {
     'raining': 'Raining',
 }
 
-_SOUND_PATHS = frozenset(Sound.__args__)  # type: ignore[attr-defined]
+_SOUND_PATHS = frozenset(Sound.__args__)
 
 
 def resolve_sound(sound: 'Sound | str') -> 'Sound':
@@ -93,6 +93,8 @@ class PlaySoundExpression(Expression):
         )
 
     def raw_execute(self, context: 'EmulatedHouse') -> None:
+        if not context.sound:
+            return
         from pyhtsw.misc.sounds import preview_sound
 
         found = preview_sound(

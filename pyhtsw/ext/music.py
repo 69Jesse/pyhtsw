@@ -134,6 +134,9 @@ def _fuzzy_match(normalized: str) -> Sound | None:
 def _resolve_custom_instrument(
     name: str,
     resolver: CustomInstrumentResolver | None,
+    *,
+    file: str,
+    path: Path,
 ) -> Sound:
     normalized = _normalize_sound_name(name)
     if resolver is not None:
@@ -143,11 +146,16 @@ def _resolve_custom_instrument(
     candidate = _NORMALIZED_PRETTY_TO_RAW.get(normalized, normalized)
     if candidate in _ALL_RAW_SOUNDS:
         return cast(Sound, candidate)
+    source = f'{name!r} ({file})' if file else repr(name)
+    hint = 'map it in custom_instrument_resolver to silence this'
     fuzzy = _fuzzy_match(normalized)
     if fuzzy is not None:
-        warn(f'Using {fuzzy} for custom sound {name!r}')
+        warn(f'Using {fuzzy} for custom sound {source} in {path.name}; {hint}')
         return fuzzy
-    warn(f'Could not find sound {name!r}, falling back to note.harp')
+    warn(
+        f'Could not find sound {source} in {path.name}, '
+        f'falling back to note.harp; {hint}',
+    )
     return 'note.harp'
 
 
@@ -258,8 +266,8 @@ def _events_from_nbs(
 
     # Custom instruments follow the built-ins: note.instrument == 16 + custom id.
     builtin_count = len(NBS_INSTRUMENT_TO_SOUND)
-    custom_names: dict[int, str] = {
-        builtin_count + inst.id: inst.name or '' for inst in song.instruments
+    custom_instruments: dict[int, pynbs.Instrument] = {
+        builtin_count + inst.id: inst for inst in song.instruments
     }
     # Resolved lazily on first use, so unused instruments never log a note.
     custom_sounds: dict[int, Sound] = {}
@@ -270,10 +278,12 @@ def _events_from_nbs(
             sound = NBS_INSTRUMENT_TO_SOUND.get(note.instrument)
             if sound is None:
                 if note.instrument not in custom_sounds:
-                    name = custom_names.get(note.instrument, '')
+                    inst = custom_instruments.get(note.instrument)
                     custom_sounds[note.instrument] = _resolve_custom_instrument(
-                        name,
+                        (inst.name if inst else '') or '',
                         custom_instrument_resolver,
+                        file=(inst.file if inst else '') or '',
+                        path=path,
                     )
                 sound = custom_sounds[note.instrument]
             layer_vol = layer_volumes.get(note.layer, 1.0)

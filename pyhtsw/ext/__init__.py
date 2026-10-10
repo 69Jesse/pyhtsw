@@ -170,3 +170,6 @@ from pyhtsw.ext.stack_queue import (
 from pyhtsw.ext.stack_queue import (
     Stack as Stack,
 )
+from pyhtsw.ext.vector import (
+    Vector as Vector,
+)

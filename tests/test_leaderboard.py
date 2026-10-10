@@ -1,5 +1,6 @@
 import io
 from contextlib import redirect_stdout
+from typing import Any
 
 from helpers import expect_exception
 
@@ -11,7 +12,7 @@ CAPACITY = 5
 EMPTY = ('---', '--:--', 0)
 
 
-def build(capacity: int = CAPACITY, **kwargs: object) -> SortedTopN:
+def build(capacity: int = CAPACITY, **kwargs: Any) -> SortedTopN:
     return SortedTopN(
         slots=[
             (
@@ -25,7 +26,7 @@ def build(capacity: int = CAPACITY, **kwargs: object) -> SortedTopN:
         key_column=-1,
         identity_column=0,
         empty=(*EMPTY, 0),
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,
     )
 
 

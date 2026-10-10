@@ -325,7 +325,7 @@ class Importable(ABC):
     def rename(self, name: str) -> None:
         """Change what `identifier()` returns. Go through
         `Container.rename_importable`, which keeps the name index in step."""
-        self.name = name  # type: ignore[attr-defined]
+        self.name = name
 
     @abstractmethod
     def build(self, project: Project) -> dict[str, Any]:
@@ -403,7 +403,7 @@ class EventImportable(Importable):
     def reexport(self) -> None:
         from pyhtsw.declarations.event import event
 
-        value = event(self.event)(_block_replayer(self.block))  # type: ignore[arg-type]
+        value = event(self.event)(_block_replayer(self.block))
         value.declaration().module = self.module
 
     def build(self, project: Project) -> dict[str, Any]:

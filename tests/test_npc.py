@@ -7,19 +7,20 @@ from pyhtsw import (
     Item,
     chat,
 )
+from pyhtsw.compiler.importable import NpcImportable
 
 flag = GlobalStat('flag').as_long()
 
 
 def _entry(container: Container, name: str) -> dict:
     npc = container.find_importable('npcs', name)
-    assert npc is not None, name
+    assert isinstance(npc, NpcImportable), name
     return {
-        'left': npc.left,  # type: ignore[attr-defined]
-        'right': npc.right,  # type: ignore[attr-defined]
-        'redirect': npc.left_click_redirect,  # type: ignore[attr-defined]
-        'skin': npc.skin,  # type: ignore[attr-defined]
-        'pos': npc.pos,  # type: ignore[attr-defined]
+        'left': npc.left,
+        'right': npc.right,
+        'redirect': npc.left_click_redirect,
+        'skin': npc.skin,
+        'pos': npc.pos,
     }
 
 

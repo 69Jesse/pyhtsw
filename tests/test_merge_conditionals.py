@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from pyhtsw import (
     Container,
     Else,
@@ -16,9 +18,9 @@ y = PlayerStat('y').as_long()
 z = PlayerStat('z').as_long()
 
 
-def htsl_of(body: 'object', name: str = 'merge') -> str:
+def htsl_of(body: Callable[[], None], name: str = 'merge') -> str:
     with Container() as container:
-        function(name)(body)  # type: ignore[arg-type]
+        function(name)(body)
     return next(
         block.into_htsl() for block in container.blocks if block.get_name() == name
     )

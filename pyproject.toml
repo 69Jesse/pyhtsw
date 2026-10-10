@@ -36,6 +36,15 @@ ignore = [
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.pyright]
+include = ["pyhtsw", "tests", "scripts", "examples", "devbundle.py"]
+exclude = ["vendor", "**/__pycache__"]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+reportIncompatibleMethodOverride = "none"
+reportIncompatibleVariableOverride = "none"
+reportUnnecessaryTypeIgnoreComment = "error"
+
 [tool.setuptools]
 include-package-data = true
 

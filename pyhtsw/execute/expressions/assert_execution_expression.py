@@ -71,12 +71,12 @@ class AssertExecutionExpression(ExecutionExpression):
         if len(self.conditions) != len(other.conditions):
             return False
         return all(
-            self.conditions[i].equals(other.conditions[i])  # type: ignore
-            if not callable(self.conditions[i]) and not callable(other.conditions[i])
-            else self.conditions[i] == other.conditions[i]
-            if callable(self.conditions[i]) and callable(other.conditions[i])
+            mine.equals(theirs)
+            if not callable(mine) and not callable(theirs)
+            else mine == theirs
+            if callable(mine) and callable(theirs)
             else False
-            for i in range(len(self.conditions))
+            for mine, theirs in zip(self.conditions, other.conditions, strict=True)
         )
 
     def __repr__(self) -> str:
@@ -123,7 +123,7 @@ class AssertExecutionExpression(ExecutionExpression):
             if isinstance(cond, AssertExecutionExpression) and cond.mode == self.mode:
                 flattened.extend(cond.flattened_conditions(context))
             else:
-                flattened.append(cond)  # type: ignore
+                flattened.append(cond)
         return flattened
 
     def raw_execute(self, context: 'EmulatedHouse') -> None:

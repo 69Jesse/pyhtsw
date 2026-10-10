@@ -25,20 +25,18 @@ INDENT: str = ' ' * 4
 # Lazily cached to dodge import cycles; these are only touched well after every
 # module is loaded, and resolving them once avoids re-running `from` import
 # machinery on the millions of calls the optimizer makes.
-_Stat: type | None = None
-_Checkable: type | None = None
-_TemporaryStat: type | None = None
+_refs: tuple[type['Stat'], type['Checkable'], type['TemporaryStat']] | None = None
 
 
 def _stat_refs() -> tuple[type['Stat'], type['Checkable'], type['TemporaryStat']]:
-    global _Stat, _Checkable, _TemporaryStat
-    if _Stat is None:
+    global _refs
+    if _refs is None:
         from pyhtsw.checkable import Checkable
         from pyhtsw.stats.stat import Stat
         from pyhtsw.stats.temporary_stat import TemporaryStat
 
-        _Stat, _Checkable, _TemporaryStat = Stat, Checkable, TemporaryStat
-    return _Stat, _Checkable, _TemporaryStat  # type: ignore[return-value]
+        _refs = Stat, Checkable, TemporaryStat
+    return _refs
 
 
 class Expression(BaseObject):

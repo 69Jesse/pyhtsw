@@ -21,7 +21,7 @@ def assert_sin_cos_close(
             assign_to_sin=sin_out,
             assign_to_cos=cos_out,
             certain_x_in_range=certain_x_in_range,
-        )  # type: ignore
+        )
 
     actual_sin = float(house.get_raw(sin_out))
     actual_cos = float(house.get_raw(cos_out))

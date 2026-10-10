@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import get_args
 
 from pyhtsw.compiler.importable import (
     EVENTS,
@@ -52,7 +53,7 @@ LOCATIONS = (
 
 
 def literal_values(alias: object) -> tuple[str, ...]:
-    return alias.__args__  # type: ignore[attr-defined]
+    return get_args(alias)
 
 
 # The user-facing values are snake_case; the *_TO_HTSW maps carry the exact

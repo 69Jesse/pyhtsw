@@ -101,7 +101,7 @@ pyhtsw.configure(post_export=None)
 # Too many required arguments is an error, not a silent miscall.
 greedy = Container(
     projects_folder=tmp,
-    post_export=lambda a, b, c: None,  # pyright: ignore[reportUnknownLambdaType]
+    post_export=lambda a, b, c: None,  # pyright: ignore[reportArgumentType]
 )
 build(greedy)
 try:

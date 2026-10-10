@@ -661,7 +661,7 @@ class _SlotContainerBase:
         ):
             if self.on_overflow == 'override_oldest':
                 # The shift above put counter back in range when full.
-                index: Editable = self.counter  # type: ignore[assignment]
+                index: Editable = self.counter
             else:
                 clamp = TemporaryStat().as_long()
                 index_stat = TemporaryStat().as_long()

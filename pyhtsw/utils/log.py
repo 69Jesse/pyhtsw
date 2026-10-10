@@ -1,6 +1,6 @@
 import re
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 __all__ = ('log',)
 
@@ -11,10 +11,10 @@ def strip_ansi(text: str) -> str:
     return ANSI_ESCAPE.sub('', text)
 
 
-def _log(*args: object, **kwargs: object) -> None:
+def _log(*args: object, **kwargs: Any) -> None:
     if not sys.stdout.isatty():
         args = tuple(strip_ansi(str(a)) for a in args)
-    print(*args, **kwargs)  # type: ignore
+    print(*args, **kwargs)
 
 
 if TYPE_CHECKING:

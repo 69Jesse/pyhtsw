@@ -89,7 +89,7 @@ class _DamageAmount:
     ) -> DamageAmountCondition:
         return DamageAmountCondition(operator, other)
 
-    def __eq__(self, other: 'Checkable | HousingType') -> DamageAmountCondition:  # type: ignore[override]
+    def __eq__(self, other: 'Checkable | HousingType') -> DamageAmountCondition:
         return self._compare(ComparisonOperator.Equal, other)
 
     def __gt__(self, other: 'Checkable | HousingType') -> DamageAmountCondition:

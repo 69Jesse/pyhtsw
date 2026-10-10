@@ -718,26 +718,26 @@ class Checkable(BaseObject):
     def __abs__(self) -> 'CompoundExpression':
         return self.abs()
 
-    def __eq__[T: 'Checkable | HousingType'](  # type: ignore[override]
+    def __eq__[T: 'Checkable | HousingType'](
         self,
         other: T,
     ) -> ComparisonCondition[Self, T]:
         # Comparing to None is not a housing condition; defer to identity so
         # equality checks (e.g. Enum value de-duplication) don't blow up.
         if other is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return ComparisonCondition(
             self,
             other,
             ComparisonOperator.Equal,
         )
 
-    def __ne__[T: 'Checkable | HousingType'](  # type: ignore[override]
+    def __ne__[T: 'Checkable | HousingType'](
         self,
         other: T,
     ) -> ComparisonCondition[Self, T]:
         if other is None:
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return ~self.__eq__(other)
 
     def __gt__[T: 'Checkable | HousingType'](

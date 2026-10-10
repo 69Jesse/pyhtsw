@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from enum import Enum
 from functools import cached_property
-from typing import Any, NoReturn, Self, final
+from typing import Any, NoReturn, Self, cast, final
 
 import numpy as np
 
@@ -189,7 +189,7 @@ class BinaryExpression[
             raise TypeError(
                 'Right side of a binary expression must be checkable or a housing type',
             )
-        return self  # type: ignore
+        return cast('AssignmentExpression', self)
 
     def is_assignment_expression(self) -> bool:
         try:
@@ -560,10 +560,10 @@ class BinaryExpression[
                     i += 1
                     continue
                 if any(
-                    isinstance(expressions[k], BinaryExpression)
-                    and isinstance(expressions[k].left, Stat)  # type: ignore[union-attr]
-                    and expressions[k].left.is_same_stat(rhs)  # type: ignore[union-attr]
-                    for k in range(i + 1, j)
+                    isinstance(between, BinaryExpression)
+                    and isinstance(between.left, Stat)
+                    and between.left.is_same_stat(rhs)
+                    for between in expressions[i + 1 : j]
                 ):
                     i += 1
                     continue

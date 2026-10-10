@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Self
 
 from pyhtsw import (
@@ -21,11 +22,11 @@ x = PlayerStat('x').as_long()
 y = PlayerStat('y').as_long()
 
 
-def captured(body: 'object') -> list[Expression]:
+def captured(body: Callable[[], object]) -> list[Expression]:
     """The expressions a body writes, before any finalize pass touches them."""
     with Container(ignore_action_limits=True) as container:
         written = container.blocks[0].expressions
-        body()  # type: ignore[operator]
+        body()
         snapshot = list(written)
     return snapshot
 

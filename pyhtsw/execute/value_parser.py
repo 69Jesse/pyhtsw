@@ -9,6 +9,7 @@ from pyhtsw.execute.java_long import INT64_MAX, INT64_MIN
 if TYPE_CHECKING:
     from pyhtsw.execute.house import EmulatedHouse
     from pyhtsw.execute.player import EmulatedPlayer
+    from pyhtsw.stats.stat import Stat
 
 __all__ = (
     'parse_string',
@@ -94,8 +95,8 @@ def _run_placeholder(
         parts = trimmed.split(' ')
         kind, args = parts[0], parts[1:]
 
-    def resolve_var(stat: object, fallback_raw: str | None) -> BackendType:
-        raw = context._get_raw(stat, player=player)  # type: ignore[arg-type]
+    def resolve_var(stat: 'Stat', fallback_raw: str | None) -> BackendType:
+        raw = context._get_raw(stat, player=player)
         if raw is not None:
             return raw
         return parse_value(
@@ -104,8 +105,8 @@ def _run_placeholder(
             player=player,
         )
 
-    def resolve_stat(stat: object) -> BackendType:
-        raw = context._get_raw(stat, player=player)  # type: ignore[arg-type]
+    def resolve_stat(stat: 'Stat') -> BackendType:
+        raw = context._get_raw(stat, player=player)
         if isinstance(raw, JavaLong):
             return raw
         return JavaLong(0)

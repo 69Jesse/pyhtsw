@@ -154,16 +154,18 @@ class _Collector:
     ) -> None:
         from pyhtsw.expression.binary_expression import BinaryExpression, BinaryOperator
 
-        is_assignment = (
-            not treat_all_as_reads
+        operator = (
+            expression.operator
+            if not treat_all_as_reads
             and isinstance(expression, BinaryExpression)
             and expression.is_assignment_expression()
+            else None
         )
         for key, value in expression._get_all_values().items():  # noqa: SLF001
-            if is_assignment and key == 'left':
+            if operator is not None and key == 'left':
                 self.checkable(value, write=True)
                 # Everything except a plain `=` reads the target first.
-                if expression.operator is not BinaryOperator.Set:  # type: ignore[attr-defined]
+                if operator is not BinaryOperator.Set:
                     self.checkable(value)
                 continue
             if isinstance(value, str):

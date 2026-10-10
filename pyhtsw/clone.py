@@ -64,13 +64,13 @@ def build_clone_spec(cls: type) -> None:
             if fields and fields[0] == 'self':
                 fields = fields[1:]
                 posonly = max(0, posonly - 1)
-    cls.__clone_fields__ = fields  # type: ignore[attr-defined]
-    cls.__clone_posonly__ = posonly  # type: ignore[attr-defined]
+    cls.__clone_fields__ = fields
+    cls.__clone_posonly__ = posonly
 
     mapping: dict[str, str] = {}
     for base in reversed(cls.__mro__):
         mapping.update(base.__dict__.get('__clone_map__', {}))
-    cls.__clone_map__ = mapping  # type: ignore[attr-defined]
+    cls.__clone_map__ = mapping
 
     # Declarations are read only from `__clone_extra__` and the deduped result is
     # written to `__clone_carry__`: a name that is a *this* class's constructor
@@ -81,11 +81,11 @@ def build_clone_spec(cls: type) -> None:
         for name in base.__dict__.get('__clone_extra__', ()):
             if name not in carry and name not in fields:
                 carry.append(name)
-    cls.__clone_carry__ = tuple(carry)  # type: ignore[attr-defined]
+    cls.__clone_carry__ = tuple(carry)
 
     compare = [mapping.get(field, field) for field in fields]
     compare += [name for name in carry if name not in compare]
-    cls.__clone_compare__ = tuple(compare)  # type: ignore[attr-defined]
+    cls.__clone_compare__ = tuple(compare)
 
 
 def clone_with(obj: 'BaseObject', overrides: dict[str, Any]) -> Any:

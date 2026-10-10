@@ -1,6 +1,7 @@
 from pyhtsw import (
     EmulatedHouse,
     EmulatedPlayer,
+    Function,
     GlobalStat,
     IfAll,
     PlayerStat,
@@ -95,13 +96,13 @@ with EmulatedHouse(players=['A', 'B', 'C']) as house:
     visited = PlayerStat('visited').as_long()
     house.put(active, 0, ignore_warning=True)
 
-    holder: dict[str, object] = {}
+    holder: dict[str, Function] = {}
 
     @function('spread')
     def spread() -> None:
         with IfAll(active == 0):
             active.value = 1
-            trigger_function(holder['fn'], True)  # type: ignore[arg-type]
+            trigger_function(holder['fn'], True)
             exit_function()
         visited.value = 1
 

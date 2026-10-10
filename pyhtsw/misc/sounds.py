@@ -226,7 +226,7 @@ def preview_sound(
     volume: float = 0.7,
     pitch: float = 1.0,
 ) -> bool:
-    raw_sound: Sound = SOUND_NAME_TO_PATH.get(sound, sound)  # type: ignore
+    raw_sound: Sound = SOUND_NAME_TO_PATH.get(sound, sound)
     paths = get_sound_paths(raw_sound)
     if not paths:
         return False

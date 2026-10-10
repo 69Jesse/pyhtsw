@@ -161,7 +161,7 @@ with Container() as container:
     # A read-only field says so rather than silently dropping the write.
     raised = False
     try:
-        mods.permissions = {}  # type: ignore[assignment]
+        mods.permissions = {}
     except AttributeError:
         raised = True
     assert raised, 'expected permissions to reject assignment'

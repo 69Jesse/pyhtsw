@@ -107,7 +107,7 @@ class TemporaryStat(Stat):
         return f'{self.name_prefix}{self.number}'
 
     @name.setter
-    def name(self, value: str) -> None:  # type: ignore[assignment]
+    def name(self, value: str) -> None:
         # `Stat.__init__` assigns it; the number is the identity here.
         pass
 

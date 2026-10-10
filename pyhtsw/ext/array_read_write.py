@@ -955,7 +955,7 @@ class StatArray[T: Editable](Sequence[MaybeSequence[T]]):
     def __len__(self) -> int:
         return len(self.items)
 
-    def __getitem__(self, index):  # type: ignore[override]
+    def __getitem__(self, index):
         return self.items[index]
 
     def read(

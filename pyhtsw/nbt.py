@@ -131,7 +131,7 @@ class NBTBoolean(NBTByte):
         return 'true' if self.value else 'false'
 
     def into_object(self) -> bool:
-        return self.value  # type: ignore
+        return bool(self.value)
 
     BOOLEAN_REGEX: re.Pattern[str] = re.compile(r'^(true|false|[10][bB])', re.ASCII)
 

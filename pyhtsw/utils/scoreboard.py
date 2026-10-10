@@ -179,7 +179,7 @@ def _key_strings(key: PlaceholderKey) -> tuple[str, ...]:
         return (key,)
     strings = {key.into_inside_string()}
     try:
-        strings.add(key.into_inside_string(include_fallback_value=False))  # type: ignore[call-arg]
+        strings.add(key.into_inside_string(include_fallback_value=False))
     except TypeError:
         pass
     return tuple(strings)
